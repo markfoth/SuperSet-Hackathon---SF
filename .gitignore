@@ -28,3 +28,7 @@ public/data/
 
 # Live routing cache (scripts/server/routing-proxy.mjs)
 data/cache/
+
+# Browser verification artifacts
+test-results/
+playwright-report/

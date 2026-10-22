@@ -1,84 +1,58 @@
-// Preference definitions. Each reads ONE measured value from neighbourhood_metrics.json.
-// `value` returns null when the data is missing; null is never a pass or a fail.
-import { num, pct } from '../../lib/format';
-import type { NeighbourhoodMetrics } from '../../types';
+import { num } from '../../lib/format';
+import type { AreaCellProps, PreferenceLevel } from '../../types';
 
 export interface PreferenceDef {
   id: string;
   label: string;
-  /** Measured value, or null if not measured for this neighbourhood. */
-  value: (m: NeighbourhoodMetrics) => number | null;
+  value: (cell: AreaCellProps) => number | null;
   higherIsBetter: boolean;
-  /** Must-have threshold, in the value's own units. */
-  mustHave: { describe: string; passes: (v: number) => boolean };
+  mustHave: { describe: string; threshold: number; passes: (v: number) => boolean };
   format: (v: number | null) => string;
   source: string;
+  resolution: string;
+  band: { nice: number; important: number };
+  nearTolerance: number;
 }
+
+const metres = (v: number | null) => v == null ? 'Unavailable' : `${num(v)} m straight line`;
+const distance = (id: string, label: string, key: keyof AreaCellProps, threshold: number, source: string): PreferenceDef => ({
+  id, label, value: (p) => p[key] as number | null, higherIsBetter: false,
+  mustHave: { describe: `within ${threshold} m straight line`, threshold, passes: (v) => v <= threshold },
+  format: metres, source, resolution: 'distance from this cell’s representative location',
+  band: { nice: 400, important: 200 }, nearTolerance: 100,
+});
 
 export const PREFERENCES: PreferenceDef[] = [
   {
-    id: 'lowCrime',
-    label: 'Fewer reported incidents',
-    value: (m) => m.crime?.per_km2 ?? null,
-    higherIsBetter: false,
-    mustHave: { describe: 'fewer than 300 reported incidents per km² a year', passes: (v) => v < 300 },
-    format: (v) => (v == null ? 'No data' : `${num(v)} per km²/yr`),
-    source: 'SFPD incident reports, last 12 months',
+    id: 'flat', label: 'Flatter streets', value: (p) => p.street_grade_pct, higherIsBetter: false,
+    mustHave: { describe: 'median DEM-derived street grade under 8%', threshold: 8, passes: (v) => v < 8 },
+    format: (v) => v == null ? 'Unavailable' : `${num(v, 1)}% median street grade`,
+    source: 'USGS 3DEP + official DataSF streets; DEM estimate, not surveyed', resolution: '40 m street windows aggregated within this H3-9 cell',
+    band: { nice: 4, important: 2 }, nearTolerance: 2,
   },
+  distance('frequent', 'Frequent buses & trains', 'frequent_distance_m', 400, 'GTFS stops with ≥120 weekday departures; Muni timetable out of date'),
+  distance('parks', 'Parks nearby', 'park_distance_m', 400, 'SF Rec & Park + OpenStreetMap polygons; entrance access unverified'),
+  distance('rail', 'Rail station nearby', 'rail_distance_m', 800, 'BART, Muni and Caltrain station locations'),
+  distance('groceries', 'Supermarket within walking distance', 'grocery_distance_m', 800, 'OpenStreetMap supermarkets; completeness unverified'),
+  distance('cycling', 'Bike lanes', 'cycling_distance_m', 250, 'SFMTA protected, painted lanes and off-street paths'),
   {
-    id: 'parks',
-    label: 'Parks nearby',
-    value: (m) => m.parks?.share_within_400m ?? null,
-    higherIsBetter: true,
-    mustHave: { describe: '90%+ of the area within 400 m of a park', passes: (v) => v >= 0.9 },
-    format: (v) => (v == null ? 'No data' : `${pct(v)} within 400 m`),
-    source: 'SF Rec & Park + OpenStreetMap',
-  },
-  {
-    id: 'flat',
-    label: 'Flatter streets',
-    value: (m) => m.hills?.median_slope_pct ?? null,
-    higherIsBetter: false,
-    mustHave: { describe: 'median DEM-derived street grade under 8%', passes: (v) => v < 8 },
-    format: (v) => (v == null ? 'No data' : `${num(v, 1)}% median street grade`),
-    source: 'USGS 3DEP + official DataSF streets; DEM estimate, not surveyed',
-  },
-  {
-    id: 'rail',
-    label: 'Rail station nearby',
-    value: (m) => m.transit?.share_within_800m_rail ?? null,
-    higherIsBetter: true,
-    mustHave: { describe: 'half the area within 800 m of BART, Caltrain or Muni Metro', passes: (v) => v >= 0.5 },
-    format: (v) => (v == null ? 'No data' : `${pct(v)} within 800 m`),
-    source: 'BART, Muni, Caltrain GTFS',
-  },
-  {
-    id: 'frequent',
-    label: 'Frequent buses & trains',
-    value: (m) => m.transit?.share_within_400m_frequent ?? null,
-    higherIsBetter: true,
-    mustHave: { describe: '75%+ of the area within 400 m of a frequent stop', passes: (v) => v >= 0.75 },
-    format: (v) => (v == null ? 'No data' : `${pct(v)} within 400 m`),
-    source: 'GTFS weekday departures (>=120/day)',
-  },
-  {
-    id: 'cycling',
-    label: 'Bike lanes',
-    value: (m) => m.cycling?.dedicated_km_per_km2 ?? null,
-    higherIsBetter: true,
-    mustHave: { describe: 'at least 3 km of bike lanes or paths per km²', passes: (v) => v >= 3 },
-    format: (v) => (v == null ? 'No data' : `${num(v, 1)} km per km²`),
-    source: 'SFMTA bike network',
-  },
-  {
-    id: 'groceries',
-    label: 'Supermarket within walking distance',
-    value: (m) => m.groceries?.share_within_800m_supermarket ?? null,
-    higherIsBetter: true,
-    mustHave: { describe: '80%+ of the area within 800 m of a supermarket', passes: (v) => v >= 0.8 },
-    format: (v) => (v == null ? 'No data' : `${pct(v)} within 800 m`),
-    source: 'OpenStreetMap',
+    id: 'lowCrime', label: 'Fewer reported incidents', value: (p) => p.incidents_per_km2, higherIsBetter: false,
+    mustHave: { describe: 'fewer than 300 reported incidents per km² a year', threshold: 300, passes: (v) => v < 300 },
+    format: (v) => v == null ? 'Unavailable' : `${num(v)} per km²/yr (H3-8)`,
+    source: 'SFPD reports; anonymised and aggregated, not a safety measure', resolution: 'shared H3 resolution 8 (~0.74 km²), not this individual cell',
+    band: { nice: 300, important: 150 }, nearTolerance: 60,
   },
 ];
 
-export const LEVEL_WEIGHT = { off: 0, nice: 1, important: 3, must: 3 } as const;
+export const DEFAULT_PRIORITY = PREFERENCES.map((p) => p.id);
+export function orderedPreferences(order: string[] = []): PreferenceDef[] {
+  return [...new Set([...order, ...DEFAULT_PRIORITY])].flatMap((id) => {
+    const p = PREFERENCES.find((d) => d.id === id); return p ? [p] : [];
+  });
+}
+
+export function measurementBand(def: PreferenceDef, value: number | null, level: PreferenceLevel): number | null {
+  if (value == null || !Number.isFinite(value)) return null;
+  const width = level === 'nice' ? def.band.nice : def.band.important;
+  return (def.higherIsBetter ? 1 : -1) * Math.floor(value / width);
+}

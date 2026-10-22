@@ -1,7 +1,7 @@
 import { NeighbourhoodPhoto } from '../../components/NeighbourhoodPhoto';
 import { num, pct, usd } from '../../lib/format';
-import { PREFERENCES } from '../filters/preferences';
-import type { AreaResult } from '../filters/ranking';
+import { ranked, type AreaResult, type CellResult } from '../filters/ranking';
+import { CellDetail } from './CellDetail';
 import type { NeighbourhoodContent, NeighbourhoodMetrics, Workplace, ZipRent } from '../../types';
 import { reasonText, rentalSearchLinks } from './reasons';
 
@@ -14,9 +14,12 @@ interface Props {
   saved: boolean;
   onToggleShortlist: () => void;
   onClose: () => void;
+  cellResult?: CellResult;
+  cellResults: CellResult[];
+  onSelectCell: (id: string) => void;
 }
 
-export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, workplaces, saved, onToggleShortlist, onClose }: Props) {
+export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, workplaces, saved, onToggleShortlist, onClose, cellResult, cellResults, onSelectCell }: Props) {
   const photo = c?.photos[0];
   const mainZip = m.rents?.zips[0];
   const zipRent = mainZip ? rents[mainZip.zip] : undefined;
@@ -36,6 +39,11 @@ export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, wor
         </figure>
       )}
       <h2>{m.name}</h2>
+      <p className="suitability"><b>{result.eligibleCount} of {result.candidateCount} candidate cells fit</b> · ~{pct(result.eligibleShare)} of candidate land. {result.unknownCount > 0 ? `${result.unknownCount} cells have insufficient information.` : ''}</p>
+      {cellResult && <CellDetail result={cellResult} workplaces={workplaces} />}
+      {!cellResult && <div className="local-choices"><p className="hint">Choose a hexagon on the map for local measurements, or explore a leading eligible cell:</p>
+        {ranked(cellResults).slice(0, 3).map((r) => <button className="btn" key={r.id} onClick={() => onSelectCell(r.id)}>{r.state === 'strong' ? 'Strong' : 'Partial'} · {r.cell.street_grade_pct == null ? 'Grade unavailable' : `${r.cell.street_grade_pct}% street grade`}</button>)}
+      </div>}
       {c?.description && <p>{c.description}</p>}
       <div className="tags">{c?.tags.map((t) => <span key={t} className="tag">{t}</span>)}</div>
 
@@ -57,11 +65,10 @@ export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, wor
         </>
       )}
 
-      <h3>Practical indicators</h3>
+      <h3>Neighbourhood context</h3>
       <ul className="facts">
-        {PREFERENCES.map((p) => (
-          <li key={p.id}><span>{p.label}</span><b>{p.format(p.value(m))}</b></li>
-        ))}
+        {m.parks?.share_within_400m != null && <li><span>Neighbourhood within 400 m of parks</span><b>{pct(m.parks.share_within_400m)}</b></li>}
+        {m.cycling && <li><span>Bike lane/path density (neighbourhood)</span><b>{num(m.cycling.dedicated_km_per_km2, 1)} km/km²</b></li>}
         {m.population?.population != null && <li><span>Residents (ACS 2020–24)</span><b>{num(m.population.population)}</b></li>}
         {m.crime && <li><span>Reported incidents (12 mo)</span><b>{num(m.crime.total)} · violent {num(m.crime.violent)} · property {num(m.crime.property)}</b></li>}
         {m.crime?.per_1000_residents != null && <li><span>Incidents per 1,000 residents</span><b>{num(m.crime.per_1000_residents)}</b></li>}

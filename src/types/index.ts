@@ -101,6 +101,37 @@ export interface NeighbourhoodProps {
 
 export type NeighbourhoodCollection = FeatureCollection<Polygon | MultiPolygon, NeighbourhoodProps>;
 export type AreaGeometry = Polygon | MultiPolygon;
+export interface AreaCellProps {
+  h3: string;
+  nhood_id: string;
+  area_m2: number;
+  land_share: number;
+  center_lat: number;
+  center_lon: number;
+  check_lat: number;
+  check_lon: number;
+  residential: boolean | null;
+  residential_reason: string;
+  street_m: number | null;
+  measured_street_m: number | null;
+  grade_coverage: number | null;
+  street_grade_pct: number | null;
+  street_grade_p90_pct: number | null;
+  steep_street_share: number | null;
+  park_land_share: number | null;
+  park_distance_m: number | null;
+  rail_distance_m: number | null;
+  frequent_distance_m: number | null;
+  cycling_distance_m: number | null;
+  grocery_distance_m: number | null;
+  crime_source_h3: string;
+  incidents_per_km2: number | null;
+  tract_id: string | null;
+  pm25_percentile: number | null;
+  rent_zip: string | null;
+  zip_asking_rent: number | null;
+}
+export type AreaCellCollection = FeatureCollection<AreaGeometry, AreaCellProps>;
 export type CommuteFixtureFeature = Feature<AreaGeometry, {
   workplace: string;
   mode: TravelMode;

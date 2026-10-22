@@ -64,29 +64,31 @@ export function nextWeekdayArrival(hhmm = '08:45', now = new Date()) {
   throw new Error('unreachable');
 }
 
-export function buildRequest({ lat, lon, mode, minutes, arriveBy }) {
+export function buildRequest({ lat, lon, mode, minutes, arriveBy, arrivalTime }) {
   return {
     arrival_searches: [{
       id: 'commute',
       coords: { lat, lng: lon },
-      arrival_time: nextWeekdayArrival(arriveBy),
+      arrival_time: arrivalTime || nextWeekdayArrival(arriveBy),
       travel_time: minutes * 60,
       transportation: { type: MODES[mode] },
     }],
   };
 }
 
-function validate(body) {
+export function validate(body) {
   const lat = Number(body?.lat);
   const lon = Number(body?.lon);
   const minutes = Number(body?.minutes);
   const arriveBy = /^\d{2}:\d{2}$/.test(body?.arrive_by ?? '') ? body.arrive_by : '08:45';
+  if (body?.direction != null && body.direction !== 'to_workplace') return { error: 'only inbound home-to-work routing is supported' };
+  if (Number(arriveBy.slice(0, 2)) > 23 || Number(arriveBy.slice(3)) > 59) return { error: 'arrive_by must be a valid 24-hour HH:MM time' };
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return { error: 'lat/lon required' };
   if (lon < BOUNDS.west || lon > BOUNDS.east || lat < BOUNDS.south || lat > BOUNDS.north) return { error: 'location outside the study area' };
   if (!MODES[body?.mode]) return { error: `mode must be one of ${Object.keys(MODES).join(', ')}` };
   if (!(minutes >= 5 && minutes <= 120)) return { error: 'minutes must be 5–120' };
   // ~11 m rounding: shares cache entries between near-identical pins, below any meaningful routing difference.
-  return { lat: Math.round(lat * 1e4) / 1e4, lon: Math.round(lon * 1e4) / 1e4, mode: body.mode, minutes, arriveBy };
+  return { lat: Math.round(lat * 1e4) / 1e4, lon: Math.round(lon * 1e4) / 1e4, mode: body.mode, minutes, arriveBy, arrivalTime: nextWeekdayArrival(arriveBy) };
 }
 
 async function fetchIsochrone(q) {
@@ -132,9 +134,10 @@ const server = createServer(async (req, res) => {
   if (q.error) return send(res, 400, q);
   if (DRY_RUN) return send(res, 200, { dryRun: true, request: buildRequest(q) });
 
-  const key = `${q.lat},${q.lon},${q.mode},${q.minutes},${q.arriveBy}`;
-  const label = `TravelTime (live), arrive by ${q.arriveBy} on a weekday`;
-  if (cache[key]) return send(res, 200, { geometry: cache[key].geometry, label, source: 'traveltime', cached: true });
+  const key = `${q.lat},${q.lon},${q.mode},${q.minutes},${q.arrivalTime}`;
+  const label = `TravelTime routing estimate · arrive by ${q.arriveBy} on ${q.arrivalTime.slice(0, 10)}`;
+  const cached = cache[key];
+  if (cached && Date.now() - Date.parse(cached.fetched) < 24 * 3600000) return send(res, 200, { geometry: cached.geometry, label, source: 'traveltime', cached: true });
   if (!APP_ID || !API_KEY) return send(res, 503, { error: 'routing not configured (set TRAVELTIME_APP_ID and TRAVELTIME_API_KEY in .env)' });
 
   try {

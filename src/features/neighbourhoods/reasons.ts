@@ -3,10 +3,11 @@ import type { ExclusionReason } from '../filters/ranking';
 import type { Workplace } from '../../types';
 
 export function reasonText(r: ExclusionReason, workplaces: Workplace[]): string {
-  if (r.kind === 'nonResidential') return 'Mostly parkland — few or no homes';
+  if (r.kind === 'nonResidential') return 'Mapped parkland without supporting residential street evidence';
+  if (r.kind === 'noOverlap') return 'No candidate cell satisfies all workplaces together';
   if (r.kind === 'commute') {
     const w = workplaces.find((x) => x.id === r.workplaceId);
-    return `Only ${Math.round(r.coverage * 100)}% within ${w?.maxMinutes ?? '?'} min of ${w?.name ?? 'workplace'}`;
+    return `Outside ${w?.maxMinutes ?? '?'} min home-to-work catchment for ${w?.name ?? 'workplace'}`;
   }
   const p = PREFERENCES.find((x) => x.id === r.prefId)!;
   return `${p.label}: ${p.format(r.value)} (needs ${p.mustHave.describe})`;

@@ -1,0 +1,247 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "h3": "8928308212fffff",
+        "nhood_id": "potrero-hill",
+        "area_m2": 109496,
+        "land_share": 1,
+        "center_lat": 37.750941,
+        "center_lon": -122.39938,
+        "check_lat": 37.750941,
+        "check_lon": -122.39938,
+        "residential": true,
+        "residential_reason": "Addressed residential-class street; parcel use unverified",
+        "street_m": 1991,
+        "measured_street_m": 1741,
+        "grade_coverage": 0.874,
+        "street_grade_pct": 6.4,
+        "street_grade_p90_pct": 16.7,
+        "steep_street_share": 0.407,
+        "park_distance_m": 183,
+        "rail_distance_m": 904,
+        "frequent_distance_m": 60,
+        "cycling_distance_m": 153,
+        "grocery_distance_m": 696,
+        "park_land_share": 0,
+        "crime_source_h3": "8828308213fffff",
+        "incidents_per_km2": 161,
+        "tract_id": "06075980900",
+        "pm25_percentile": 13.2,
+        "rent_zip": "94107",
+        "zip_asking_rent": 5099
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -122.40045,
+              37.74926
+            ],
+            [
+              -122.40171,
+              37.75076
+            ],
+            [
+              -122.40064,
+              37.75245
+            ],
+            [
+              -122.39831,
+              37.75262
+            ],
+            [
+              -122.39705,
+              37.75112
+            ],
+            [
+              -122.39812,
+              37.74944
+            ],
+            [
+              -122.40045,
+              37.74926
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "h3": "8928308216fffff",
+        "nhood_id": "potrero-hill",
+        "area_m2": 109504,
+        "land_share": 1,
+        "center_lat": 37.753334,
+        "center_lon": -122.388985,
+        "check_lat": 37.753334,
+        "check_lon": -122.388985,
+        "residential": true,
+        "residential_reason": "Addressed residential-class street; parcel use unverified",
+        "street_m": 2183,
+        "measured_street_m": 2183,
+        "grade_coverage": 1,
+        "street_grade_pct": 0.5,
+        "street_grade_p90_pct": 2.9,
+        "steep_street_share": 0,
+        "park_distance_m": 175,
+        "rail_distance_m": 229,
+        "frequent_distance_m": 510,
+        "cycling_distance_m": 149,
+        "grocery_distance_m": 1514,
+        "park_land_share": 0,
+        "crime_source_h3": "8828308217fffff",
+        "incidents_per_km2": 234,
+        "tract_id": "06075022600",
+        "pm25_percentile": 9.6,
+        "rent_zip": "94107",
+        "zip_asking_rent": 5099
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -122.39006,
+              37.75165
+            ],
+            [
+              -122.39132,
+              37.75316
+            ],
+            [
+              -122.39024,
+              37.75484
+            ],
+            [
+              -122.38791,
+              37.75502
+            ],
+            [
+              -122.38665,
+              37.75351
+            ],
+            [
+              -122.38773,
+              37.75183
+            ],
+            [
+              -122.39006,
+              37.75165
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "h3": "89283082327ffff",
+        "nhood_id": "potrero-hill",
+        "area_m2": 11771,
+        "land_share": 0.108,
+        "center_lat": 37.762102,
+        "center_lon": -122.378964,
+        "check_lat": 37.76197,
+        "check_lon": -122.37953,
+        "residential": null,
+        "residential_reason": "Land use uncertain; no addressed residential-class street identified",
+        "street_m": 0,
+        "measured_street_m": 0,
+        "grade_coverage": null,
+        "street_grade_pct": null,
+        "street_grade_p90_pct": null,
+        "steep_street_share": null,
+        "park_distance_m": 603,
+        "rail_distance_m": 812,
+        "frequent_distance_m": 1053,
+        "cycling_distance_m": 718,
+        "grocery_distance_m": 1720,
+        "park_land_share": 0,
+        "crime_source_h3": "8828308233fffff",
+        "incidents_per_km2": null,
+        "tract_id": "06075022600",
+        "pm25_percentile": 9.6,
+        "rent_zip": "94107",
+        "zip_asking_rent": 5099
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                -122.38066,
+                37.76292
+              ],
+              [
+                -122.38047,
+                37.76094
+              ],
+              [
+                -122.38071,
+                37.76122
+              ],
+              [
+                -122.38084,
+                37.76263
+              ],
+              [
+                -122.38066,
+                37.76292
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                -122.38103,
+                37.76234
+              ],
+              [
+                -122.38103,
+                37.76222
+              ],
+              [
+                -122.38111,
+                37.76222
+              ],
+              [
+                -122.38103,
+                37.76234
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                -122.37953,
+                37.76046
+              ],
+              [
+                -122.37981,
+                37.76346
+              ],
+              [
+                -122.37953,
+                37.76347
+              ],
+              [
+                -122.37925,
+                37.76048
+              ],
+              [
+                -122.37953,
+                37.76046
+              ]
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

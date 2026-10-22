@@ -18,6 +18,19 @@ export interface CommuteArea {
 
 export type CommuteResult = { ok: true; area: CommuteArea } | { ok: false; reason: string };
 
+/** Reject empty, nonfinite or malformed provider polygons before Leaflet sees them. */
+export function isAreaGeometry(value: unknown): value is AreaGeometry {
+  if (!value || typeof value !== 'object') return false;
+  const g = value as { type?: string; coordinates?: unknown };
+  if (g.type !== 'Polygon' && g.type !== 'MultiPolygon') return false;
+  const polygons = g.type === 'Polygon' ? [g.coordinates] : g.coordinates;
+  if (!Array.isArray(polygons) || !polygons.length) return false;
+  return polygons.every((polygon) => Array.isArray(polygon) && polygon.length > 0 && polygon.every((ring) =>
+    Array.isArray(ring) && ring.length >= 4 && ring.every((xy) => Array.isArray(xy) && xy.length >= 2
+      && Number.isFinite(xy[0]) && Number.isFinite(xy[1]) && Math.abs(xy[0]) <= 180 && Math.abs(xy[1]) <= 90)
+    && ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1]));
+}
+
 export interface CommuteProvider {
   id: string;
   getArea(workplace: Workplace): Promise<CommuteResult>;
@@ -49,6 +62,7 @@ export const fixtureProvider: CommuteProvider = {
       (x) => x.properties.workplace === key && x.properties.mode === wp.mode && x.properties.minutes === wp.maxMinutes,
     );
     if (!f) return { ok: false, reason: `No fixture for ${wp.mode} within ${wp.maxMinutes} min.` };
+    if (!isAreaGeometry(f.geometry)) return { ok: false, reason: 'Offline commute geometry is invalid.' };
     return {
       ok: true,
       area: {
@@ -77,12 +91,14 @@ export function proxyProvider(baseUrl: string): CommuteProvider {
             lat: wp.lat, lon: wp.lon, mode: wp.mode, minutes: wp.maxMinutes,
             direction: 'to_workplace', arrive_by: '08:45',
           }),
+          signal: AbortSignal.timeout(25000),
         });
         if (!r.ok) {
           const detail = await r.json().then((b: { error?: string }) => b.error).catch(() => undefined);
           return { ok: false, reason: `Live routing unavailable${detail ? `: ${detail}` : ` (HTTP ${r.status})`}.` };
         }
         const body = (await r.json()) as { geometry: AreaGeometry; label?: string; source?: string };
+        if (!isAreaGeometry(body.geometry)) return { ok: false, reason: 'Live routing returned no valid reachable area.' };
         return {
           ok: true,
           area: {
@@ -109,7 +125,8 @@ export function getCommuteProvider(): CommuteProvider {
         const res = await live.getArea(wp);
         if (res.ok) return res;
         const fallback = await fixtureProvider.getArea(wp);
-        return fallback.ok ? fallback : { ok: false, reason: `${res.reason} ${fallback.reason}` };
+        return fallback.ok ? { ok: true, area: { ...fallback.area, label: `Live routing unavailable · ${fallback.area.label}` } }
+          : { ok: false, reason: `${res.reason} ${fallback.reason}` };
       },
     };
   }

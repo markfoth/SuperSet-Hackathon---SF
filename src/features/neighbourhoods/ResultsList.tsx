@@ -1,7 +1,7 @@
 import { NeighbourhoodPhoto } from '../../components/NeighbourhoodPhoto';
-import { scoreColor } from '../../map/MapView';
+import { MATCH_COLORS } from '../../map/MapView';
 import { usd } from '../../lib/format';
-import type { AreaResult } from '../filters/ranking';
+import type { AreaResult, nearMisses } from '../filters/ranking';
 import type { NeighbourhoodContent, NeighbourhoodMetrics, Workplace } from '../../types';
 import { reasonText } from './reasons';
 
@@ -17,9 +17,15 @@ interface Props {
   shortlist: string[];
   onToggleShortlist: (id: string) => void;
   blocked: string | null;
+  pending: boolean;
+  hasWorkplaces: boolean;
+  nearMisses: ReturnType<typeof nearMisses>;
+  onSelectCell: (id: string) => void;
 }
 
 export function ResultsList(p: Props) {
+  if (!p.hasWorkplaces) return <div className="results notice">Add at least one workplace to discover reachable areas.</div>;
+  if (p.pending) return <div className="results" role="status">Calculating every workplace’s commute before showing matches…</div>;
   if (p.blocked) {
     return (
       <div className="results">
@@ -33,11 +39,12 @@ export function ResultsList(p: Props) {
   return (
     <div className="results">
       <div className="results-head">
-        <h2>{p.ranked.length} neighbourhood{p.ranked.length === 1 ? '' : 's'} fit</h2>
+        <h2>{p.ranked.length} neighbourhood{p.ranked.length === 1 ? '' : 's'} with matches</h2>
         <button className="btn link" onClick={p.onToggleExcluded}>
-          {p.showExcluded ? 'Hide' : 'Show'} {p.excluded.length} excluded
+          {p.showExcluded ? 'Hide' : 'Show'} other areas
         </button>
       </div>
+      <p className="hint">Ranked by the best eligible local cell in each neighbourhood. Suitability varies within every boundary.</p>
       {p.ranked.length === 0 && (
         <div className="notice">No neighbourhood meets every requirement. Relax a “Must” or increase a commute time — the excluded list shows why each area was removed.</div>
       )}
@@ -46,6 +53,14 @@ export function ResultsList(p: Props) {
           <Card key={r.id} r={r} rank={i + 1} {...p} />
         ))}
       </ol>
+      {p.nearMisses.length > 0 && <section className="near-misses">
+        <h3>Near misses · {p.nearMisses.length} cells</h3>
+        <p className="hint">Still excluded. Changing the indicated Must to Important would make these cells eligible.</p>
+        {p.nearMisses.slice(0, 5).map((n) => <button className="near-miss" key={n.result.id} onClick={() => p.onSelectCell(n.result.id)}>
+          <b>{n.result.name}</b><span>{n.pref.label}: {n.pref.format(n.value)}</span>
+          <small>Needs {n.pref.mustHave.describe} · gap {n.gap.toFixed(1)} {n.pref.id === 'flat' ? 'percentage points' : n.pref.id === 'lowCrime' ? 'incidents/km²/yr' : 'm'}</small>
+        </button>)}
+      </section>}
       {p.showExcluded && p.excluded.length > 0 && (
         <>
           <h3 className="excluded-head">Excluded</h3>
@@ -53,7 +68,9 @@ export function ResultsList(p: Props) {
             {p.excluded.map((r) => (
               <li key={r.id} className="card compact" onClick={() => p.onSelect(r.id)}>
                 <div className="card-title">{r.name}</div>
+                <span className="hint">{r.state === 'unknown' ? 'Insufficient information' : 'No eligible candidate cells'}</span>
                 <ul className="reasons">{r.reasons.map((x, j) => <li key={j}>{reasonText(x, p.workplaces)}</li>)}</ul>
+                {r.unchecked.length > 0 && <p className="hint">Missing required information: {r.unchecked.join(', ')}</p>}
               </li>
             ))}
           </ul>
@@ -72,7 +89,7 @@ function Card({ r, rank, content, metrics, workplaces, onSelect, shortlist, onTo
     <li className="card" onClick={() => onSelect(r.id)}>
       <div className="card-photo">
         <NeighbourhoodPhoto photo={photo} />
-        <span className="rank" style={{ background: scoreColor(r.score) }}>{rank}</span>
+        <span className="rank" style={{ background: MATCH_COLORS[r.state] }}>{rank}</span>
         <button
           className={`save ${saved ? 'on' : ''}`} aria-pressed={saved} aria-label={saved ? 'Remove from shortlist' : 'Save to shortlist'}
           onClick={(e) => { e.stopPropagation(); onToggleShortlist(r.id); }}
@@ -80,11 +97,14 @@ function Card({ r, rank, content, metrics, workplaces, onSelect, shortlist, onTo
       </div>
       <div className="card-body">
         <div className="card-title">{r.name}</div>
+        <div className="suitability"><b>{r.eligibleCount} of {r.candidateCount} candidate cells fit</b> · ~{Math.round(r.eligibleShare * 100)}% of candidate land</div>
+        <div className="share-bar" aria-hidden="true"><span style={{ width: `${r.eligibleShare * 100}%` }} /></div>
         <div className="tags">{c?.tags.slice(0, 3).map((t) => <span key={t} className="tag">{t}</span>)}</div>
         <div className="card-facts">
           {r.commute && workplaces.map((w) => (
-            <span key={w.id}>{Math.round((r.commute!.byWorkplace[w.id] ?? 0) * 100)}% ≤ {w.maxMinutes} min to {w.name}</span>
+            <span key={w.id}>{Math.round((r.commute!.byWorkplace[w.id] ?? 0) * 100)}% of candidate land in {w.name} catchment</span>
           ))}
+          {r.commute && <span><b>{Math.round(r.commute.all * 100)}% in all workplace catchments together</b></span>}
           {m.rents?.typical_rent_zip_weighted != null && <span>~{usd(m.rents.typical_rent_zip_weighted)}/mo asking (ZIP-level)</span>}
         </div>
         {r.active > 0 && r.assessed < r.active && <div className="card-warn">{r.assessed} of {r.active} preferences could be assessed here</div>}

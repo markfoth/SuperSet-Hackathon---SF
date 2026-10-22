@@ -1,24 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DataNotice } from './components/DataNotice';
 import { CommutePanel } from './features/commute/CommutePanel';
-import { commuteCoverage } from './features/commute/eligibility';
+import { cellCommutes, commonReachableGeometry } from './features/commute/eligibility';
 import { DEFAULT_WORKPLACES, getCommuteProvider, type CommuteResult } from './features/commute/provider';
 import { PreferencePanel } from './features/filters/PreferencePanel';
-import { evaluate, ranked as rankResults, type EvaluateInput } from './features/filters/ranking';
+import { evaluate, summarize, nearMisses, ranked as rankResults, type EvaluateInput } from './features/filters/ranking';
+import { DEFAULT_PRIORITY } from './features/filters/preferences';
 import { NeighbourhoodDetail } from './features/neighbourhoods/NeighbourhoodDetail';
 import { ResultsList } from './features/neighbourhoods/ResultsList';
+import { ShortlistComparison } from './features/neighbourhoods/ShortlistComparison';
 import { loadData } from './lib/data';
 import { readStored, writeStored } from './lib/storage';
 import { LayerPanel } from './map/controls/LayerPanel';
 import { MapView } from './map/MapView';
 import type {
-  NeighbourhoodCollection, NeighbourhoodContent, NeighbourhoodMetrics, PreferenceLevel, Workplace, ZipRent,
+  AreaCellCollection, NeighbourhoodCollection, NeighbourhoodContent, NeighbourhoodMetrics, PreferenceLevel, Workplace, ZipRent,
 } from './types';
 
 interface AppData {
   neighbourhoods: NeighbourhoodCollection;
   metrics: Record<string, NeighbourhoodMetrics>;
-  samples: Record<string, [number, number][]>;
+  cells: AreaCellCollection;
   content: Record<string, NeighbourhoodContent>;
   rents: Record<string, ZipRent>;
 }
@@ -32,30 +34,34 @@ export default function App() {
   // Workplaces are precise locations: session-scoped. Preferences/layers/shortlist are harmless UI state: local.
   const [workplaces, setWorkplaces] = useState<Workplace[]>(() => readStored('cg:workplaces', DEFAULT_WORKPLACES, 'session'));
   const [prefs, setPrefs] = useState<Record<string, PreferenceLevel>>(() => readStored('cg:prefs', {}));
+  const [priorityOrder, setPriorityOrder] = useState<string[]>(() => readStored('cg:priority:v1', DEFAULT_PRIORITY));
   const [layers, setLayers] = useState<Set<string>>(() => new Set(readStored<string[]>('cg:layers', [])));
   const [shortlist, setShortlist] = useState<string[]>(() => readStored('cg:shortlist', []));
-  const [commute, setCommute] = useState<Record<string, CommuteResult | undefined>>({});
+  const [commuteCache, setCommuteCache] = useState<Record<string, CommuteResult | undefined>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedCellId, setSelectedCellId] = useState<string | null>(null);
   const [showExcluded, setShowExcluded] = useState(false);
   const [adding, setAdding] = useState(false);
   const [about, setAbout] = useState(false);
+  const [compareSaved, setCompareSaved] = useState(false);
   const [panel, setPanel] = useState<'search' | 'results'>('search');
 
   useEffect(() => {
     Promise.all([
       loadData<NeighbourhoodCollection>('neighbourhoods.geojson'),
       loadData<{ neighbourhoods: Record<string, NeighbourhoodMetrics> }>('neighbourhood_metrics.json'),
-      loadData<{ neighbourhoods: Record<string, [number, number][]> }>('neighbourhood_samples.json'),
+      loadData<AreaCellCollection>('area_cells.geojson'),
       loadData<{ neighbourhoods: Record<string, NeighbourhoodContent> }>('neighbourhood_content.json'),
       loadData<{ zips: Record<string, ZipRent> }>('rents_zori_zip.json'),
-    ]).then(([neighbourhoods, metrics, samples, content, rents]) => setData({
-      neighbourhoods, metrics: metrics.neighbourhoods, samples: samples.neighbourhoods,
+    ]).then(([neighbourhoods, metrics, cells, content, rents]) => setData({
+      neighbourhoods, metrics: metrics.neighbourhoods, cells,
       content: content.neighbourhoods, rents: rents.zips,
     })).catch((e: Error) => setLoadError(e.message));
   }, []);
 
   useEffect(() => writeStored('cg:workplaces', workplaces, 'session'), [workplaces]);
   useEffect(() => writeStored('cg:prefs', prefs), [prefs]);
+  useEffect(() => writeStored('cg:priority:v1', priorityOrder), [priorityOrder]);
   useEffect(() => writeStored('cg:layers', [...layers]), [layers]);
   useEffect(() => writeStored('cg:shortlist', shortlist), [shortlist]);
 
@@ -63,28 +69,32 @@ export default function App() {
   const keys = workplaces.map((w) => `${w.id}|${wpKey(w)}`).join(';');
   useEffect(() => {
     let cancelled = false;
-    setCommute({});
     workplaces.forEach((w) => {
-      provider.getArea(w).then((res) => { if (!cancelled) setCommute((c) => ({ ...c, [w.id]: res })); });
+      const key = `${w.id}|${wpKey(w)}`;
+      provider.getArea(w).catch((): CommuteResult => ({ ok: false, reason: 'Routing request failed. Retry or reset the demo.' }))
+        .then((res) => { if (!cancelled) setCommuteCache((c) => ({ ...c, [key]: res })); });
     });
     return () => { cancelled = true; };
   }, [keys]); // keyed on what changes the area, not on object identity
+
+  // Route identity includes location/mode/time: stale successes never gate new settings.
+  const commute = useMemo(() => Object.fromEntries(workplaces.map((w) => [w.id, commuteCache[`${w.id}|${wpKey(w)}`]])), [keys, commuteCache]);
 
   const areas = useMemo(() => workplaces.map((w) => commute[w.id]).flatMap((r) => (r?.ok ? [r.area] : [])), [commute, workplaces]);
   const pending = workplaces.some((w) => commute[w.id] === undefined);
   const failed = workplaces.map((w) => [w, commute[w.id]] as const).find(([, r]) => r && !r.ok);
   const blocked = failed ? `${failed[0].name}: ${(failed[1] as { reason: string }).reason}` : null;
 
-  const coverage = useMemo(
-    () => (data && workplaces.length && !pending && !blocked ? commuteCoverage(data.samples, areas) : null),
-    [data, areas, workplaces.length, pending, blocked],
-  );
-
-  const input: EvaluateInput | null = data ? { metrics: data.metrics, content: data.content, coverage, prefs } : null;
-  const results = useMemo(() => (input ? evaluate(input) : []), [data, coverage, prefs]);
+  const cellCoverage = useMemo(() => data ? cellCommutes(data.cells, workplaces, commute) : {}, [data, keys, commute]);
+  const overlap = useMemo(() => !pending && !blocked ? commonReachableGeometry(areas, workplaces.length) : null, [areas, workplaces.length, pending, blocked]);
+  const input: EvaluateInput | null = useMemo(() => data ? { cells: data.cells, metrics: data.metrics, commutes: cellCoverage, prefs, priorityOrder } : null, [data, cellCoverage, prefs, priorityOrder]);
+  const cellResults = useMemo(() => input ? evaluate(input) : [], [input]);
+  const cellById = useMemo(() => Object.fromEntries(cellResults.map((r) => [r.id, r])), [cellResults]);
+  const results = useMemo(() => input ? summarize(input, cellResults) : [], [input, cellResults]);
   const byId = useMemo(() => Object.fromEntries(results.map((r) => [r.id, r])), [results]);
   const rankedList = useMemo(() => rankResults(results), [results]);
   const excluded = useMemo(() => results.filter((r) => !r.eligible).sort((a, b) => a.name.localeCompare(b.name)), [results]);
+  const misses = useMemo(() => nearMisses(cellResults), [cellResults]);
 
   if (loadError) return <div className="fatal">Could not load data: {loadError}. Run <code>npm run dev</code> (it syncs data first).</div>;
   if (!data || !input) return <div className="fatal">Loading Common Ground…</div>;
@@ -92,13 +102,17 @@ export default function App() {
   const updateWorkplace = (id: string, patch: Partial<Workplace>) => setWorkplaces((ws) => ws.map((w) => (w.id === id ? { ...w, ...patch } : w)));
   const toggleShortlist = (id: string) => setShortlist((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   const selected = selectedId ? byId[selectedId] : null;
+  const selectedCell = selectedCellId ? cellById[selectedCellId] : undefined;
+  const selectCell = (id: string) => { const r = cellById[id]; if (r) { setSelectedCellId(id); setSelectedId(r.nhoodId); setPanel('results'); } };
+  const selectNeighbourhood = (id: string) => { setSelectedId(id); setSelectedCellId(null); setPanel('results'); };
+  const eligibleCells = cellResults.filter((r) => r.eligible).length;
 
   return (
     <div className="app">
       <header className="topbar">
         <div className="brand"><span className="logo">◐</span> Common Ground <span className="tagline">Find where to live in San Francisco</span></div>
         <div className="topbar-right">
-          {shortlist.length > 0 && <span className="shortlist-count" title={shortlist.map((id) => data.metrics[id]?.name).join(', ')}>♥ {shortlist.length} saved</span>}
+          {shortlist.length > 0 && <button className="btn link shortlist-count" onClick={() => setCompareSaved(true)} title="Compare your saved areas">♥ {shortlist.length} saved</button>}
           <button className="btn link" onClick={() => setAbout(true)}>About the data</button>
         </div>
       </header>
@@ -114,13 +128,14 @@ export default function App() {
             onAdd={() => setAdding((a) => !a)}
             onReset={() => { setWorkplaces(DEFAULT_WORKPLACES); setAdding(false); }}
           />
-          <PreferencePanel input={input} onChange={(id, level) => setPrefs((p) => ({ ...p, [id]: level }))} />
+          <PreferencePanel input={input} onChange={(id, level) => setPrefs((p) => ({ ...p, [id]: level }))} onOrderChange={setPriorityOrder} />
           <LayerPanel visible={layers} onToggle={(id) => setLayers((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; })} />
         </aside>
         <section className="map-wrap">
           <MapView
             neighbourhoods={data.neighbourhoods} results={byId} showExcluded={showExcluded} selectedId={selectedId}
-            onSelect={(id) => { setSelectedId(id); setPanel('results'); }}
+            cells={data.cells} cellResults={cellById} selectedCellId={selectedCellId} onSelectCell={selectCell}
+            overlap={overlap} onSelect={selectNeighbourhood}
             areas={areas} workplaces={workplaces} addingWorkplace={adding}
             onMoveWorkplace={(id, lat, lon) => updateWorkplace(id, { lat, lon })}
             onMapPick={(lat, lon) => {
@@ -130,24 +145,34 @@ export default function App() {
             visibleLayers={layers}
           />
           {pending && workplaces.length > 0 && <div className="map-badge">Calculating commute areas…</div>}
+          {!pending && blocked && <div className="map-badge error">Commute unavailable · results blocked</div>}
+          <div className="match-legend" aria-label="Cell matching legend">
+            <b>{eligibleCells} eligible cells · {rankedList.length} neighbourhoods</b>
+            <div><span className="match-dot strong" /> Strong <span className="match-dot partial" /> Partial <span className="match-dot excluded" /> Excluded <span className="match-dot unknown" /> Unknown</div>
+            <small>~0.1 km² cells · representative-location matching<br />Teal dashed outline: shared commute area{areas.some((a) => a.source === 'fixture') ? ' · approximate demo' : ''}</small>
+          </div>
         </section>
         <aside className={`resultsbar ${panel === 'results' ? 'show' : ''}`}>
           {selected ? (
             <NeighbourhoodDetail
               result={selected} metrics={data.metrics[selected.id]} content={data.content[selected.id]} rents={data.rents}
+              cellResult={selectedCell} cellResults={cellResults.filter((r) => r.nhoodId === selected.id)} onSelectCell={selectCell}
               workplaces={workplaces} saved={shortlist.includes(selected.id)}
-              onToggleShortlist={() => toggleShortlist(selected.id)} onClose={() => setSelectedId(null)}
+              onToggleShortlist={() => toggleShortlist(selected.id)} onClose={() => { setSelectedId(null); setSelectedCellId(null); }}
             />
           ) : (
             <ResultsList
               ranked={rankedList} excluded={excluded} content={data.content} metrics={data.metrics} workplaces={workplaces}
               showExcluded={showExcluded} onToggleExcluded={() => setShowExcluded((s) => !s)}
-              onSelect={setSelectedId} shortlist={shortlist} onToggleShortlist={toggleShortlist} blocked={blocked}
+              onSelect={selectNeighbourhood} shortlist={shortlist} onToggleShortlist={toggleShortlist} blocked={blocked}
+              pending={pending} hasWorkplaces={workplaces.length > 0} nearMisses={misses} onSelectCell={selectCell}
             />
           )}
         </aside>
       </main>
       {about && <DataNotice onClose={() => setAbout(false)} />}
+      {compareSaved && <ShortlistComparison areas={results.filter((r) => shortlist.includes(r.id))} cells={cellById} metrics={data.metrics} priorityOrder={priorityOrder}
+        onClose={() => setCompareSaved(false)} onSelect={(id) => { setCompareSaved(false); selectNeighbourhood(id); }} />}
     </div>
   );
 }

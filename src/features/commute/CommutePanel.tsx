@@ -16,7 +16,7 @@ export function CommutePanel({ workplaces, results, onChange, onRemove, onAdd, a
   return (
     <section className="panel-section">
       <h2>Where do you commute to?</h2>
-      <p className="hint">Areas are only suggested if most of the neighbourhood is within every commute.</p>
+      <p className="hint">Every suggested cell must reach all workplaces within your limits. Matching uses one representative location per ~0.1 km² cell.</p>
       {workplaces.map((w, i) => {
         const res = results[w.id];
         return (
@@ -39,7 +39,7 @@ export function CommutePanel({ workplaces, results, onChange, onRemove, onAdd, a
             </div>
             {res === undefined && <p className="status">Calculating…</p>}
             {res?.ok && (
-              <p className={`status ${res.area.synthetic ? 'warn' : ''}`} title={res.area.label}>
+              <p className={`status ${res.area.source === 'fixture' ? 'warn' : ''}`} title={res.area.label}>
                 {res.area.synthetic ? '⚠ ' : ''}{res.area.label}
               </p>
             )}

@@ -61,19 +61,28 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
   {
     id: 'hills',
     label: 'Hills & street gradients',
-    note: 'Street-aligned 40 m gradients from USGS elevation and official streets. DEM estimates, not surveyed grades. Missing coverage stays blank.',
+    note: 'Zoom to street level (14+) for 40 m gradients from USGS elevation and official streets. DEM estimates, not surveyed grades. Missing coverage stays blank.',
     legend: SLOPE_COLORS.map((c, i) => ({
       color: c,
       label: i === 0 ? `< ${SLOPE_BREAKS[0]}% slope` : i === SLOPE_COLORS.length - 1 ? `${SLOPE_BREAKS[i - 1]}%+` : `${SLOPE_BREAKS[i - 1]}–${SLOPE_BREAKS[i]}%`,
     })),
-    build: async () => {
+    build: async (map) => {
       const fc = await loadData<FeatureCollection>('street_gradients.geojson');
-      return L.geoJSON(fc, {
+      const streets = L.geoJSON(fc, {
         pane: 'context-lines',
         filter: (f) => f.properties?.grade_pct != null,
         style: (f) => ({ color: step(f!.properties!.grade_pct, SLOPE_BREAKS, SLOPE_COLORS), weight: 3, opacity: 0.85 }),
         onEachFeature: (f, l) => l.bindTooltip(`${esc(f.properties!.street)} · ${f.properties!.grade_pct}% DEM-derived median street grade`),
       });
+      const group = L.layerGroup();
+      const syncZoom = () => {
+        const show = map.getZoom() >= 14;
+        if (show && !group.hasLayer(streets)) group.addLayer(streets);
+        if (!show && group.hasLayer(streets)) group.removeLayer(streets);
+      };
+      group.on('add', () => { map.on('zoomend', syncZoom); syncZoom(); });
+      group.on('remove', () => map.off('zoomend', syncZoom));
+      return group;
     },
   },
   {
