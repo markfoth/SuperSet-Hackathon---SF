@@ -1,0 +1,186 @@
+# Hand-maintained editorial content for the 41 Analysis Neighborhoods.
+# Keyed by the stable neighbourhood id (slug of the DataSF name).
+#
+# Rules: describe character, built form, landmarks and terrain only. No
+# demographic, income, safety or school claims — those belong to sourced data.
+# `wiki` lists candidate English Wikipedia titles whose lead image (if freely
+# licensed) becomes the photo; `commons` names a specific Commons file instead
+# (hand-picked where the article has no usable lead image). scripts/build_content.py
+# records credit + licence and caches an optimised local copy.
+# `residential: false` marks areas that are overwhelmingly parkland; they are
+# shown on the map but not ranked as places to live.
+# Status: DRAFT written 2026-10-21 for the hackathon — review before publishing.
+
+bayview-hunters-point:
+  description: Large south-eastern district along the bay, with the Third Street light-rail corridor, former shipyard land under redevelopment and waterfront parks such as Heron's Head.
+  tags: [waterfront, light rail, redevelopment, larger lots]
+  wiki: ["Bayview–Hunters Point, San Francisco"]
+bernal-heights:
+  description: Hilltop neighbourhood of compact streets around Bernal Heights Park, with a village-like Cortland Avenue shopping strip and wide city views.
+  tags: [hilly, views, village high street, dog-friendly park]
+  wiki: ["Bernal Heights, San Francisco"]
+castro-upper-market:
+  description: Lively neighbourhood centred on Castro and Market Streets, with Victorian housing climbing toward Twin Peaks and direct Muni Metro service downtown.
+  tags: [nightlife, Victorian homes, Muni Metro, hilly]
+  wiki: ["Castro District, San Francisco"]
+chinatown:
+  description: One of the oldest Chinatowns in North America — dense, walkable streets of shops, restaurants and apartments between Nob Hill and the Financial District.
+  tags: [historic, dense, walkable, food]
+  wiki: ["Chinatown, San Francisco"]
+excelsior:
+  description: Residential southern neighbourhood of single-family homes on gentle slopes, with Mission Street as its commercial spine and Balboa Park BART nearby.
+  tags: [residential, family homes, Mission Street, BART nearby]
+  wiki: ["Excelsior District, San Francisco"]
+financial-district-south-beach:
+  description: The downtown office core and the newer towers and waterfront of South Beach, from the Ferry Building to Oracle Park.
+  tags: [downtown, high-rise, waterfront, transit hub]
+  wiki: ["Financial District, San Francisco", "South Beach, San Francisco"]
+glen-park:
+  description: Small, steep residential neighbourhood with its own BART station and village centre, bordering the natural canyon of Glen Canyon Park.
+  tags: [BART, village centre, canyon park, hilly]
+  wiki: ["Glen Park, San Francisco"]
+golden-gate-park:
+  description: The city's great park — meadows, lakes, museums and gardens stretching three miles from the Haight to Ocean Beach.
+  tags: [parkland, museums, cycling, not residential]
+  wiki: ["Golden Gate Park"]
+  residential: false
+haight-ashbury:
+  description: Famous for its 1960s history, with colourful Victorian streets, independent shops on Haight Street and quick access to Golden Gate Park and Buena Vista Park.
+  tags: [Victorian homes, independent shops, near parks, historic]
+  wiki: ["Haight-Ashbury"]
+hayes-valley:
+  description: Compact, walkable neighbourhood of boutiques and restaurants around Patricia's Green, close to Civic Center's performing-arts venues.
+  tags: [walkable, boutiques, restaurants, central]
+  wiki: ["Hayes Valley, San Francisco"]
+inner-richmond:
+  description: Flat, residential grid between the Presidio and Golden Gate Park, with Clement Street's restaurants and shops at its heart.
+  tags: [flat, food, near Golden Gate Park, buses]
+  wiki: ["Richmond District, San Francisco"]
+inner-sunset:
+  description: Neighbourhood beside Golden Gate Park and UCSF Parnassus, with a busy Irving and 9th Avenue shopping area on the N Judah line.
+  tags: [N Judah, near Golden Gate Park, cafés, fog]
+  wiki: ["Inner Sunset, San Francisco"]
+  commons: "File:Outbound train at Irving and 9th Avenue, September 2017.JPG"
+japantown:
+  description: Small historic district around the Japan Center malls and Peace Plaza, one of the few remaining Japantowns in the United States.
+  tags: [historic, food, compact, central]
+  wiki: ["Japantown, San Francisco"]
+lakeshore:
+  description: South-western area around Lake Merced, San Francisco State University, Stonestown and the Olympic Club and Harding Park golf courses.
+  tags: [lake, university, golf, quieter]
+  wiki: ["Lake Merced", "Lakeshore, San Francisco"]
+  commons: "File:Lake Merced at SFSU.jpg"
+lincoln-park:
+  description: Clifftop parkland at Land's End, home to the Legion of Honor museum and a public golf course, with coastal trails above the Golden Gate.
+  tags: [parkland, coastal trails, museum, not residential]
+  wiki: ["Lincoln Park (San Francisco)"]
+  residential: false
+lone-mountain-usf:
+  description: Residential area around the University of San Francisco's hilltop campus, between the Western Addition and the Richmond.
+  tags: [university, residential, central-west, buses]
+  wiki: ["Lone Mountain, San Francisco", "University of San Francisco"]
+marina:
+  description: Flat, bayfront neighbourhood of Mediterranean-style homes, the Marina Green and Chestnut Street's shops, close to Crissy Field and the Palace of Fine Arts.
+  tags: [waterfront, flat, shops, near Presidio]
+  wiki: ["Marina District, San Francisco"]
+mclaren-park:
+  description: The city's second-largest park — wild hillside grassland, trails and a reservoir in the south of the city.
+  tags: [parkland, trails, hilly, not residential]
+  wiki: ["McLaren Park"]
+  commons: "File:McLaren Park, San Francisco (2766282897).jpg"
+  residential: false
+mission:
+  description: Sunny, flat and lively district known for its murals, Valencia and Mission Street restaurants and bars, Dolores Park and two BART stations.
+  tags: [sunny, nightlife, food, BART, flat]
+  wiki: ["Mission District, San Francisco"]
+mission-bay:
+  description: Newly built neighbourhood of modern apartments, UCSF's campus, Chase Center and bayfront parks, on the T Third light-rail line.
+  tags: [new build, waterfront, light rail, flat]
+  wiki: ["Mission Bay, San Francisco"]
+nob-hill:
+  description: Steep, central hill of grand hotels, Grace Cathedral and apartment buildings, served by the cable cars.
+  tags: [central, cable cars, steep, apartments]
+  wiki: ["Nob Hill, San Francisco"]
+noe-valley:
+  description: Residential valley of Victorian and Edwardian homes with a 24th Street shopping strip, sheltered between Twin Peaks and Bernal Heights.
+  tags: [family-friendly, 24th Street, Victorian homes, hilly edges]
+  wiki: ["Noe Valley, San Francisco"]
+north-beach:
+  description: Historic Italian quarter of cafés, restaurants and Washington Square, below Telegraph Hill and Coit Tower.
+  tags: [cafés, historic, walkable, nightlife]
+  wiki: ["North Beach, San Francisco"]
+oceanview-merced-ingleside:
+  description: Residential south-western neighbourhoods of modest single-family homes near City College, on the M Ocean View and K Ingleside lines.
+  tags: [residential, family homes, Muni Metro, quieter]
+  wiki: ["Ingleside, San Francisco", "Oceanview, San Francisco"]
+  commons: "File:Merced Heights from Ocean Avenue, January 2018.JPG"
+outer-mission:
+  description: Southern residential area along Mission Street toward Daly City, close to Balboa Park BART and the Excelsior.
+  tags: [residential, BART nearby, family homes]
+  wiki: ["Outer Mission, San Francisco"]
+outer-richmond:
+  description: Foggy, flat residential avenues running to Ocean Beach, Sutro Baths and Land's End, with Geary and Balboa Street shops.
+  tags: [ocean, fog, flat, quieter]
+  wiki: ["Sutro Baths", "Richmond District, San Francisco"]
+pacific-heights:
+  description: Elegant hilltop neighbourhood of mansions and apartment buildings with bay views, Alta Plaza and Lafayette Parks, and Fillmore Street's shops.
+  tags: [views, historic homes, hilly, shops]
+  wiki: ["Pacific Heights, San Francisco"]
+portola:
+  description: Quiet south-eastern residential neighbourhood on San Bruno Avenue, historically known for its plant nurseries and greenhouses.
+  tags: [residential, quieter, family homes]
+  wiki: ["Portola, San Francisco"]
+potrero-hill:
+  description: Sunny hillside neighbourhood with skyline views, a small 18th Street village centre and quick freeway and Caltrain access.
+  tags: [sunny, views, hilly, Caltrain nearby]
+  wiki: ["Potrero Hill, San Francisco"]
+presidio:
+  description: Former army post now a national park, with forests, trails, beaches and a limited number of rental homes managed by the Presidio Trust.
+  tags: [national park, trails, limited housing, near Golden Gate Bridge]
+  wiki: ["Presidio of San Francisco"]
+presidio-heights:
+  description: Quiet residential streets of large homes bordering the Presidio, with Sacramento Street's boutiques.
+  tags: [quiet, large homes, near Presidio]
+  wiki: ["Presidio Heights, San Francisco"]
+  commons: "File:Vogue Theatre.jpg"
+russian-hill:
+  description: Steep hill of apartments and hidden stairways, home to Lombard Street's famous switchbacks and served by cable cars.
+  tags: [views, steep, cable cars, stairways]
+  wiki: ["Russian Hill, San Francisco"]
+seacliff:
+  description: Secluded enclave of large homes above China Beach and Baker Beach, next to Lincoln Park.
+  tags: [ocean views, beaches, quiet, large homes]
+  wiki: ["Sea Cliff, San Francisco"]
+south-of-market:
+  description: Former warehouse district now mixing offices, apartments, museums and nightlife, with Moscone Center and the Caltrain terminus.
+  tags: [central, flat, nightlife, Caltrain, apartments]
+  wiki: ["South of Market, San Francisco"]
+sunset-parkside:
+  description: The city's largest residential district — long, flat avenues of row houses running to Ocean Beach, with frequent fog and the L Taraval and N Judah lines.
+  tags: [ocean, fog, family homes, flat, Muni Metro]
+  wiki: ["Sunset District, San Francisco"]
+tenderloin:
+  description: Dense, central neighbourhood of historic residential hotels and apartment buildings next to Union Square and Civic Center.
+  tags: [central, dense, historic buildings, transit hub]
+  wiki: ["Tenderloin, San Francisco"]
+  commons: "File:UptownTenderloin SF.JPG"
+treasure-island:
+  description: Artificial island in the bay between San Francisco and Yerba Buena Island, being redeveloped with new housing; reached by the Bay Bridge or ferry.
+  tags: [island, redevelopment, skyline views, ferry]
+  wiki: ["Treasure Island, San Francisco"]
+twin-peaks:
+  description: The city's central summits and the winding residential streets around them, with some of the widest views in San Francisco.
+  tags: [views, very hilly, quiet, car-oriented]
+  wiki: ["Twin Peaks (San Francisco)"]
+visitacion-valley:
+  description: South-eastern neighbourhood beside McLaren Park and the T Third line, with ongoing redevelopment near the city's southern edge.
+  tags: [residential, near McLaren Park, light rail]
+  wiki: ["Visitacion Valley, San Francisco"]
+west-of-twin-peaks:
+  description: Leafy, mostly single-family residential neighbourhoods such as West Portal, St. Francis Wood and Forest Hill, with the West Portal Muni Metro hub.
+  tags: [leafy, family homes, Muni Metro, quieter]
+  wiki: ["West of Twin Peaks, San Francisco", "West Portal, San Francisco"]
+western-addition:
+  description: Central neighbourhood including the Fillmore, Alamo Square's "Painted Ladies" and many mid-century apartment complexes.
+  tags: [central, Victorian homes, Fillmore, buses]
+  wiki: ["Western Addition, San Francisco"]
