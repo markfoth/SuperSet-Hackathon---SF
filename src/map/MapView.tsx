@@ -19,6 +19,21 @@ export const WORKPLACE_COLORS = ['#e8590c', '#7048e8', '#0c8599', '#c2255c'];
 export const MATCH_COLORS: Record<MatchState, string> = { strong: '#27824d', partial: '#e4b63f', excluded: '#ba4e48', unknown: '#858e9b' };
 const ISOCHRONE_BORDER_OPACITY = 0.2;
 
+// Desktop panels float over the map. Frame places inside the unobscured map area;
+// mobile panels sit below it and therefore contribute no horizontal inset.
+function framePadding(map: L.Map, padding: number): L.FitBoundsOptions {
+  const container = map.getContainer();
+  const bounds = container.getBoundingClientRect();
+  const layout = container.closest('.layout');
+  const panelWidth = (selector: string, side: 'left' | 'right') => {
+    const panel = layout?.querySelector(selector)?.getBoundingClientRect();
+    if (!panel?.width || panel.top >= bounds.bottom || panel.bottom <= bounds.top) return 0;
+    return side === 'left' ? panel.right - bounds.left : bounds.right - panel.left;
+  };
+  return { paddingTopLeft: [panelWidth('.sidebar', 'left') + padding, padding],
+    paddingBottomRight: [panelWidth('.resultsbar', 'right') + padding, padding] };
+}
+
 interface Props {
   neighbourhoods: NeighbourhoodCollection;
   cells: AreaCellDisplayCollection;
@@ -99,7 +114,7 @@ export function MapView(props: Props) {
     // Frame the city plus every workplace (SFO sits south of the city line).
     const bounds = nhLayer.current.getBounds();
     latest.current.workplaces.forEach((w) => bounds.extend([w.lat, w.lon]));
-    m.fitBounds(bounds, { padding: [20, 20] });
+    m.fitBounds(bounds, framePadding(m, 24));
   }, [props.neighbourhoods]);
 
   useEffect(() => {
@@ -249,13 +264,13 @@ export function MapView(props: Props) {
   useEffect(() => {
     if (props.selectedCellId || !props.selectedId || !nhLayer.current || !map.current) return;
     const layer = nhLayer.current.getLayers().find((l) => (l as L.GeoJSON & { feature: { properties: { id: string } } }).feature.properties.id === props.selectedId) as L.Polygon | undefined;
-    if (layer) map.current.flyToBounds(layer.getBounds(), { padding: [60, 60], maxZoom: 15, duration: 0.6, animate: !window.matchMedia('(prefers-reduced-motion: reduce)').matches });
+    if (layer) map.current.flyToBounds(layer.getBounds(), { ...framePadding(map.current, 60), maxZoom: 15, duration: 0.6, animate: !window.matchMedia('(prefers-reduced-motion: reduce)').matches });
   }, [props.selectedId]);
 
   useEffect(() => {
     if (!props.selectedCellId || !cellLayer.current || !map.current) return;
     const layer = cellLayer.current.getLayers().find((l) => (l as L.GeoJSON & { feature: { properties: { h3: string } } }).feature.properties.h3 === props.selectedCellId) as L.Polygon | undefined;
-    if (layer) map.current.fitBounds(layer.getBounds(), { padding: [40, 40], maxZoom: 16, animate: false });
+    if (layer) map.current.fitBounds(layer.getBounds(), { ...framePadding(map.current, 40), maxZoom: 16, animate: false });
   }, [props.selectedCellId]);
 
   return <><div ref={el} className="map" aria-label="Map of San Francisco and northern Peninsula area cells" />
