@@ -10,7 +10,7 @@ export function DataNotice({ onClose }: { onClose: () => void }) {
         <ul>
           <li><b>Neighbourhoods, police incidents, bike network, parks, injury crashes</b> — DataSF (ODC PDDL).</li>
           <li><b>Transit</b> — BART, SFMTA (Muni) and Caltrain GTFS schedules. BART and Caltrain timetables cover 22 Oct 2026; the public Muni timetable is from summer 2026.</li>
-          <li><b>Elevation</b> — U.S. Geological Survey 3D Elevation Program.</li>
+          <li><b>Street gradients</b> — U.S. Geological Survey 3DEP elevation and official DataSF street centrelines. Rolling 40 m DEM estimates, not surveyed road grades.</li>
           <li><b>Residents and rent paid</b> — U.S. Census Bureau, American Community Survey 2020–2024 (tract).</li>
           <li><b>Air pollution</b> — CalEnviroScreen 5.0, California OEHHA (tract; pollution indicators only).</li>
           <li><b>Extra parks, supermarkets, cafés, restaurants, bars</b> — © OpenStreetMap contributors (ODbL); map tiles © Stadia Maps / OpenMapTiles.</li>

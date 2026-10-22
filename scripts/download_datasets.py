@@ -270,6 +270,9 @@ def sources() -> list[Source]:
                json_rows_min(50000), note=f"window {crime_start} to {crime_end} (exclusive)"),
         Source("bike_network", "bike_network.geojson",
                fetch_url(f"{SOCRATA}/ygmz-vaxd.geojson", {"$limit": 50000}), geojson_min(3000)),
+        Source("streets_active", "streets_active.geojson",
+               fetch_url(f"{SOCRATA}/3psu-pn9h.geojson", {"$where": "active=true", "$limit": 50000}),
+               geojson_min(10000), note="Official DPW active centrelines; road classes/layers filtered during processing"),
         Source("parks_rpd", "parks_rpd.geojson",
                fetch_url(f"{SOCRATA}/gtr9-ntp6.geojson", {"$limit": 5000}), geojson_min(200)),
         # P0 — transit. 511.org requires an API token (HTTP 401 without one); the agencies

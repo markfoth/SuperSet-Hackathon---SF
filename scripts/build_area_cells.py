@@ -10,6 +10,8 @@ from pathlib import Path
 
 import geopandas as gpd
 import h3
+import pandas as pd
+import numpy as np
 from shapely.geometry import Point
 
 from _common import METRIC_CRS, PROCESSED_DIR, rel, today, update_manifest
@@ -51,14 +53,95 @@ def canonical_grid() -> gpd.GeoDataFrame:
     return grid.reset_index(drop=True)
 
 
+def read_layer(name: str) -> gpd.GeoDataFrame | None:
+    path = PROCESSED_DIR / name
+    return gpd.read_file(path).to_crs(METRIC_CRS) if path.exists() else None
+
+
+def distances(points, layer):
+    """Nearest geometry, in metres. No source => null, never zero distance."""
+    if layer is None or layer.empty:
+        return [None] * len(points)
+    joined = gpd.sjoin_nearest(gpd.GeoDataFrame(geometry=points, crs=METRIC_CRS), layer[["geometry"]],
+                               how="left", distance_col="distance")
+    return joined.groupby(level=0)["distance"].min().reindex(range(len(points))).round().tolist()
+
+
+def add_indicators(grid):
+    points = gpd.GeoSeries(gpd.points_from_xy(grid["check_lon"], grid["check_lat"]), crs=4326).to_crs(METRIC_CRS)
+    hills = read_layer("hills_grid.geojson")
+    fields = ["street_m", "measured_street_m", "grade_coverage", "street_grade_pct", "street_grade_p90_pct", "steep_street_share"]
+    new_hills = hills is not None and "street_grade_pct" in hills
+    lookup = hills.set_index("h3") if new_hills else None
+    for field in fields:
+        grid[field] = grid["h3"].map(lookup[field]) if new_hills else None
+    parks, stops = read_layer("parks.geojson"), read_layer("transit_stops.geojson")
+    bikes, shops = read_layer("cycling_network.geojson"), read_layer("groceries.geojson")
+    grid["park_distance_m"] = distances(points, parks[parks.area >= 2023] if parks is not None else None)
+    grid["rail_distance_m"] = distances(points, stops[stops["rail"].eq(True)] if stops is not None else None)
+    grid["frequent_distance_m"] = distances(points, stops[stops["weekday_departures"] >= 120] if stops is not None else None)
+    grid["cycling_distance_m"] = distances(points, bikes[bikes["cat"].isin(["protected", "path", "lane"])] if bikes is not None else None)
+    grid["grocery_distance_m"] = distances(points, shops[shops["shop"].eq("supermarket")] if shops is not None else None)
+    park_union = parks.geometry.union_all() if parks is not None else None
+    grid["park_land_share"] = (grid.geometry.intersection(park_union).area / grid.area).round(3) if park_union is not None else None
+    from street_gradients import usable_streets
+    try:
+        roads = usable_streets()
+        evidence = roads[roads["residential_evidence"]]
+        joined = gpd.sjoin(grid[["geometry"]], evidence[["geometry"]], how="inner", predicate="intersects")
+        supported = set(joined.index)
+        grid["residential"] = pd.Series([True if i in supported else None for i in grid.index], dtype=object)
+        grid["residential_reason"] = ["Addressed residential-class street; parcel use unverified" if i in supported
+                                       else "Land use uncertain; no addressed residential-class street identified" for i in grid.index]
+        # Park evidence alone does not exclude mixed edges or Presidio housing.
+        park_only = (grid["park_land_share"] >= 0.95) & ~grid.index.isin(supported)
+        grid.loc[park_only, "residential"] = False
+        grid.loc[park_only, "residential_reason"] = "At least 95% mapped parkland; no addressed residential-class street"
+    except FileNotFoundError:
+        pass  # uncertainty remains explicit; never use an editorial neighbourhood flag
+    crime = read_layer("crime_grid.geojson")
+    crime_lookup = crime.set_index("h3")["per_km2"].to_dict() if crime is not None else {}
+    grid["crime_source_h3"] = grid["h3"].map(lambda c: h3.cell_to_parent(c, 8))
+    # Missing coarse cells are not automatically zero reports: source coverage is unknown.
+    grid["incidents_per_km2"] = grid["crime_source_h3"].map(crime_lookup)
+    tracts = read_layer("census_tracts.geojson")
+    grid["tract_id"], grid["pm25_percentile"] = None, None
+    if tracts is not None:
+        joined = gpd.sjoin(gpd.GeoDataFrame(geometry=points, crs=METRIC_CRS), tracts[["geoid", "ces_pm_pctl", "geometry"]], how="left", predicate="within")
+        joined = joined[~joined.index.duplicated()].reindex(grid.index)
+        grid["tract_id"], grid["pm25_percentile"] = joined["geoid"], joined["ces_pm_pctl"]
+    # Identify the actual ZIP containing the representative point; never infer a
+    # fine rent from neighbourhood-weighted averages.
+    grid["rent_zip"], grid["zip_asking_rent"] = None, None
+    zcta_path = Path(__file__).resolve().parents[1] / "data/sf/raw/zcta_2020.geojson"
+    rent_path = PROCESSED_DIR / "rents_zori_zip.json"
+    if zcta_path.exists() and rent_path.exists():
+        zctas = gpd.read_file(zcta_path).to_crs(METRIC_CRS)
+        joined = gpd.sjoin(gpd.GeoDataFrame(geometry=points, crs=METRIC_CRS), zctas[["ZCTA5", "geometry"]], how="left", predicate="within")
+        joined = joined[~joined.index.duplicated()].reindex(grid.index)
+        rent_data = json.loads(rent_path.read_text(encoding="utf-8"))["zips"]
+        grid["rent_zip"] = joined["ZCTA5"]
+        grid["zip_asking_rent"] = grid["rent_zip"].map(lambda z: rent_data.get(z, {}).get("latest"))
+    return grid
+
+
 def build() -> dict:
     grid = canonical_grid()
+    grid = add_indicators(grid)
     path, count = write_geojson(grid, "area_cells.geojson", meta={
         "generated": today(), "h3_resolution": 9,
         "parent_method": "largest overlap with one of 41 neighbourhood polygons",
         "geometry": "H3 polygons clipped to SF neighbourhood land; <1000 m² coastal slivers omitted",
         "matching_point": "H3 centre, or representative land point for coastal clipped cells",
         "null": "measurement unavailable, never a zero, pass or failure",
+        "sources": {
+            "street_grade_pct": {"resolution": "40 m windows along official streets; ~10 m DEM", "method": "length-weighted median; p90 and >10% street share retained", "coverage": "at least 100 m measured streets and 75% valid street length"},
+            "access": {"resolution": "distance from representative point to mapped geometries", "method": "straight-line metres, not walking routes; no entrance/barrier model"},
+            "incidents_per_km2": {"resolution": "H3 8", "source_id": "crime_source_h3", "period": "see crime_grid meta; not an independent H3-9 observation"},
+            "pm25_percentile": {"resolution": "census tract", "source_id": "tract_id", "method": "whole-tract CalEnviroScreen value, no interpolation"},
+            "zip_asking_rent": {"resolution": "ZIP/ZCTA", "source_id": "rent_zip", "method": "whole-ZIP Zillow index; never a cell-specific rental estimate"},
+            "residential": {"resolution": "park polygons and addressed residential-class street evidence", "method": "true=supporting street evidence; false=95%+ park without supporting streets; null=unverified"},
+        },
     })
     update_manifest("area_cells", {
         "source": "Derived from H3 and DataSF Analysis Neighborhoods; contextual inputs recorded separately",

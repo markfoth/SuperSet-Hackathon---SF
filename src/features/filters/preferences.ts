@@ -39,9 +39,9 @@ export const PREFERENCES: PreferenceDef[] = [
     label: 'Flatter streets',
     value: (m) => m.hills?.median_slope_pct ?? null,
     higherIsBetter: false,
-    mustHave: { describe: 'median terrain slope under 8%', passes: (v) => v < 8 },
-    format: (v) => (v == null ? 'No data' : `${num(v, 1)}% median slope`),
-    source: 'USGS 3DEP elevation',
+    mustHave: { describe: 'median DEM-derived street grade under 8%', passes: (v) => v < 8 },
+    format: (v) => (v == null ? 'No data' : `${num(v, 1)}% median street grade`),
+    source: 'USGS 3DEP + official DataSF streets; DEM estimate, not surveyed',
   },
   {
     id: 'rail',

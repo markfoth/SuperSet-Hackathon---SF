@@ -346,26 +346,41 @@ def bike_category(facility: str | None, symbology: str | None) -> str:
 
 
 def dem_sampler():
-    """Return (sample(x, y) -> elevation_m, slope_array_info) for the 3DEP DEM, or None."""
+    """Bilinearly sample metre-valued USGS elevations at metric-CRS coordinates.
+
+    Pixel centres matter: nearest-neighbour sampling creates staircase grades on
+    flat roads. All four contributing pixels must be valid; never bridge nodata.
+    The raster has no band unit tag; metre elevations are the USGS service contract.
+    """
     p = RAW_DIR / "elevation_3dep_10m.tif"
     if not p.exists():
         return None
     import rasterio
-    src = rasterio.open(p)
-    band = src.read(1).astype("float64")
-    nodata = src.nodata
-    if nodata is not None:
-        band[band == nodata] = np.nan
-    band[band < -50] = np.nan
+    from pyproj import Transformer
+    with rasterio.open(p) as src:
+        if not src.crs or not src.crs.is_projected:
+            raise ValueError("DEM must have a projected CRS with metre horizontal units")
+        if src.crs.linear_units != "metre":
+            raise ValueError(f"unsupported DEM horizontal units: {src.crs.linear_units}")
+        band = src.read(1, masked=True).astype("float64").filled(np.nan)
+        transform = src.transform
+        transformer = Transformer.from_crs(METRIC_CRS, src.crs, always_xy=True)
+    band[~np.isfinite(band) | (band < -1000) | (band > 10000)] = np.nan
 
     def sample(x: np.ndarray, y: np.ndarray) -> np.ndarray:
-        rows, cols = rasterio.transform.rowcol(src.transform, x, y)
-        rows, cols = np.asarray(rows), np.asarray(cols)
-        ok = (rows >= 0) & (rows < band.shape[0]) & (cols >= 0) & (cols < band.shape[1])
-        out = np.full(len(rows), np.nan)
-        out[ok] = band[rows[ok], cols[ok]]
+        xs, ys = transformer.transform(x, y)
+        cols, rows = ~transform * (np.asarray(xs), np.asarray(ys))
+        # Affine gives pixel corners; array samples are at pixel centres.
+        cols, rows = cols - 0.5, rows - 0.5
+        cc, rr = np.floor(cols).astype(int), np.floor(rows).astype(int)
+        ok = (rr >= 0) & (rr + 1 < band.shape[0]) & (cc >= 0) & (cc + 1 < band.shape[1])
+        out = np.full(len(rr), np.nan)
+        r, c = rr[ok], cc[ok]
+        dx, dy = cols[ok] - c, rows[ok] - r
+        out[ok] = ((1-dx)*(1-dy)*band[r, c] + dx*(1-dy)*band[r, c+1]
+                   + (1-dx)*dy*band[r+1, c] + dx*dy*band[r+1, c+1])
         return out
-    return sample, band, src.transform, abs(src.transform.a)
+    return sample, band, transform, abs(transform.a)
 
 
 def segment_grade(line: LineString, sample) -> float | None:
@@ -776,58 +791,10 @@ def step_transit() -> dict:
 # --- P1 hills -------------------------------------------------------------------------------
 
 def step_hills() -> dict:
-    dem = dem_sampler()
-    if dem is None:
-        raise MissingInput("elevation_3dep_10m.tif missing")
-    _, band, transform, px = dem
-    gy, gx = np.gradient(band, px)
-    slope = np.hypot(gx, gy) * 100  # percent grade
-    import rasterio
-    pts = sample_points()
-    radius_px = int(round(170 / px))
-    yy, xx = np.mgrid[-radius_px:radius_px + 1, -radius_px:radius_px + 1]
-    disk = (xx ** 2 + yy ** 2) <= radius_px ** 2
-    rows, cols = rasterio.transform.rowcol(transform, pts.geometry.x.values, pts.geometry.y.values)
-    mean_slope, elev = [], []
-    for r, c in zip(rows, cols):
-        r0, r1, c0, c1 = r - radius_px, r + radius_px + 1, c - radius_px, c + radius_px + 1
-        if r0 < 0 or c0 < 0 or r1 > band.shape[0] or c1 > band.shape[1]:
-            mean_slope.append(None); elev.append(None)
-            continue
-        win_s, win_e = slope[r0:r1, c0:c1][disk], band[r0:r1, c0:c1][disk]
-        if np.isnan(win_e).mean() > 0.5:
-            mean_slope.append(None); elev.append(None)
-            continue
-        mean_slope.append(round(float(np.nanmean(win_s)), 1)); elev.append(round(float(np.nanmean(win_e))))
-    pts["slope_pct"], pts["elev_m"] = mean_slope, elev
-    grid = gpd.GeoDataFrame({"h3": pts["h3"], "nhood_id": pts["nhood_id"], "slope_pct": pts["slope_pct"],
-                             "elev_m": pts["elev_m"]}, geometry=[hex_polygon(c) for c in pts["h3"]], crs=4326)
-    path, n = write_geojson(grid, "hills_grid.geojson", meta={
-        "h3_resolution": SAMPLE_RES, "slope_pct": "mean terrain slope within ~170 m of the cell centre, percent grade",
-    })
-    summary = {}
-    for nid, g in pts.groupby("nhood_id"):
-        sl = g["slope_pct"].dropna()
-        el = g["elev_m"].dropna()
-        summary[nid] = None if sl.empty else {
-            "median_slope_pct": round(float(sl.median()), 1), "share_steep": round(float((sl > 10).mean()), 3),
-            "elev_min_m": int(el.min()), "elev_max_m": int(el.max()), "cells": int(len(sl)),
-        }
-    d = dl("elevation_3dep")
-    update_manifest("elevation", {
-        "source": "USGS 3D Elevation Program (3DEP) seamless DEM via The National Map ImageServer",
-        "source_url": "https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer",
-        "licence": "US public domain (USGS) — credit 'U.S. Geological Survey'",
-        "downloaded_at": d.get("downloaded_at"), "measurement_period": "Composite of 3DEP lidar collections",
-        "resolution": "10 m bare-earth DEM resampled from 1 m lidar; summarised to H3 res-9 cells and street segments",
-        "feature_count": n, "raw_path": "data/sf/raw/elevation_3dep_10m.tif",
-        "processed_path": [rel(path), "data/sf/processed/cycling_network.geojson (grade_pct)"],
-        "script": SCRIPT, "refresh": "rarely (terrain)",
-        "limitations": "Terrain slope, not street grade: a street cut across a hill can be flatter than the slope "
-                       "around it, and stairs/retaining walls are invisible. 'Steep' = mean slope > 10%.",
-        "status": "processed",
-    })
-    return {"cells": n, "summary": summary}
+    # The former 170 m terrain-slope mean is deliberately retired: it measured
+    # adjacent hillsides rather than gradients along the street network.
+    from street_gradients import build_street_gradients
+    return build_street_gradients()
 
 
 # --- P1 groceries ----------------------------------------------------------------------------
@@ -1211,7 +1178,7 @@ def step_metrics(results: dict[str, dict]) -> dict:
             "transit.share_within_800m_rail": "share of sample points within 800 m of a BART/Caltrain/Muni Metro stop",
             "transit.share_within_400m_frequent": "share within 400 m of a stop with >= 120 weekday departures",
             "cycling.dedicated_km_per_km2": "protected + path + painted lane km per km² (each direction counted)",
-            "hills.median_slope_pct": "median of res-9 cell mean terrain slope (percent grade)",
+            "hills.median_slope_pct": "length-weighted median 40 m DEM-derived street grade (percent); not surveyed",
             "groceries.share_within_800m_supermarket": "share of sample points within 800 m of an OSM supermarket",
             "collisions.per_km2_per_year": "injury crashes per km² per year (3-year window)",
             "rents.typical_rent_zip_weighted": "Zillow ZORI asking rent, area-weighted over overlapping ZIPs (ZIP-level!)",
@@ -1286,7 +1253,7 @@ def main(argv: list[str] | None = None) -> int:
     for k, v in status.items():
         extra = {kk: vv for kk, vv in results.get(k, {}).items() if kk != "summary"}
         print(f"  {k:15s} {v} {extra if extra else ''}")
-    return 1 if any(v.startswith("FAILED") for k, v in status.items() if k in ("neighbourhoods", "crime", "cycling", "parks", "transit")) else 0
+    return 1 if any(v.startswith("FAILED") for v in status.values()) else 0
 
 
 if __name__ == "__main__":

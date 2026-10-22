@@ -60,19 +60,19 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
   },
   {
     id: 'hills',
-    label: 'Hills',
-    note: 'Mean terrain slope around each ~0.1 km² hexagon (USGS 3DEP). Terrain, not exact street grade.',
+    label: 'Hills & street gradients',
+    note: 'Street-aligned 40 m gradients from USGS elevation and official streets. DEM estimates, not surveyed grades. Missing coverage stays blank.',
     legend: SLOPE_COLORS.map((c, i) => ({
       color: c,
       label: i === 0 ? `< ${SLOPE_BREAKS[0]}% slope` : i === SLOPE_COLORS.length - 1 ? `${SLOPE_BREAKS[i - 1]}%+` : `${SLOPE_BREAKS[i - 1]}–${SLOPE_BREAKS[i]}%`,
     })),
     build: async () => {
-      const fc = await loadData<FeatureCollection>('hills_grid.geojson');
+      const fc = await loadData<FeatureCollection>('street_gradients.geojson');
       return L.geoJSON(fc, {
-        pane: 'context-fill',
-        filter: (f) => f.properties?.slope_pct != null,
-        style: (f) => ({ fillColor: step(f!.properties!.slope_pct, SLOPE_BREAKS, SLOPE_COLORS), fillOpacity: 0.6, stroke: false }),
-        onEachFeature: (f, l) => l.bindTooltip(`${f.properties!.slope_pct}% slope · ${f.properties!.elev_m} m elevation`),
+        pane: 'context-lines',
+        filter: (f) => f.properties?.grade_pct != null,
+        style: (f) => ({ color: step(f!.properties!.grade_pct, SLOPE_BREAKS, SLOPE_COLORS), weight: 3, opacity: 0.85 }),
+        onEachFeature: (f, l) => l.bindTooltip(`${esc(f.properties!.street)} · ${f.properties!.grade_pct}% DEM-derived median street grade`),
       });
     },
   },

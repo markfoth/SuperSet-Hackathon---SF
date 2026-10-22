@@ -98,21 +98,23 @@ cycling_network:
     678, route 2594. grade_pct is a terrain estimate, not a surveyed street grade.'
   status: processed
 elevation:
-  source: USGS 3D Elevation Program (3DEP) seamless DEM via The National Map ImageServer
-  source_url: https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer
-  licence: US public domain (USGS) — credit 'U.S. Geological Survey'
-  downloaded_at: '2026-10-21'
-  measurement_period: Composite of 3DEP lidar collections
-  resolution: 10 m bare-earth DEM resampled from 1 m lidar; summarised to H3 res-9 cells and street segments
-  feature_count: 1117
-  raw_path: data/sf/raw/elevation_3dep_10m.tif
+  source: USGS 3DEP bare-earth DEM + SF DPW Streets – Active and Retired (DataSF 3psu-pn9h)
+  source_url: https://data.sf.gov/d/3psu-pn9h; https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer
+  licence: USGS US public domain; DataSF ODC PDDL
+  downloaded_at: '2026-10-22'
+  measurement_period: Street snapshot at download; DEM composite of lidar acquisitions
+  resolution: Street centrelines sampled every ~10 m; 40 m rolling windows; length-weighted H3-9 aggregates
+  feature_count: 1226
+  raw_path: data/sf/raw/streets_active.geojson; data/sf/raw/elevation_3dep_10m.tif
   processed_path:
   - data/sf/processed/hills_grid.geojson
   - data/sf/processed/cycling_network.geojson (grade_pct)
-  script: scripts/process_datasets.py
-  refresh: rarely (terrain)
-  limitations: 'Terrain slope, not street grade: a street cut across a hill can be flatter than the slope
-    around it, and stairs/retaining walls are invisible. ''Steep'' = mean slope > 10%.'
+  script: scripts/street_gradients.py via process_datasets.py --only hills
+  refresh: after street or DEM refresh
+  limitations: 'DEM-derived street-gradient estimates, not surveyed. Bare-earth DEM cannot resolve bridge
+    decks, tunnels, retaining walls or stairs. No windows on roads <40 m. Null cell grade below 100 m
+    valid street length or 75% coverage. Median may hide a steep street: p90 and steep-length share are
+    retained. No neighbourhood terrain mean used.'
   status: processed
 food_drink_pois:
   source: OpenStreetMap contributors via Overpass API (amenity=cafe|restaurant|bar|pub, shop=coffee)
@@ -278,7 +280,7 @@ neighbourhood_metrics:
   source: Derived — merge of the processed datasets above
   source_url: n/a (derived)
   licence: Inherits the most restrictive input (Zillow terms for the rents block)
-  downloaded_at: '2026-10-21'
+  downloaded_at: '2026-10-22'
   measurement_period: Per input dataset
   resolution: Neighbourhood (41), computed from finer inputs
   feature_count: 41
@@ -368,6 +370,25 @@ rents_zori:
   limitations: Asking rents for listed units, skewed toward units that turn over. ZIPs cross neighbourhood
     boundaries; the neighbourhood figure is a blend and must be labelled as ZIP-level. ZIPs with too few
     listings have no ZORI series.
+  status: processed
+street_gradients:
+  source: USGS 3DEP bare-earth DEM + SF DPW Streets – Active and Retired (DataSF 3psu-pn9h)
+  source_url: https://data.sf.gov/d/3psu-pn9h; https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer
+  licence: USGS US public domain; DataSF ODC PDDL
+  downloaded_at: '2026-10-22'
+  measurement_period: Street snapshot at download; DEM composite of lidar acquisitions
+  resolution: Street centrelines sampled every ~10 m; 40 m rolling windows; length-weighted H3-9 aggregates
+  feature_count: 14585
+  raw_path: data/sf/raw/streets_active.geojson; data/sf/raw/elevation_3dep_10m.tif
+  processed_path:
+  - data/sf/processed/street_gradients.geojson
+  - data/sf/processed/street_gradient_validation.json
+  script: scripts/street_gradients.py via process_datasets.py --only hills
+  refresh: after street or DEM refresh
+  limitations: 'DEM-derived street-gradient estimates, not surveyed. Bare-earth DEM cannot resolve bridge
+    decks, tunnels, retaining walls or stairs. No windows on roads <40 m. Null cell grade below 100 m
+    valid street length or 75% coverage. Median may hide a steep street: p90 and steep-length share are
+    retained. No neighbourhood terrain mean used.'
   status: processed
 transit:
   source: Combined BART + Muni + Caltrain static GTFS

@@ -67,7 +67,7 @@ export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, wor
         {m.crime?.per_1000_residents != null && <li><span>Incidents per 1,000 residents</span><b>{num(m.crime.per_1000_residents)}</b></li>}
         {m.transit && m.transit.rail_stations.length > 0 && <li><span>Stations inside</span><b>{m.transit.rail_stations.join(', ')}</b></li>}
         {m.collisions && <li><span>Injury crashes (3 yrs)</span><b>{num(m.collisions.injury_crashes)} · pedestrian {m.collisions.pedestrian} · cyclist {m.collisions.cyclist}</b></li>}
-        {m.hills && <li><span>Elevation range</span><b>{m.hills.elev_min_m}–{m.hills.elev_max_m} m</b></li>}
+        {m.hills?.elev_min_m != null && <li><span>Elevation range</span><b>{m.hills.elev_min_m}–{m.hills.elev_max_m} m</b></li>}
       </ul>
       <p className="hint">Reported incidents are not a measure of safety. Per-km² and per-resident rates both read high where many people visit or commute but few live.</p>
 
