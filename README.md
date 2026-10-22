@@ -143,8 +143,9 @@ npm.cmd run preview -- --host localhost --port 4173
 ```
 
 The production preview is at `http://localhost:4173`. The static `dist/` artifact is ready for
-a future hosting decision. Nothing is publicly deployed. Live routing needs the
-separate proxy; Vite's development `/api` proxy is not part of a static production build.
+a future hosting decision. Live routing needs either the separate local proxy or the
+Vercel `/api/isochrone` function. See [Vercel deployment](docs/VERCEL_DEPLOYMENT.md) for
+the hosted setup and private environment variables.
 
 Rebuild the fine cells from cached sources:
 

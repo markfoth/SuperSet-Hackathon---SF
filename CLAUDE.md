@@ -55,11 +55,15 @@ out to rental platforms.
 ## Architecture (see docs/ARCHITECTURE.md)
 
 - Frontend: React 19 + TypeScript + Vite + Leaflet (imperative, no react-leaflet) + two Turf modules.
-- No backend. Static files in `public/data/` are **copied** from `data/sf/processed/` by
+- Static files in `public/data/` are **copied** from `data/sf/processed/` by
   `scripts/sync_public_data.mjs` (runs on `predev`/`prebuild`). Edit/commit `data/sf/processed/` only.
 - Data pipeline: Python (GeoPandas, Shapely, H3, rasterio) in `scripts/`.
 - Commute areas go through the `CommuteProvider` adapter (`src/features/commute/provider.ts`):
   fixtures offline, proxy when configured.
+- Hosted routing: `api/isochrone.js` is a Vercel Node function using `server/routing-core.mjs`.
+  No private `.env` files or filesystem cache writes in the function. Runtime cache keys are
+  hashed and namespaced; private credentials remain server-side. Local proxy behavior shares
+  the same core. See `docs/VERCEL_DEPLOYMENT.md` for project, build and runtime configuration.
 - Ranking logic is pure and tested: `src/features/filters/ranking.ts`.
 
 ## Data rules

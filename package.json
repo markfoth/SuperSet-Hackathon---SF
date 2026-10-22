@@ -12,13 +12,14 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:browser": "playwright test",
-    "test:proxy": "node --test tests/routing-proxy.test.mjs",
+    "test:proxy": "node --test tests/routing-proxy.test.mjs tests/routing-serverless.test.mjs",
     "proxy": "node server/routing-proxy.mjs"
   },
   "dependencies": {
     "@turf/boolean-point-in-polygon": "^7.4.0",
     "@turf/helpers": "^7.4.0",
     "@turf/intersect": "^7.4.0",
+    "@vercel/functions": "^3.10.3",
     "leaflet": "^1.9.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
