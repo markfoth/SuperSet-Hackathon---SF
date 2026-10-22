@@ -27,6 +27,22 @@ acs_tracts:
     tenants (incl. long-standing rent-controlled leases), not asking rent. The Census API needs a key;
     these official bulk files do not.
   status: processed
+area_cells:
+  source: Derived from H3 and DataSF Analysis Neighborhoods; contextual inputs recorded separately
+  source_url: https://data.sf.gov/d/j2bu-swwd
+  licence: Inherits inputs; H3 Apache-2.0
+  downloaded_at: '2026-10-22'
+  measurement_period: Per input dataset
+  resolution: H3 resolution 9 (~0.105 km²); coarser indicators retain original source ids
+  feature_count: 1226
+  raw_path: See individual source entries
+  processed_path:
+  - data/sf/processed/area_cells.geojson
+  script: scripts/build_area_cells.py
+  refresh: after rebuilding any input
+  limitations: Centre-based access and commute checks describe a representative location, not every address.
+    Parent assignment is approximate along neighbourhood borders. Land use is incomplete.
+  status: processed
 calenviroscreen5:
   source: OEHHA CalEnviroScreen 5.0 (final), California Open Data Portal
   source_url: https://data.ca.gov/dataset/calenviroscreen-5-0

@@ -100,7 +100,7 @@ def check_feature_counts() -> list[str]:
         actual = len(json.loads(first.read_text(encoding="utf-8"))["features"])
         # Several entries list a summary file first; only compare where the geojson is the counted file.
         if key in {"neighbourhoods", "cycling_network", "parks", "hills", "elevation", "groceries", "transit",
-                   "commute_fixtures", "acs_tracts", "calenviroscreen5"} and actual != entry["feature_count"]:
+                   "commute_fixtures", "acs_tracts", "calenviroscreen5", "area_cells", "street_gradients"} and actual != entry["feature_count"]:
             errors.append(f"manifest[{key}] feature_count {entry['feature_count']} != {actual} in {first.name}")
     return errors
 
