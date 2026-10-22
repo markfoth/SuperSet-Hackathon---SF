@@ -24,9 +24,7 @@ function step(value: number, breaks: number[], colors: string[]): string {
 
 const CRIME_BREAKS = [100, 300, 700, 1500];
 const CRIME_COLORS = ['#fde7d9', '#f9b98f', '#ee8551', '#cf5226', '#8f2d10'];
-const SLOPE_BREAKS = [5, 10, 15, 20];
 const AIR_COLORS = ['#eef3fb', '#c6d6ef', '#93b2df', '#5b84c4', '#2b5797'];
-const SLOPE_COLORS = ['#f4efe6', '#ddc9a3', '#bf9a5d', '#8f6a32', '#5a3f17'];
 
 const BIKE_STYLE: Record<string, { color: string; weight: number; dashArray?: string; label: string }> = {
   protected: { color: '#0b6e3a', weight: 4, label: 'Protected bikeway (Class IV)' },
@@ -40,8 +38,8 @@ const BIKE_STYLE: Record<string, { color: string; weight: number; dashArray?: st
 export const CONTEXT_LAYERS: ContextLayerDef[] = [
   {
     id: 'crime',
-    label: 'Reported crime',
-    note: 'SFPD reported incidents, last 12 months, per ~0.7 km² hexagon. Reported ≠ all crime; busy commercial areas score high.',
+    label: 'Reported incidents',
+    note: 'SF coverage only; Peninsula data unavailable. SFPD reported incidents, last 12 months, per ~0.7 km² hexagon. Reported ≠ all crime.',
     legend: CRIME_COLORS.map((c, i) => ({
       color: c,
       label: i === 0 ? `< ${CRIME_BREAKS[0]} per km²` : i === CRIME_COLORS.length - 1 ? `${num(CRIME_BREAKS[i - 1])}+` : `${CRIME_BREAKS[i - 1]}–${CRIME_BREAKS[i]}`,
@@ -59,27 +57,25 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
     },
   },
   {
-    id: 'hills',
-    label: 'Hills',
-    note: 'Mean terrain slope around each ~0.1 km² hexagon (USGS 3DEP). Terrain, not exact street grade.',
-    legend: SLOPE_COLORS.map((c, i) => ({
-      color: c,
-      label: i === 0 ? `< ${SLOPE_BREAKS[0]}% slope` : i === SLOPE_COLORS.length - 1 ? `${SLOPE_BREAKS[i - 1]}%+` : `${SLOPE_BREAKS[i - 1]}–${SLOPE_BREAKS[i]}%`,
+    id: 'topography',
+    label: 'Topographic map',
+    note: 'USGS land elevation above sea level, in metres, from San Francisco to SFO. Colour shows elevation, not street steepness. Water and missing coverage are transparent.',
+    legend: ['#c3e3df', '#dbe5ac', '#eee0a4', '#d8b379', '#ab825d', '#ede6de'].map((color, i) => ({
+      color, label: ['0 m · sea level', '50 m', '100 m', '200 m', '300 m', '450 m+'][i],
     })),
     build: async () => {
-      const fc = await loadData<FeatureCollection>('hills_grid.geojson');
-      return L.geoJSON(fc, {
-        pane: 'context-fill',
-        filter: (f) => f.properties?.slope_pct != null,
-        style: (f) => ({ fillColor: step(f!.properties!.slope_pct, SLOPE_BREAKS, SLOPE_COLORS), fillOpacity: 0.6, stroke: false }),
-        onEachFeature: (f, l) => l.bindTooltip(`${f.properties!.slope_pct}% slope · ${f.properties!.elev_m} m elevation`),
-      });
+      const data = await loadData<{ image: string; bounds: [[number, number], [number, number]] }>('topography.json');
+      const url = `${import.meta.env.BASE_URL}data/${data.image}`;
+      const image = new Image();
+      image.src = url;
+      await image.decode();
+      return L.imageOverlay(url, data.bounds, { pane: 'context-fill', opacity: 0.8, interactive: false, className: 'topography-overlay' });
     },
   },
   {
     id: 'cycling',
     label: 'Cycling network',
-    note: 'SFMTA bike network. Protected, painted and shared routes are shown separately.',
+    note: 'SFMTA and San Mateo County existing bikeways. Protected, painted and shared routes are shown separately; proposed lanes omitted.',
     legend: ['protected', 'path', 'lane', 'neighborway', 'route'].map((k) => ({ color: BIKE_STYLE[k].color, label: BIKE_STYLE[k].label, dashed: !!BIKE_STYLE[k].dashArray })),
     build: async () => {
       const fc = await loadData<FeatureCollection>('cycling_network.geojson');
@@ -99,10 +95,10 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
   {
     id: 'transit',
     label: 'Public transport',
-    note: 'BART, Muni and Caltrain routes and rail stations; bus stops appear when zoomed in. SamTrans not yet included.',
+    note: 'BART, Muni, Caltrain and SamTrans routes and rail stations; bus stops appear when zoomed in.',
     legend: [
       { color: '#0099d8', label: 'BART' }, { color: '#c4122f', label: 'Caltrain' },
-      { color: '#4e2a84', label: 'Muni Metro / streetcar' }, { color: '#8b94a3', label: 'Muni bus' },
+      { color: '#4e2a84', label: 'Muni Metro / streetcar' }, { color: '#8b94a3', label: 'Muni / SamTrans bus' },
     ],
     build: async (map) => {
       const [routes, stops] = await Promise.all([
@@ -143,7 +139,7 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
   {
     id: 'parks',
     label: 'Parks & open space',
-    note: 'SF Rec & Park properties plus federal/state parks from OpenStreetMap (Presidio, Lands End, Fort Funston).',
+    note: 'SF Rec & Park, San Mateo County mapped parks, and OpenStreetMap parks/open spaces. Entrance access unverified.',
     legend: [{ color: '#5aa469', label: 'Park or open space' }],
     build: async () => {
       const fc = await loadData<FeatureCollection>('parks.geojson');
@@ -171,7 +167,7 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
   {
     id: 'collisions',
     label: 'Injury crashes',
-    note: 'Traffic crashes with injuries, last 3 years, per ~0.7 km² hexagon. Reflects traffic volume as well as danger.',
+    note: 'SF coverage only; Peninsula data unavailable. Injury crashes over 3 years, per ~0.7 km² hexagon. Reflects traffic volume as well as danger.',
     legend: ['< 5 crashes', '5–20', '20–50', '50–100', '100+'].map((label, i) => ({ color: CRIME_COLORS[i], label })),
     build: async () => {
       const fc = await loadData<FeatureCollection>('collisions_grid.geojson');

@@ -23,7 +23,7 @@ import time
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-STEPS = ["download_datasets", "process_datasets", "build_commute_fixtures", "build_content", "validate_datasets"]
+STEPS = ["download_datasets", "process_datasets", "build_area_cells", "build_commute_fixtures", "build_content", "validate_datasets"]
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -209,6 +209,29 @@ def fetch_overpass(query: str) -> Callable[[Path], str]:
     return run
 
 
+def fetch_arcgis(layer: str, fields: str = "*", where: str = "1=1") -> Callable[[Path], str]:
+    """Page public county layers; never silently accept ArcGIS's 1,000-feature cap."""
+    def fetch(dest: Path) -> str:
+        features, offset = [], 0
+        while True:
+            params = {"where": where, "geometry": ",".join(map(str, STUDY_BBOX)),
+                      "geometryType": "esriGeometryEnvelope", "inSR": 4326,
+                      "spatialRel": "esriSpatialRelIntersects", "outFields": fields,
+                      "outSR": 4326, "returnGeometry": "true", "f": "geojson",
+                      "geometryPrecision": 6, "resultOffset": offset, "resultRecordCount": 1000}
+            body = http_get(layer + "/query", params=params).json()
+            if "error" in body or "features" not in body:
+                raise ValueError(f"ArcGIS query failed: {body.get('error', 'no features')}")
+            page = body["features"]
+            features.extend(page)
+            if not page or (len(page) < 1000 and not body.get("exceededTransferLimit")):
+                break
+            offset += len(page)
+        dest.write_text(json.dumps({"type": "FeatureCollection", "features": features}), encoding="utf-8")
+        return layer
+    return fetch
+
+
 def twelve_month_window(today_: date | None = None) -> tuple[str, str]:
     """The 12 most recent complete calendar months: [start, end)."""
     t = today_ or date.today()
@@ -255,7 +278,19 @@ def sources() -> list[Source]:
     crash_start = f"{int(crime_end[:4]) - 3}{crime_end[4:]}"
     w, s, e, n = SF_BBOX
     sw, ss, se, sn = STUDY_BBOX
+    county = "https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer"
     return [
+        Source("peninsula_jurisdictions", "peninsula_jurisdictions.geojson", fetch_arcgis(
+            "https://gis.smcgov.org/maps/rest/services/ODP/Jurisdictions/FeatureServer/0",
+            "COMMONNAME,NAME,UNINCORPORATED"), geojson_min(8)),
+        Source("peninsula_water", "peninsula_water.geojson", fetch_arcgis(county + "/38"), geojson_min(1)),
+        Source("peninsula_lakes", "peninsula_lakes.geojson", fetch_arcgis(county + "/30"), geojson_min(1)),
+        Source("peninsula_streets", "peninsula_streets.geojson", fetch_arcgis(county + "/26",
+            "OBJECTID,fullrdname,roadclass,fromaddr_l,toaddr_l,fromaddr_r,toaddr_r,expire,dateupdate"), geojson_min(1000)),
+        Source("peninsula_cycling", "peninsula_cycling.geojson", fetch_arcgis(county + "/17",
+            "OBJECTID,STATUS,BIKE_CLASS,NAME,CITY,SOURCE,LAST_EDITED_DATE"), geojson_min(40)),
+        Source("peninsula_parks", "peninsula_parks.geojson", fetch_arcgis(county + "/37",
+            "OBJECTID,NAME,CATEGORY,CITY,SRC_AGENCY,SRC_DATE,REV_DATE"), geojson_min(40)),
         # P0 — DataSF. Analysis Neighborhoods: p5b7-5n3h is a map *visualisation*; its
         # underlying table (same 41 polygons) is j2bu-swwd, which has the GeoJSON endpoint.
         Source("neighbourhoods", "neighbourhoods.geojson",
@@ -270,6 +305,9 @@ def sources() -> list[Source]:
                json_rows_min(50000), note=f"window {crime_start} to {crime_end} (exclusive)"),
         Source("bike_network", "bike_network.geojson",
                fetch_url(f"{SOCRATA}/ygmz-vaxd.geojson", {"$limit": 50000}), geojson_min(3000)),
+        Source("streets_active", "streets_active.geojson",
+               fetch_url(f"{SOCRATA}/3psu-pn9h.geojson", {"$where": "active=true", "$limit": 50000}),
+               geojson_min(10000), note="Official DPW active centrelines; road classes/layers filtered during processing"),
         Source("parks_rpd", "parks_rpd.geojson",
                fetch_url(f"{SOCRATA}/gtr9-ntp6.geojson", {"$limit": 5000}), geojson_min(200)),
         # P0 — transit. 511.org requires an API token (HTTP 401 without one); the agencies
@@ -280,11 +318,14 @@ def sources() -> list[Source]:
                fetch_url("https://muni-gtfs.apps.sfmta.com/data/muni_gtfs-current.zip"), gtfs_valid),
         Source("gtfs_caltrain", "gtfs_caltrain.zip",
                fetch_url("https://data.trilliumtransit.com/gtfs/caltrain-ca-us/caltrain-ca-us.zip"), gtfs_valid),
+        Source("gtfs_samtrans_public", "gtfs_samtrans_public.zip",
+               fetch_url("https://www.samtrans.com/media/37770/download"), gtfs_valid,
+               note="Official public SamTrans developer feed; no 511 key required"),
         # P1 — secondary; failures are reported but never fatal.
         Source("osm_parks", "osm_parks.json", fetch_overpass(
             f"[out:json][timeout:180];"
-            f"(way[\"leisure\"~\"^(park|nature_reserve|garden)$\"]({s},{w},{n},{e});"
-            f"relation[\"leisure\"~\"^(park|nature_reserve|garden)$\"]({s},{w},{n},{e}););out geom;"),
+            f"(way[\"leisure\"~\"^(park|nature_reserve|garden)$\"]({ss},{sw},{sn},{se});"
+            f"relation[\"leisure\"~\"^(park|nature_reserve|garden)$\"]({ss},{sw},{sn},{se}););out geom;"),
                overpass_min(100), priority="P1",
                note="fills non-RPD parks (Presidio, GGNRA, state parks, POPOS gardens)"),
         Source("osm_groceries", "osm_groceries.json", fetch_overpass(
@@ -337,11 +378,11 @@ def sources() -> list[Source]:
                pdf_valid, priority="P1"),
         Source("osm_food_drink", "osm_food_drink.json", fetch_overpass(
             f"[out:json][timeout:180];"
-            f"(nwr[\"amenity\"~\"^(cafe|restaurant|bar|pub)$\"]({s},{w},{n},{e});"
-            f"nwr[\"shop\"=\"coffee\"]({s},{w},{n},{e}););out center tags;"),
-               overpass_min(1000), priority="P1", note="cafes, coffee shops, restaurants, bars, pubs (SF)"),
-        # SamTrans (SFO buses 292/398/ECR) is only published through 511.org (samtrans.com's old
-        # developer page is gone). Muni via 511 is the current timetable when SFMTA's own lags.
+            f"(nwr[\"amenity\"~\"^(cafe|restaurant|bar|pub)$\"]({ss},{sw},{sn},{se});"
+            f"nwr[\"shop\"=\"coffee\"]({ss},{sw},{sn},{se}););out center tags;"),
+               overpass_min(1000), priority="P1", note="cafes, coffee shops, restaurants, bars, pubs (SF to SFO)"),
+        # Optional 511 alternatives. SamTrans also has the keyless official public feed above.
+        # Muni via 511 is the current timetable when SFMTA's own lags.
         Source("gtfs_samtrans", "gtfs_samtrans.zip", fetch_511_gtfs("SM"), gtfs_valid, priority="P1",
                requires=["API_511_KEY"]),
         Source("gtfs_muni_511", "gtfs_muni_511.zip", fetch_511_gtfs("SF"), gtfs_valid, priority="P1",

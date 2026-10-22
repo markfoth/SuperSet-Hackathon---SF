@@ -1,118 +1,140 @@
-// Order-independent filtering and ranking.
-//
-//   1. Commute is the primary hard constraint (coverage >= ELIGIBLE_SHARE for every workplace).
-//   2. Must-haves are hard constraints too, but each is tested independently against the
-//      full set, so the result never depends on the order constraints were added. Every
-//      failed constraint is reported, not just the first.
-//   3. Nice-to-have / important preferences only change the ranking.
-//   4. Missing data is neither a pass nor a fail: a must-have that cannot be checked keeps
-//      the area and flags it; a soft preference with no data is left out of that area's score.
-import { ELIGIBLE_SHARE, type CommuteCoverage } from '../commute/eligibility';
-import { LEVEL_WEIGHT, PREFERENCES, type PreferenceDef } from './preferences';
-import type { NeighbourhoodContent, NeighbourhoodMetrics, PreferenceLevel } from '../../types';
+// Pure cell feasibility and lexicographic measurement bands. No combined score.
+import type { CellCommute, CommuteCoverage } from '../commute/eligibility';
+import { orderedPreferences, measurementBand, PREFERENCES } from './preferences';
+import type { AreaCellCollection, AreaCellProps, NeighbourhoodMetrics, PreferenceLevel } from '../../types';
 
+export type MatchState = 'strong' | 'partial' | 'excluded' | 'unknown';
 export type ExclusionReason =
   | { kind: 'commute'; workplaceId: string; coverage: number }
   | { kind: 'mustHave'; prefId: string; value: number }
-  | { kind: 'nonResidential' };
-
+  | { kind: 'nonResidential' }
+  | { kind: 'noOverlap' };
+export interface Criterion {
+  prefId: string; level: PreferenceLevel; value: number | null; band: number | null;
+  passes: boolean | null; comparison: 'above' | 'below' | 'similar' | null;
+}
+export interface CellResult {
+  id: string; name: string; nhoodId: string; cell: AreaCellProps;
+  eligible: boolean; state: MatchState; reasons: ExclusionReason[];
+  unchecked: string[]; warnings: string[]; criteria: Criterion[];
+  priorityVector: (number | null)[]; commute: CellCommute; active: number; assessed: number;
+}
 export interface AreaResult {
-  id: string;
-  name: string;
-  eligible: boolean;
-  reasons: ExclusionReason[];
-  /** Weighted mean of 0..1 preference scores; null if no active preference could be assessed. */
-  score: number | null;
-  assessed: number;
-  active: number;
-  /** Must-haves that could not be checked because the data is missing. */
-  unchecked: string[];
-  commute: CommuteCoverage | null;
+  id: string; name: string; eligible: boolean; state: MatchState; reasons: ExclusionReason[];
+  unchecked: string[]; active: number; assessed: number; priorityVector: (number | null)[];
+  commute: CommuteCoverage | null; cellCount: number; candidateCount: number;
+  eligibleCount: number; unknownCount: number; eligibleShare: number; bestCellId: string | null;
 }
-
 export interface EvaluateInput {
-  metrics: Record<string, NeighbourhoodMetrics>;
-  content: Record<string, NeighbourhoodContent>;
-  /** null = no workplace set, so no commute gate. */
-  coverage: Record<string, CommuteCoverage> | null;
-  prefs: Record<string, PreferenceLevel>;
-  defs?: PreferenceDef[];
+  cells: AreaCellCollection; metrics: Record<string, NeighbourhoodMetrics>;
+  commutes: Record<string, CellCommute>; prefs: Record<string, PreferenceLevel>; priorityOrder: string[];
 }
 
-/** Rank each area's value among all areas with data: 1 = best, 0 = worst. */
-function relativeScores(metrics: Record<string, NeighbourhoodMetrics>, def: PreferenceDef): Record<string, number | null> {
-  const entries = Object.entries(metrics).map(([id, m]) => [id, def.value(m)] as const);
-  const present = entries.filter(([, v]) => v != null) as [string, number][];
-  const sorted = present.map(([, v]) => v).sort((a, b) => a - b);
-  const out: Record<string, number | null> = {};
-  for (const [id, v] of entries) {
-    if (v == null || sorted.length < 2) {
-      out[id] = v == null ? null : 0.5;
-      continue;
+export function evaluate(input: EvaluateInput): CellResult[] {
+  const active = orderedPreferences(input.priorityOrder).filter((d) => (input.prefs[d.id] ?? 'off') !== 'off');
+  const results = input.cells.features.map(({ properties: cell }): CellResult => {
+    const reasons: ExclusionReason[] = [], unchecked: string[] = [], warnings: string[] = [];
+    if (cell.residential === false) reasons.push({ kind: 'nonResidential' });
+    if (cell.residential == null) warnings.push('Residential use uncertain; verify local streets and homes');
+    const commute = input.commutes[cell.h3] ?? { all: null, byWorkplace: {} };
+    for (const [workplaceId, inside] of Object.entries(commute.byWorkplace)) {
+      if (inside === false) reasons.push({ kind: 'commute', workplaceId, coverage: 0 });
     }
-    // Mid-rank for ties keeps equal values equal.
-    const lo = sorted.indexOf(v);
-    const hi = sorted.lastIndexOf(v);
-    const rank = (lo + hi) / 2 / (sorted.length - 1);
-    out[id] = def.higherIsBetter ? rank : 1 - rank;
-  }
-  return out;
-}
-
-export function evaluate({ metrics, content, coverage, prefs, defs = PREFERENCES }: EvaluateInput): AreaResult[] {
-  const active = defs.filter((d) => (prefs[d.id] ?? 'off') !== 'off');
-  const scores = Object.fromEntries(active.map((d) => [d.id, relativeScores(metrics, d)]));
-
-  return Object.entries(metrics).map(([id, m]) => {
-    const reasons: ExclusionReason[] = [];
-    const unchecked: string[] = [];
-    if (content[id] && content[id].residential === false) reasons.push({ kind: 'nonResidential' });
-    const cov = coverage?.[id] ?? null;
-    if (cov) {
-      for (const [wid, share] of Object.entries(cov.byWorkplace)) {
-        if (share < ELIGIBLE_SHARE) reasons.push({ kind: 'commute', workplaceId: wid, coverage: share });
-      }
-    }
-    let wsum = 0;
-    let total = 0;
-    let assessed = 0;
-    for (const d of active) {
-      const level = prefs[d.id];
-      const v = d.value(m);
+    if (commute.all == null) unchecked.push('commute');
+    const criteria: Criterion[] = active.map((d) => {
+      const level = input.prefs[d.id], measured = d.value(cell);
+      const value = measured != null && Number.isFinite(measured) ? measured : null;
+      const passes = value == null ? null : d.mustHave.passes(value);
       if (level === 'must') {
-        if (v == null) unchecked.push(d.id);
-        else if (!d.mustHave.passes(v)) reasons.push({ kind: 'mustHave', prefId: d.id, value: v });
+        if (value == null) unchecked.push(d.id);
+        else if (!passes) reasons.push({ kind: 'mustHave', prefId: d.id, value });
       }
-      const s = scores[d.id][id];
-      if (s != null) {
-        wsum += LEVEL_WEIGHT[level];
-        total += LEVEL_WEIGHT[level] * s;
-        assessed += 1;
+      if (value == null && level !== 'must') warnings.push(`${d.label}: measurement unavailable`);
+      return { prefId: d.id, level, value, passes, band: measurementBand(d, value, level), comparison: null };
+    });
+    const assessed = criteria.filter((c) => c.value != null).length;
+    const state: MatchState = reasons.length ? 'excluded' : unchecked.length
+      ? 'unknown' : criteria.some((c) => c.passes !== true) ? 'partial' : 'strong';
+    return {
+      id: cell.h3, name: input.metrics[cell.nhood_id]?.name ?? cell.nhood_id, nhoodId: cell.nhood_id, cell,
+      eligible: state === 'strong' || state === 'partial', state, reasons, unchecked, warnings, criteria,
+      priorityVector: criteria.map((c) => c.band), commute, active: active.length, assessed,
+    };
+  });
+  for (const d of active) {
+    const values = results.filter((r) => r.eligible).flatMap((r) => {
+      const c = r.criteria.find((x) => x.prefId === d.id); return c?.value == null ? [] : [c.value];
+    }).sort((a, b) => a - b);
+    if (!values.length) continue;
+    for (const r of results) {
+      const c = r.criteria.find((x) => x.prefId === d.id)!;
+      if (c.value != null) {
+        const reference = measurementBand(d, values[Math.floor(values.length / 2)], c.level)!;
+        c.comparison = c.band! > reference ? 'above' : c.band! < reference ? 'below' : 'similar';
       }
     }
+  }
+  return results;
+}
+
+export function comparePriority(a: { priorityVector: (number | null)[] }, b: { priorityVector: (number | null)[] }): number {
+  for (let i = 0; i < Math.max(a.priorityVector.length, b.priorityVector.length); i++) {
+    const av = a.priorityVector[i] ?? null, bv = b.priorityVector[i] ?? null;
+    // Missing is a distinct evidence category, never zero or a failed measurement.
+    if (av == null && bv != null) return 1;
+    if (bv == null && av != null) return -1;
+    if (av != null && bv != null && av !== bv) return bv - av;
+  }
+  return 0;
+}
+export function ranked<T extends { id: string; name: string; eligible: boolean; priorityVector: (number | null)[]; eligibleShare?: number }>(results: T[]): T[] {
+  return results.filter((r) => r.eligible).sort((a, b) => comparePriority(a, b) || (b.eligibleShare ?? 0) - (a.eligibleShare ?? 0) || a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+}
+
+export function summarize(input: EvaluateInput, cells: CellResult[]): AreaResult[] {
+  return Object.entries(input.metrics).map(([id, m]) => {
+    const all = cells.filter((r) => r.nhoodId === id), candidates = all.filter((r) => r.cell.residential !== false);
+    const eligible = ranked(candidates), best = eligible[0];
+    const area = candidates.reduce((s, r) => s + r.cell.area_m2, 0);
+    const passingArea = eligible.reduce((s, r) => s + r.cell.area_m2, 0);
+    const workplaceIds = [...new Set(candidates.flatMap((r) => Object.keys(r.commute.byWorkplace)))];
+    const routesKnown = candidates.length > 0 && candidates.every((r) => r.commute.all != null);
+    const commute = routesKnown ? {
+      all: candidates.filter((r) => r.commute.all === true).reduce((s, r) => s + r.cell.area_m2, 0) / (area || 1),
+      byWorkplace: Object.fromEntries(workplaceIds.map((wid) => [wid, candidates.filter((r) => r.commute.byWorkplace[wid] === true).reduce((s, r) => s + r.cell.area_m2, 0) / (area || 1)])),
+    } : null;
+    const reasons: ExclusionReason[] = best ? [] : !candidates.length ? [{ kind: 'nonResidential' }]
+      : commute?.all === 0 ? [{ kind: 'noOverlap' }] : candidates.flatMap((r) => r.reasons).filter((r, i, rs) => rs.findIndex((x) =>
+        x.kind === r.kind && (x.kind !== 'mustHave' || r.kind !== 'mustHave' || x.prefId === r.prefId)
+        && (x.kind !== 'commute' || r.kind !== 'commute' || x.workplaceId === r.workplaceId)) === i);
     return {
-      id, name: m.name, eligible: reasons.length === 0, reasons,
-      score: assessed ? total / wsum : null, assessed, active: active.length, unchecked, commute: cov,
+      id, name: m.name, eligible: eligible.length > 0, state: best?.state ?? (candidates.some((r) => r.state === 'unknown') ? 'unknown' : 'excluded'),
+      reasons, unchecked: best?.unchecked ?? [...new Set(candidates.flatMap((r) => r.unchecked))],
+      active: best?.active ?? all[0]?.active ?? 0, assessed: best?.assessed ?? 0,
+      priorityVector: best?.priorityVector ?? [], commute, cellCount: all.length, candidateCount: candidates.length,
+      eligibleCount: eligible.length, unknownCount: candidates.filter((r) => r.state === 'unknown').length,
+      eligibleShare: area ? passingArea / area : 0, bestCellId: best?.id ?? null,
     };
   });
 }
 
-/** Eligible areas, best first. Ties (and "no preferences set") fall back to commute coverage, then name. */
-export function ranked(results: AreaResult[]): AreaResult[] {
-  return results
-    .filter((r) => r.eligible)
-    .sort((a, b) => (b.score ?? -1) - (a.score ?? -1) || (b.commute?.all ?? 0) - (a.commute?.all ?? 0) || a.name.localeCompare(b.name));
-}
-
-/**
- * Exclusion preview: how many CURRENTLY eligible areas would making `prefId` a must-have remove?
- * Computed against the current state, independent of the order other constraints were added.
- */
-export function previewMustHave(input: EvaluateInput, prefId: string): { excluded: number; eligibleNow: number; unchecked: number } {
+export function previewMustHave(input: EvaluateInput, prefId: string) {
   const now = evaluate(input).filter((r) => r.eligible);
   const next = evaluate({ ...input, prefs: { ...input.prefs, [prefId]: 'must' } });
-  const nextById = new Map(next.map((r) => [r.id, r]));
-  const excluded = now.filter((r) => !nextById.get(r.id)!.eligible).length;
-  const unchecked = now.filter((r) => nextById.get(r.id)!.unchecked.includes(prefId)).length;
-  return { excluded, eligibleNow: now.length, unchecked };
+  const byId = new Map(next.map((r) => [r.id, r]));
+  return {
+    eligibleNow: now.length,
+    excluded: now.filter((r) => byId.get(r.id)!.reasons.some((x) => x.kind === 'mustHave' && x.prefId === prefId)).length,
+    unchecked: now.filter((r) => byId.get(r.id)!.unchecked.includes(prefId)).length,
+    neighbourhoodsLost: new Set(now.map((r) => r.nhoodId)).size - new Set(next.filter((r) => r.eligible).map((r) => r.nhoodId)).size,
+  };
+}
+
+export function nearMisses(results: CellResult[]) {
+  return results.flatMap((r) => {
+    if (r.reasons.length !== 1 || r.reasons[0].kind !== 'mustHave' || r.unchecked.length || r.commute.all !== true) return [];
+    const reason = r.reasons[0], def = PREFERENCES.find((d) => d.id === reason.prefId)!;
+    const gap = Math.abs(reason.value - def.mustHave.threshold);
+    return gap <= def.nearTolerance ? [{ result: r, pref: def, value: reason.value, gap, threshold: def.mustHave.threshold }] : [];
+  }).sort((a, b) => a.gap / a.pref.nearTolerance - b.gap / b.pref.nearTolerance || a.result.id.localeCompare(b.result.id));
 }

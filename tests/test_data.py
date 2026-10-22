@@ -36,7 +36,7 @@ def test_validator_check(check):
 
 
 def test_neighbourhood_ids_are_stable():
-    ids = {f["properties"]["id"] for f in load("neighbourhoods.geojson")["features"]}
+    ids = {f["properties"]["id"] for f in load("neighbourhoods.geojson")["features"] if f["properties"]["region"] == "sf"}
     assert ids == EXPECTED_IDS
 
 
@@ -45,7 +45,7 @@ def test_every_neighbourhood_has_sample_points():
     assert all(len(pts) >= 1 for pts in samples.values())
     for pts in samples.values():
         for lat, lon in pts:
-            assert 37.70 <= lat <= 37.84 and -122.53 <= lon <= -122.35
+            assert 37.60 <= lat <= 37.84 and -122.53 <= lon <= -122.35
 
 
 def test_crime_window_is_twelve_complete_months():
@@ -57,10 +57,12 @@ def test_crime_window_is_twelve_complete_months():
 
 def test_crime_totals_are_plausible_and_consistent():
     data = load("crime_by_neighbourhood.json")
-    total = sum(n["total"] for n in data["neighbourhoods"].values())
+    total = sum(n["total"] for n in data["neighbourhoods"].values() if n is not None)
     assert 20_000 < total < 150_000
     assert total + data["meta"]["incidents_without_neighbourhood"] == data["meta"]["incidents_counted"]
     for n in data["neighbourhoods"].values():
+        if n is None:
+            continue
         assert n["vehicle_breakin"] <= n["property"]
 
 
@@ -132,7 +134,7 @@ def test_slug():
 
 def test_population_matches_county_total():
     m = load("neighbourhood_metrics.json")["neighbourhoods"]
-    total = sum((v["population"] or {}).get("population") or 0 for v in m.values())
+    total = sum((v["population"] or {}).get("population") or 0 for v in m.values() if v["region"] == "sf")
     assert 800_000 < total < 870_000  # ACS 2020-24 SF County = 830,235
 
 

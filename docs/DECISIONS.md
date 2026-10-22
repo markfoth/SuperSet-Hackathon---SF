@@ -4,8 +4,8 @@ Short records of decisions that shape the product and data. Newest first within 
 
 ## Product
 
-**D1. Commute gates; everything else ranks unless explicitly a Must.** The commute is the only
-default hard constraint (≥ 50 % of a neighbourhood's sample points within every workplace's area).
+**D1. Commute gates each H3-9 cell; everything else ranks unless explicitly a Must.** Every
+workplace catchment must contain the same representative home location. No neighbourhood-majority gate.
 Soft preferences re-rank; Musts exclude, but each is evaluated independently and all failures are
 listed, so adding an unimportant filter can never silently wipe out strong matches. *Why:* the core
 complaint with filter-chain UIs. Borrowed from Optimal London Living's "commute gates, budget warns".
@@ -15,15 +15,21 @@ offline fixture, so results show a recoverable error instead of an ungated list.
 dropping the user's most important constraint is worse than an error (OLL rule).
 
 **D3. Missing data is explicit.** `null` in data, "No data" in UI, never a pass or fail.
+Missing hard information makes a cell unknown and prevents confirmed eligibility; missing soft
+measurements are disclosed and ordered after measured evidence.
 
-**D4. Parkland isn't ranked as a place to live.** Golden Gate Park, Lincoln Park and McLaren Park
-(`residential: false` in the content YAML) are excluded with a visible reason; the Presidio and
-Treasure Island have housing and stay in.
+**D4. Residential evidence is local and conservative.** A cell is excluded only with ≥95% mapped
+park coverage and no addressed residential-class street. Addressed class-5 streets support
+eligibility, but parcel land use remains unverified; other cells are flagged uncertain. Editorial
+whole-neighbourhood residential flags no longer control matching.
 
-**D5. No liveability score.** Scores are per-preference ranks among the 41 neighbourhoods,
-weighted by importance. Transparent, explainable, no hidden weights.
+**D5. No liveability score.** User chose explicit priorities with broad measurement bands on
+22 October. Important uses finer bands than Nice; smaller noisy differences defer to the next
+criterion. Cell measurement vectors, not weighted totals. See `RANKING_METHOD.md`.
 
-**D6. Only SF's 41 Analysis Neighborhoods are ranked for now.** The study area extends to SFO for
+**D6. Fine SF cells are matched; the 41 Analysis Neighborhoods group results.** Any eligible
+candidate cell keeps its parent discoverable, with counts and approximate suitable land share.
+The study area extends to SFO for
 commute geometry and transit, but Peninsula cities (Daly City, South SF, San Bruno, Millbrae) are
 not yet scored. Adding them needs city/neighbourhood polygons plus non-SF crime/bike data.
 
@@ -44,11 +50,11 @@ Fort Funston, Fort Mason) and state parks. OSM parks ≥ 0.2 ha that are mostly 
 added (59), with the RPD overlap subtracted. Non-park RPD property types are dropped.
 
 **D10. Transit from agency GTFS; 511 only with our own token.** BART, Muni and Caltrain publish
-public static feeds. SamTrans no longer has a developer page (samtrans.com returns 404) and is
-published only via 511. 511 returns 401 without a token, and its terms forbid redistribution
-without a developer agreement, so the Mobility Database's mirrored copy of the 511 SamTrans feed
-was **not** used. `API_511_KEY` activates SamTrans and a current Muni feed (`gtfs_muni_511`)
-automatically.
+public static feeds. The 22 October Peninsula extension found the restored
+[official SamTrans developer download](https://www.samtrans.com/developer), which needs no key
+and is now included under the SamTrans developer licence. Its timetable covers the demo day.
+511 remains an optional alternative and requires our own token; no mirrored 511 feed is used.
+`API_511_KEY` enables the current Muni feed (`gtfs_muni_511`) and the alternative SamTrans feed.
 
 **D10a. Timetables must cover the demo day, or say they don't.** `TARGET_SERVICE_DATE`
 (2026-10-22; env `CG_SERVICE_DATE`) is checked at download and processing time. BART (valid to
@@ -78,8 +84,11 @@ tract means, shown as statewide percentiles.
 restaurants and bars/pubs (3,245 named places in SF) are drawn only at street zoom (>= 15) and as
 counts on the detail panel.
 
-**D12. Terrain slope, not street grade.** USGS 3DEP 10 m DEM; cell mean slope within ~170 m, and
-steepest 50 m grade per bike segment. A street cut across a hill can be flatter than the terrain.
+**D12. Street-aligned DEM gradients replace terrain averages (22 October).** Official active DPW
+streets (3psu-pn9h), metre CRS, bilinear ~10 m elevations and rolling 40 m windows. H3-9 medians,
+p90, steep-length share and coverage are length weighted. Below 100 m valid streets or 75%
+coverage stays null. DEM-derived estimates, not surveyed road grades. Bike segments retain their
+separate steepest-window estimate. See `STREET_GRADIENT_METHOD.md` for validation.
 
 **D13. Processed data committed once.** `data/sf/processed/` is the single committed copy;
 `public/data/` is generated by `scripts/sync_public_data.mjs`. Raw data is gitignored.

@@ -1,106 +1,99 @@
 import { describe, expect, it } from 'vitest';
-import { evaluate, previewMustHave, ranked, type EvaluateInput } from './ranking';
-import type { PreferenceDef } from './preferences';
-import type { NeighbourhoodContent, NeighbourhoodMetrics } from '../../types';
+import { comparePriority, evaluate, nearMisses, previewMustHave, ranked, summarize, type EvaluateInput } from './ranking';
+import { measurementBand, orderedPreferences, PREFERENCES } from './preferences';
+import fixture from '../../test/areaCells.fixture.json';
+import type { AreaCellCollection, AreaCellProps, NeighbourhoodMetrics } from '../../types';
 
-// Two tiny preferences over a fake metric so tests don't depend on real data.
-const defs: PreferenceDef[] = [
-  {
-    id: 'flat', label: 'Flat', higherIsBetter: false, source: '', format: String,
-    value: (m) => m.hills?.median_slope_pct ?? null,
-    mustHave: { describe: '< 8%', passes: (v) => v < 8 },
-  },
-  {
-    id: 'parks', label: 'Parks', higherIsBetter: true, source: '', format: String,
-    value: (m) => m.parks?.share_within_400m ?? null,
-    mustHave: { describe: '>= 0.9', passes: (v) => v >= 0.9 },
-  },
-];
-
-function area(name: string, slope: number | null, parks: number | null): NeighbourhoodMetrics {
-  return {
-    name, area_km2: 1, crime: null, cycling: null, transit: null, groceries: null, collisions: null, rents: null,
-    population: null, environment: null, food_drink: null,
-    hills: slope == null ? null : { median_slope_pct: slope, share_steep: 0, elev_min_m: 0, elev_max_m: 0 },
-    parks: parks == null ? null : { share_within_400m: parks, park_land_share: 0 },
-  };
+function input(overrides: Partial<AreaCellProps>[] = []): EvaluateInput {
+  const cells = structuredClone(fixture) as AreaCellCollection;
+  cells.features.forEach((f, i) => Object.assign(f.properties, {
+    residential: true, h3: String(i), street_grade_pct: [3, 15, 6][i], park_distance_m: [900, 0, 200][i],
+  }, overrides[i]));
+  return { cells, metrics: { 'potrero-hill': { name: 'Potrero Hill' } as NeighbourhoodMetrics },
+    commutes: Object.fromEntries(cells.features.map((f) => [f.properties.h3, { all: true, byWorkplace: { a: true, b: true } }])),
+    prefs: {}, priorityOrder: ['flat', 'parks'] };
 }
 
-const metrics = {
-  a: area('A', 3, 0.5),   // flat, few parks
-  b: area('B', 15, 1.0),  // hilly, great parks
-  c: area('C', 6, 0.95),  // flat-ish, great parks
-  d: area('D', null, 0.92), // no elevation data
-};
-const content: Record<string, NeighbourhoodContent> = Object.fromEntries(
-  Object.entries(metrics).map(([id, m]) => [id, { name: m.name, description: '', tags: [], residential: true, photos: [] }]),
-);
-const base: EvaluateInput = { metrics, content, coverage: null, prefs: {}, defs };
-
-describe('evaluate', () => {
-  it('soft preferences never exclude an area', () => {
-    const r = evaluate({ ...base, prefs: { flat: 'important', parks: 'nice' } });
-    expect(r.every((x) => x.eligible)).toBe(true);
+describe('fine-area feasibility and priorities', () => {
+  it('soft preferences rank without excluding', () => {
+    expect(evaluate({ ...input(), prefs: { flat: 'important', parks: 'nice' } }).every((r) => r.eligible)).toBe(true);
   });
-
-  it('is independent of the order preferences were set', () => {
-    const one = evaluate({ ...base, prefs: { flat: 'must', parks: 'important' } });
-    const two = evaluate({ ...base, prefs: { parks: 'important', flat: 'must' } });
-    expect(one).toEqual(two);
+  it('click sequence cannot affect results', () => {
+    const a = evaluate({ ...input(), prefs: { flat: 'must', parks: 'important' } });
+    const b = evaluate({ ...input(), prefs: { parks: 'important', flat: 'must' } });
+    expect(a).toEqual(b);
   });
-
-  it('reports every failed must-have, not just the first', () => {
-    const r = evaluate({ ...base, prefs: { flat: 'must', parks: 'must' } });
-    const a = r.find((x) => x.id === 'a')!;
-    const b = r.find((x) => x.id === 'b')!;
-    expect(a.reasons.map((x) => x.kind === 'mustHave' && x.prefId)).toEqual(['parks']);
-    expect(b.reasons.map((x) => x.kind === 'mustHave' && x.prefId)).toEqual(['flat']);
-    expect(ranked(r).map((x) => x.id)).toEqual(['c', 'd']);
+  it('reports every failed hard condition', () => {
+    const r = evaluate({ ...input([{ street_grade_pct: 15 }]), prefs: { flat: 'must', parks: 'must' } })[0];
+    expect(r.reasons).toHaveLength(2);
+    expect(r.state).toBe('excluded');
   });
-
-  it('missing data is never a pass or a fail', () => {
-    const r = evaluate({ ...base, prefs: { flat: 'must' } });
-    const d = r.find((x) => x.id === 'd')!;
-    expect(d.eligible).toBe(true);
-    expect(d.unchecked).toEqual(['flat']);
-    expect(d.score).toBeNull(); // nothing could be assessed
-    const soft = evaluate({ ...base, prefs: { flat: 'nice', parks: 'nice' } }).find((x) => x.id === 'd')!;
-    expect(soft.assessed).toBe(1);
-    expect(soft.active).toBe(2);
+  it('missing must-have is unknown, never eligible or a failed measurement', () => {
+    const r = evaluate({ ...input([{ street_grade_pct: null }]), prefs: { flat: 'must' } })[0];
+    expect(r.state).toBe('unknown'); expect(r.eligible).toBe(false);
+    expect(r.reasons).toEqual([]); expect(r.unchecked).toEqual(['flat']);
+    expect(r.priorityVector).toEqual([null]);
   });
-
-  it('an important preference outweighs a nice-to-have', () => {
-    const r = ranked(evaluate({ ...base, prefs: { flat: 'nice', parks: 'important' } }));
-    expect(r[0].id).not.toBe('a');
-    const r2 = ranked(evaluate({ ...base, prefs: { flat: 'important', parks: 'nice' } }));
-    expect(r2[0].id).not.toBe('b');
+  it('missing soft data stays null and is disclosed', () => {
+    const r = evaluate({ ...input([{ street_grade_pct: null }]), prefs: { flat: 'important', parks: 'nice' } })[0];
+    expect(r.eligible).toBe(true); expect(r.state).toBe('partial');
+    expect(r.assessed).toBe(1); expect(r.priorityVector[0]).toBeNull(); expect(r.warnings.length).toBeGreaterThan(0);
   });
-
-  it('gates on commute coverage for every workplace', () => {
-    const coverage = {
-      a: { all: 0.9, byWorkplace: { sfo: 0.9, fidi: 1 } },
-      b: { all: 0.2, byWorkplace: { sfo: 0.2, fidi: 1 } },
-      c: { all: 0, byWorkplace: { sfo: 0, fidi: 0 } },
-      d: { all: 0.6, byWorkplace: { sfo: 0.6, fidi: 0.7 } },
-    };
-    const r = evaluate({ ...base, coverage });
-    expect(ranked(r).map((x) => x.id)).toEqual(['a', 'd']);
-    expect(r.find((x) => x.id === 'c')!.reasons).toHaveLength(2);
+  it('even entirely missing soft preferences never remove a commute-feasible cell', () => {
+    const r = evaluate({ ...input([{ street_grade_pct: null }]), prefs: { flat: 'nice' } })[0];
+    expect(r.eligible).toBe(true); expect(r.state).toBe('partial');
+    expect(r.assessed).toBe(0); expect(r.priorityVector).toEqual([null]);
   });
-
-  it('excludes non-residential areas with a visible reason', () => {
-    const r = evaluate({ ...base, content: { ...content, b: { ...content.b, residential: false } } });
-    expect(r.find((x) => x.id === 'b')!.reasons).toEqual([{ kind: 'nonResidential' }]);
+  it('explicit priority changes the winner', () => {
+    const base = { ...input(), prefs: { flat: 'important' as const, parks: 'important' as const } };
+    expect(ranked(evaluate(base))[0].id).toBe('0');
+    expect(ranked(evaluate({ ...base, priorityOrder: ['parks', 'flat'] }))[0].id).toBe('1');
   });
-});
-
-describe('previewMustHave', () => {
-  it('counts exactly the areas that activating the must-have would remove', () => {
-    const input = { ...base, prefs: { parks: 'must' as const } };
-    const p = previewMustHave(input, 'flat');
-    const after = ranked(evaluate({ ...input, prefs: { parks: 'must', flat: 'must' } }));
-    expect(p.eligibleNow).toBe(3); // b, c, d pass parks
-    expect(p.excluded).toBe(p.eligibleNow - after.length);
-    expect(p.unchecked).toBe(1); // d has no elevation data
+  it('tiny grade differences within a band yield to the next priority', () => {
+    const base = input([{ street_grade_pct: 2.1 }, { street_grade_pct: 2.2 }]);
+    expect(ranked(evaluate({ ...base, prefs: { flat: 'important', parks: 'important' } }))[0].id).toBe('1');
+  });
+  it('important distinguishes differences that nice treats as a tie', () => {
+    const flat = PREFERENCES.find((p) => p.id === 'flat')!;
+    expect(measurementBand(flat, 0.5, 'nice')).toBe(measurementBand(flat, 3, 'nice'));
+    expect(measurementBand(flat, 0.5, 'important')).not.toBe(measurementBand(flat, 3, 'important'));
+  });
+  it('all workplaces gate each individual cell', () => {
+    const base = input(); base.commutes['0'] = { all: false, byWorkplace: { a: true, b: false } };
+    expect(evaluate(base)[0].reasons).toEqual([{ kind: 'commute', workplaceId: 'b', coverage: 0 }]);
+  });
+  it('missing routes block even when another route passes', () => {
+    const base = input(); base.commutes['0'] = { all: null, byWorkplace: { a: true, b: null } };
+    expect(evaluate(base)[0].state).toBe('unknown'); expect(evaluate(base)[0].eligible).toBe(false);
+  });
+  it('a partial neighbourhood stays discoverable without a majority threshold', () => {
+    const base = input(); base.commutes['0'] = base.commutes['1'] = { all: false, byWorkplace: { a: false, b: true } };
+    const r = summarize(base, evaluate(base))[0];
+    expect(r.eligible).toBe(true); expect(r.eligibleCount).toBe(1); expect(r.eligibleShare).toBeLessThan(0.5);
+  });
+  it('nonresidential cells exclude, uncertain use is flagged without silent removal', () => {
+    const r = evaluate(input([{ residential: false }, { residential: null }]));
+    expect(r[0].state).toBe('excluded'); expect(r[1].eligible).toBe(true); expect(r[1].warnings.length).toBeGreaterThan(0);
+  });
+  it('preview distinguishes excluded and unknown cells', () => {
+    const base = input([{ street_grade_pct: null }]);
+    const p = previewMustHave(base, 'flat');
+    expect(p).toMatchObject({ eligibleNow: 3, excluded: 1, unchecked: 1, neighbourhoodsLost: 0 });
+  });
+  it('near misses remain excluded, with measured threshold and gap', () => {
+    const base = { ...input([{ street_grade_pct: 8.2 }]), prefs: { flat: 'must' as const } };
+    const misses = nearMisses(evaluate(base));
+    expect(misses).toHaveLength(1); expect(misses[0].value).toBe(8.2); expect(misses[0].threshold).toBe(8);
+    expect(misses[0].result.eligible).toBe(false);
+  });
+  it('priority storage migration deduplicates and retains every preference', () => {
+    const defs = orderedPreferences(['parks', 'parks', 'unknown']);
+    expect(defs[0].id).toBe('parks'); expect(defs).toHaveLength(PREFERENCES.length);
+  });
+  it('comparator is deterministic and transitive with missing data', () => {
+    const vectors = [[null, 0], [0, null], [-1, 2], [0, 1], [0, 2]].map((priorityVector) => ({ priorityVector }));
+    for (const a of vectors) for (const b of vectors) for (const c of vectors) {
+      if (comparePriority(a, b) <= 0 && comparePriority(b, c) <= 0) expect(comparePriority(a, c)).toBeLessThanOrEqual(0);
+    }
   });
 });

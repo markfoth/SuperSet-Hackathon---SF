@@ -1,4 +1,4 @@
-# Hand-maintained editorial content for the 41 Analysis Neighborhoods.
+# Hand-maintained editorial content for SF neighbourhoods and Peninsula jurisdiction groups.
 # Keyed by the stable neighbourhood id (slug of the DataSF name).
 #
 # Rules: describe character, built form, landmarks and terrain only. No
@@ -184,3 +184,135 @@ western-addition:
   description: Central neighbourhood including the Fillmore, Alamo Square's "Painted Ladies" and many mid-century apartment complexes.
   tags: [central, Victorian homes, Fillmore, buses]
   wiki: ["Western Addition, San Francisco"]
+
+# Northern Peninsula; county city / unincorporated boundaries, not neighbourhoods.
+south-san-francisco:
+  description: Peninsula city with hillside streets, a downtown around Grand Avenue and industrial and commercial areas toward
+    the bay. Explore local cells for differences within the city.
+  tags:
+  - Peninsula
+  - city grouping
+  - hills and bay
+  wiki:
+  - South San Francisco, California
+daly-city:
+  description: City immediately south of San Francisco, spanning hillside residential streets and commercial corridors between
+    the coast and the northern Peninsula.
+  tags:
+  - Peninsula
+  - city grouping
+  - hillside streets
+  wiki:
+  - Daly City, California
+colma:
+  description: Small Peninsula town between Daly City and South San Francisco. Its boundary includes extensive cemetery land
+    as well as residential and commercial streets.
+  tags:
+  - Peninsula
+  - town grouping
+  wiki:
+  - Colma, California
+brisbane:
+  description: Peninsula city on the eastern side of San Bruno Mountain, with a compact hillside centre and areas facing the
+    bay.
+  tags:
+  - Peninsula
+  - city grouping
+  - hillside
+  wiki:
+  - Brisbane, California
+san-bruno:
+  description: Peninsula city west of SFO, with residential streets extending from the El Camino Real corridor into the hills.
+  tags:
+  - Peninsula
+  - city grouping
+  - near SFO
+  wiki:
+  - San Bruno, California
+pacifica:
+  description: Northern portion of Pacifica inside the study area. The grouping is clipped at the southern edge of SFO; it
+    does not describe the entire city.
+  tags:
+  - Peninsula
+  - partial city
+  - coastal
+  wiki:
+  - Pacifica, California
+millbrae:
+  description: Northern part of Millbrae inside the SFO cutoff. Measurements describe only the included land, while rent indices
+    describe whole ZIP areas.
+  tags:
+  - Peninsula
+  - partial city
+  - near SFO
+  wiki:
+  - Millbrae, California
+burlingame:
+  description: Small northern fragment of Burlingame inside the SFO cutoff; the rest of the city is outside this discovery
+    area.
+  tags:
+  - Peninsula
+  - partial city
+  wiki: []
+broadmoor:
+  description: Unincorporated community within the northern Peninsula, grouped using the county jurisdiction boundary.
+  tags:
+  - Peninsula
+  - unincorporated community
+  wiki:
+  - Broadmoor, California
+country-club-park:
+  description: Small unincorporated area inside the SF-to-SFO corridor. County boundaries provide grouping context; suitability
+    is assessed in individual cells.
+  tags:
+  - Peninsula
+  - unincorporated area
+  wiki: []
+unincorporated-colma:
+  description: Unincorporated land near Colma, shown using the county jurisdiction boundary.
+  tags:
+  - Peninsula
+  - unincorporated area
+  wiki: []
+northern-peninsula-unincorporated-areas:
+  description: Remaining unincorporated land within the northern Peninsula cutoff. This grouping can contain separate pieces;
+    inspect local evidence before choosing an area.
+  tags:
+  - Peninsula
+  - unincorporated area
+  wiki: []
+sfo-airport:
+  description: Airport land shown for geographic and commute context; excluded from residential candidates.
+  tags:
+  - airport
+  - context only
+  residential: false
+  wiki: []
+san-bruno-mountain-park:
+  description: County park jurisdiction around San Bruno Mountain, retained as context and excluded from residential candidates.
+  tags:
+  - parkland
+  - context only
+  residential: false
+  wiki: []
+brisbane-quarry:
+  description: County quarry jurisdiction retained as context and excluded from residential candidates.
+  tags:
+  - quarry
+  - context only
+  residential: false
+  wiki: []
+california-golf-club:
+  description: Dedicated golf-club jurisdiction retained as context and excluded from residential candidates.
+  tags:
+  - golf
+  - context only
+  residential: false
+  wiki: []
+olympic-country-club:
+  description: Dedicated golf-club jurisdiction retained as context and excluded from residential candidates.
+  tags:
+  - golf
+  - context only
+  residential: false
+  wiki: []

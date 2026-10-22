@@ -1,6 +1,35 @@
 # Hackathon plan — 22 October 2026
 
-## Ready (prepared 21 Oct)
+## Fine-area implementation — 22 October
+
+- [x] Clean `main` baseline inspected; feature branch `hack/fine-area-discovery`, sequential work
+- [x] Baseline: 27 Python tests, 8 frontend tests, validators, production build
+- [x] Canonical 1,226 H3-9 land cells, stable ids and one parent each; real local access indicators
+- [x] Official street centrelines verified/downloaded; street-aligned 40 m DEM gradients replace terrain means
+- [x] Coverage/null preservation; H3-8 reports, tract pollution and ZIP rents retain original precision
+- [x] Same-cell AND commute gate; exact shared polygon overlay; disjoint-halves regression
+- [x] User-approved priority-first bands, accessible ordering, explanations and exclusion previews
+- [x] Green/yellow/red-hatched/grey cells, local detail, near misses, shortlist comparison
+- [x] Desktop/mobile full-flow tests, context-layer checks and production build
+- [x] Fixed mobile map picking removing Leaflet container classes and intercepting tabs
+- [x] User selected **local demo/build only**; no push or public deployment
+
+Live TravelTime was verified with a custom workplace after configuring private `.env`.
+Offline fixtures remain explicitly approximate/synthetic.
+See `VERIFICATION.md` for final commands and results, `DATA_ACCURACY_AUDIT.md` for limitations.
+
+## Northern Peninsula extension — requested 22 October
+
+- [x] 2,408 matching cells through SFO; original 41 SF ids retained plus 17 county jurisdiction groups
+- [x] County boundaries/water masks, streets/gradients, existing bikeways, parks and full-area OSM amenities
+- [x] Official keyless SamTrans GTFS, valid on the demo date, added to routes/stops/frequency and offline fixtures
+- [x] Census, pollution and actual-ZIP rents populated locally; seven additional licensed city photos
+- [x] Live South San Francisco workplace verified; missing local police/crash data disclosed and kept null
+- [x] 37 Python, 26 frontend, 4 proxy and 10 desktop/mobile browser tests; all validators and production build
+
+See [Peninsula coverage](PENINSULA_COVERAGE.md) for source availability and the southern cutoff.
+
+## Historical preparation (21 Oct)
 
 - [x] Repo on GitHub (private), `main` pushed; clone → `npm install` → `npm run dev` verified
 - [x] Data, all in `data/sf/manifest.yaml` and validated:
@@ -16,12 +45,12 @@
       (photo, indicators, per-resident crime, pollution percentiles, rents asking vs paid, food & drink)
 - [x] Tests: 27 pytest data contracts, 8 vitest ranking tests, production build clean
 
-## Blocked — each needs a free signup by you (5 minutes each)
+## External configuration
 
 | Blocker | Unlocks | How |
 |---|---|---|
-| `TRAVELTIME_APP_ID`, `TRAVELTIME_API_KEY` | Arbitrary workplace locations (live, arrive-by) | https://account.traveltime.com/signup → `.env` → `npm run proxy` + `VITE_COMMUTE_PROVIDER=proxy`, `VITE_ROUTING_PROXY_URL=/api` |
-| `API_511_KEY` | Current Muni timetable + SamTrans (SFO buses) | https://511.org/open-data/token → `.env` → `rebuild_all.py --only`… see below |
+| `TRAVELTIME_APP_ID`, `TRAVELTIME_API_KEY` | Configured and verified locally; required on other checkouts for arbitrary workplaces | https://account.traveltime.com/signup → private `.env` → live routing setup in README |
+| `API_511_KEY` | Optional current Muni / alternative 511 feeds; SamTrans already works keylessly | https://511.org/open-data/token → `.env` → download and rebuild transit |
 | Zillow terms review | Public deployment with ZORI | Read https://www.zillow.com/research/data/ terms |
 
 After adding `API_511_KEY`:
@@ -31,20 +60,14 @@ After adding `API_511_KEY`:
 .venv/Scripts/python.exe scripts/rebuild_all.py --offline --dataset transit
 ```
 
-## Tomorrow, in priority order
+## Remaining external inputs
 
-1. **Arbitrary workplaces** (needs TravelTime keys): add a workplace search box (geocoder), confirm
-   live isochrones for transit/walk/cycle/drive, keep fixtures as the offline fallback.
-2. **Demo script and rehearsal** on the default SFO + FiDi scenario: commute overlap → set "Parks:
-   Must" (exclusion preview) → turn on crime + transit + air layers → open Mission / Noe Valley.
-3. **Ranking explanations**: "why this rank" breakdown on cards; one-click "relax this must-have"
-   on excluded areas.
-4. **Comparison view** for 2–3 shortlisted neighbourhoods.
-5. **Polish**: review editorial descriptions; check mobile layout; deploy the static build (needs
-   Stadia domain auth for tiles).
+1. TravelTime keys are configured and verified locally. No paid plan.
+2. Optionally provide a 511 token to refresh Muni; stale feed remains labelled. SamTrans is included.
+3. Before any future public hosting, review unresolved data licences and configure basemap domain auth.
 
-Stop adding datasets (agreed). Deferred: noise, fog/sun, trees, flood/seismic, schools, Peninsula
-neighbourhoods.
+The user subsequently requested the Peninsula extension above. Still deferred: noise, fog/sun,
+trees, flood/seismic and schools. Peninsula local police/crash measurements need a compatible source.
 
 ## Start-of-day commands
 
