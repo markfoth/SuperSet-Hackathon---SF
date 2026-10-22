@@ -89,7 +89,7 @@ test('saved neighbourhood comparison and independent context layers', async ({ p
   await page.getByRole('button', { name: 'Close comparison', exact: true }).click();
   if (testInfo.project.name === 'mobile') await page.getByRole('button', { name: 'Commute & priorities', exact: true }).click();
   const parks = page.getByRole('checkbox', { name: 'Parks & open space', exact: true });
-  const crime = page.getByRole('checkbox', { name: 'Reported crime', exact: true });
+  const crime = page.getByRole('checkbox', { name: 'Reported incidents', exact: true });
   const transit = page.getByRole('checkbox', { name: 'Public transport', exact: true });
   await parks.check(); await crime.check(); await transit.check();
   await expect(page.locator('.leaflet-context-fill-pane canvas')).toBeVisible();

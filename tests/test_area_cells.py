@@ -4,6 +4,7 @@ import h3
 from shapely.geometry import shape
 from _common import PROCESSED_DIR
 import numpy as np
+import pytest
 from shapely.geometry import LineString
 from street_gradients import road_windows, weighted_quantile
 
@@ -67,3 +68,20 @@ def test_coarse_indicators_retain_their_source_resolution():
         assert p["incidents_per_km2"] == crimes.get(p["crime_source_h3"])
         if p["street_grade_pct"] is None:
             assert p["measured_street_m"] < 100 or (p["grade_coverage"] or 0) < 0.75
+
+
+def test_dem_sampler_interpolates_pixel_centres_and_preserves_nodata(tmp_path, monkeypatch):
+    import rasterio
+    from rasterio.transform import from_origin
+    import process_datasets as pipeline
+    band = np.fromfunction(lambda r, c: r + 2*c, (6, 6), dtype=float).astype("float32")
+    band[0, 0] = -9999
+    with rasterio.open(tmp_path / "elevation_3dep_10m.tif", "w", driver="GTiff", width=6, height=6,
+                       count=1, dtype="float32", crs="EPSG:26943", transform=from_origin(0, 60, 10, 10), nodata=-9999) as dst:
+        dst.write(band, 1)
+    monkeypatch.setattr(pipeline, "RAW_DIR", tmp_path)
+    sample = pipeline.dem_sampler()[0]
+    z = sample(np.array([15., 20., 10., -10.]), np.array([45., 40., 50., 70.]))
+    assert z[0] == pytest.approx(3)
+    assert z[1] == pytest.approx(4.5)
+    assert np.isnan(z[2]) and np.isnan(z[3])

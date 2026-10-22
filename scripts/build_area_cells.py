@@ -11,11 +11,10 @@ from pathlib import Path
 import geopandas as gpd
 import h3
 import pandas as pd
-import numpy as np
 from shapely.geometry import Point
 
 from _common import METRIC_CRS, PROCESSED_DIR, rel, today, update_manifest
-from process_datasets import hex_polygon, load_nhoods, sample_points, write_geojson
+from process_datasets import MissingInput, hex_polygon, load_nhoods, sample_points, write_geojson
 
 
 def canonical_grid() -> gpd.GeoDataFrame:
@@ -97,7 +96,7 @@ def add_indicators(grid):
         park_only = (grid["park_land_share"] >= 0.95) & ~grid.index.isin(supported)
         grid.loc[park_only, "residential"] = False
         grid.loc[park_only, "residential_reason"] = "At least 95% mapped parkland; no addressed residential-class street"
-    except FileNotFoundError:
+    except (FileNotFoundError, MissingInput):
         pass  # uncertainty remains explicit; never use an editorial neighbourhood flag
     crime = read_layer("crime_grid.geojson")
     crime_lookup = crime.set_index("h3")["per_km2"].to_dict() if crime is not None else {}

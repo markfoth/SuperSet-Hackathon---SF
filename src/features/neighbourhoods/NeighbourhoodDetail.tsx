@@ -1,7 +1,7 @@
 import { NeighbourhoodPhoto } from '../../components/NeighbourhoodPhoto';
 import { num, pct, usd } from '../../lib/format';
 import { ranked, type AreaResult, type CellResult } from '../filters/ranking';
-import { CellDetail } from './CellDetail';
+import { CellDetail, CellSummary } from './CellDetail';
 import type { NeighbourhoodContent, NeighbourhoodMetrics, Workplace, ZipRent } from '../../types';
 import { reasonText, rentalSearchLinks } from './reasons';
 
@@ -29,6 +29,7 @@ export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, wor
         <button className="btn link" onClick={onClose}>← Results</button>
         <button className={`btn ${saved ? 'primary' : ''}`} onClick={onToggleShortlist}>{saved ? '♥ Saved' : '♡ Save'}</button>
       </div>
+      {cellResult && <CellSummary result={cellResult} workplaces={workplaces} />}
       {photo && (
         <figure className="detail-photo">
           <NeighbourhoodPhoto photo={photo} />
@@ -50,7 +51,7 @@ export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, wor
       {!result.eligible && (
         <div className="notice">
           <b>Excluded by your current settings:</b>
-          <ul>{result.reasons.map((r, i) => <li key={i}>{reasonText(r, workplaces)}</li>)}</ul>
+          <ul>{result.reasons.map((r, i) => <li key={i}>{r.kind === 'mustHave' ? 'Example cell: ' : ''}{reasonText(r, workplaces)}</li>)}</ul>
         </div>
       )}
 

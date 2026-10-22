@@ -4,11 +4,12 @@
  open data sources ──► scripts/download_datasets.py ──► data/sf/raw/          (gitignored, ~90 MB)
                                                               │
                         scripts/process_datasets.py  ◄────────┘
+                        scripts/build_area_cells.py
                         scripts/build_commute_fixtures.py
                         scripts/build_content.py  ◄── data/sf/content/neighbourhoods.yaml
                                    │
                                    ▼
-                        data/sf/processed/  + data/sf/manifest.yaml           (committed, ~3.7 MB)
+                        data/sf/processed/  + data/sf/manifest.yaml           (committed, ~9 MB)
                                    │  scripts/sync_public_data.mjs (predev / prebuild)
                                    ▼
                         public/data/  ──► Vite static build ──► browser (React + Leaflet)
@@ -29,6 +30,8 @@ when live routing is added, to keep keys server-side.
 | `process_datasets.py` | One `step_*` per dataset; each writes its own processed files and manifest entry; a failure in one step never stops the others; final merge writes `neighbourhood_metrics.json` |
 | `build_commute_fixtures.py` | Commute polygons for the default workplaces (see below) |
 | `build_content.py` | Editorial YAML + one freely-licensed Wikimedia Commons photo per neighbourhood (cached) |
+| `street_gradients.py` | Hills step: official streets + bilinear DEM sampling; 40 m windows and length-weighted cell median/p90/steep share/coverage |
+| `build_area_cells.py` | 1,226 stable H3-9 cells; clipped land polygons, parent neighbourhoods, access distances and original coarse source ids |
 | `validate_datasets.py` | Structural + semantic checks; also run by `pytest` |
 | `rebuild_all.py` | Orchestrates the above in order; `--offline`, `--refresh`, `--from`, `--dataset` |
 
@@ -38,8 +41,12 @@ when live routing is added, to keep keys server-side.
   shapes, census tracts (ACS population and rent paid, CalEnviroScreen pollution indicators), cafe /
   restaurant / bar points (zoom >= 15), H3 res-8 crime/collision cells (≈0.74 km² — deliberately coarse so anonymised SFPD
   points are never shown as addresses), H3 res-9 hill cells (≈0.1 km²).
-* **Neighbourhood summaries for cards and ranking**: `neighbourhood_metrics.json` — one object per
-  neighbourhood, one block per dataset, explicit `null` when not measured.
+* **Canonical matching dataset**: `area_cells.geojson` (~1.25 MB). H3-9 cells, local street
+  gradients/access distances, explicit nulls and coarse-source identifiers. Only this fine
+  dataset enters matching and preference ranking. Street lines load lazily at zoom 14+.
+* **Neighbourhood summaries for context cards**: `neighbourhood_metrics.json` — one object per
+  neighbourhood, one block per dataset, explicit `null` when not measured. Neighbourhood-wide
+  measurements never fill missing cell measurements.
 
 Access metrics ("share of the area within 400 m of a park") are computed over **H3 res-9 sample
 points** inside each neighbourhood (1,117 points across 41 areas, `neighbourhood_samples.json`),
@@ -77,8 +84,10 @@ Timetable coverage: every GTFS feed is checked against `TARGET_SERVICE_DATE` (20
 fixture model uses that day where the feed covers it; otherwise a weekday in the feed's own period,
 and the feature label says "out-of-date timetable: <agency>".
 
-Eligibility (`eligibility.ts`): a sample point counts only if it is inside **every** workplace's
-area; a neighbourhood is eligible when ≥ 50 % of its points pass for each workplace.
+Eligibility (`eligibility.ts`): a cell's representative point must be inside **every** workplace's
+area. Missing/failed/pending routes stay unknown. `commonReachableGeometry` intersects the real
+polygons for display. A neighbourhood remains discoverable with any eligible candidate cell;
+there is no 50% majority threshold. Counts and shares distinguish cells from neighbourhoods.
 
 ## Frontend (`src/`)
 
@@ -98,13 +107,20 @@ lib/                          data loader (cached fetch), storage (guarded), for
 
 ### Ranking (`ranking.ts`)
 
-1. Exclusion reasons are collected independently: non-residential (parkland), commute coverage per
-   workplace, each failed Must. Order of interaction never matters; all reasons are shown.
-2. Score = weighted mean (Nice 1, Important 3, Must 3) of each active preference's **rank among the
-   41 neighbourhoods** (0 worst … 1 best, ties mid-ranked). Missing values are skipped and the card
-   says "N of M preferences could be assessed".
-3. `previewMustHave` re-evaluates with one extra Must and reports how many currently-eligible
-   areas it would remove and how many can't be checked.
+1. Per-cell exclusions: conservative park evidence, every workplace, every failed Must. Missing
+   hard information means unknown and prevents a confirmed match. All known failures are listed.
+2. Active preferences compare absolute measurement bands in saved explicit order. Earlier bands
+   dominate; Important uses finer bands than Nice. No combined numeric score. Missing soft values
+   are a disclosed evidence category after measured values, never zero.
+3. Neighbourhoods group/rank by their leading eligible cell; ties prefer suitable candidate-land
+   share, then name/id. Photos, descriptions, rents and shortlist retain parent ids.
+4. `previewMustHave` reports cells excluded, cells becoming unknown, and neighbourhoods losing
+   all eligible cells. Near misses remain excluded until the user changes the single failed Must.
+
+See `RANKING_METHOD.md` and `STREET_GRADIENT_METHOD.md` for thresholds and limitations.
+Route responses are keyed by active location/mode/time, preventing stale successes from gating
+new settings. Proxy cache keys include the Pacific arrival date/time and expire after 24 hours.
+Client polygons are structurally validated before matching or rendering.
 
 ### Base map
 

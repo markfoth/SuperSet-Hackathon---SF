@@ -53,7 +53,7 @@ export function evaluate(input: EvaluateInput): CellResult[] {
       return { prefId: d.id, level, value, passes, band: measurementBand(d, value, level), comparison: null };
     });
     const assessed = criteria.filter((c) => c.value != null).length;
-    const state: MatchState = reasons.length ? 'excluded' : unchecked.length || (active.length > 0 && !assessed)
+    const state: MatchState = reasons.length ? 'excluded' : unchecked.length
       ? 'unknown' : criteria.some((c) => c.passes !== true) ? 'partial' : 'strong';
     return {
       id: cell.h3, name: input.metrics[cell.nhood_id]?.name ?? cell.nhood_id, nhoodId: cell.nhood_id, cell,
@@ -104,7 +104,9 @@ export function summarize(input: EvaluateInput, cells: CellResult[]): AreaResult
       byWorkplace: Object.fromEntries(workplaceIds.map((wid) => [wid, candidates.filter((r) => r.commute.byWorkplace[wid] === true).reduce((s, r) => s + r.cell.area_m2, 0) / (area || 1)])),
     } : null;
     const reasons: ExclusionReason[] = best ? [] : !candidates.length ? [{ kind: 'nonResidential' }]
-      : commute?.all === 0 ? [{ kind: 'noOverlap' }] : all.flatMap((r) => r.reasons).filter((r, i, rs) => rs.findIndex((x) => JSON.stringify(x) === JSON.stringify(r)) === i);
+      : commute?.all === 0 ? [{ kind: 'noOverlap' }] : candidates.flatMap((r) => r.reasons).filter((r, i, rs) => rs.findIndex((x) =>
+        x.kind === r.kind && (x.kind !== 'mustHave' || r.kind !== 'mustHave' || x.prefId === r.prefId)
+        && (x.kind !== 'commute' || r.kind !== 'commute' || x.workplaceId === r.workplaceId)) === i);
     return {
       id, name: m.name, eligible: eligible.length > 0, state: best?.state ?? (candidates.some((r) => r.state === 'unknown') ? 'unknown' : 'excluded'),
       reasons, unchecked: best?.unchecked ?? [...new Set(candidates.flatMap((r) => r.unchecked))],

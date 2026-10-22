@@ -153,6 +153,6 @@ const server = createServer(async (req, res) => {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   server.listen(PORT, () => {
-    console.log(`[proxy] listening on http://localhost:${PORT} — TravelTime ${APP_ID && API_KEY ? 'configured' : 'NOT configured (fixtures only)'}${DRY_RUN ? ' [dry run]' : ''}`);
+    console.log(`[proxy] listening on http://localhost:${server.address().port} — TravelTime ${APP_ID && API_KEY ? 'configured' : 'NOT configured (fixtures only)'}${DRY_RUN ? ' [dry run]' : ''}`);
   });
 }

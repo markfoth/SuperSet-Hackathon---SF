@@ -6,17 +6,21 @@ out to rental platforms.
 
 ## Non-negotiable product rules
 
-- **Commute is the primary hard gate.** A neighbourhood is eligible only if ≥ 50% of its sample
-  points are inside *every* workplace's commute area (`ELIGIBLE_SHARE`). Commutes are **home → work**
-  (inbound; arrive-by for transit).
+- **Commute is the primary hard gate, checked at H3 resolution 9.** A cell's representative location
+  must lie inside **every** active workplace catchment. A neighbourhood is discoverable if any
+  candidate cell is eligible; there is no neighbourhood-majority gate. Commutes are **home → work**.
 - **A requested commute that can't be computed blocks results** with a visible, recoverable error.
   Never fall back to silently ungated results.
 - **Preferences are order-independent.** Off / Nice / Important change ranking only; **Must** can
   exclude. Every failed constraint is listed. Before a Must is applied the UI says how many
   currently eligible areas it would remove (`previewMustHave`).
-- **Missing data is never a pass or a fail.** `null` stays `null` end to end. A Must that can't be
-  checked keeps the area and flags it; a soft preference with no data is left out of that score.
-- **No universal liveability score.** Ranking is a transparent weighted mean of per-preference ranks.
+- **Missing data is never a pass or a fail.** `null` stays `null`. A missing Must or required route
+  makes the cell unknown and prevents it appearing as a confirmed match. Missing soft values are
+  disclosed and sorted after measured evidence, never converted to zero.
+- **No universal liveability score.** Ranking compares absolute measurement bands in the user's
+  explicit priority order. Important uses finer bands than Nice. See `docs/RANKING_METHOD.md`.
+- **Street gradients, not terrain averages.** Use length-weighted 40 m DEM-derived gradients along
+  official streets, with coverage thresholds. No neighbouring terrain slope substitutes for roads.
 - **Resolution honesty.** Crime is *reported incidents* (never "safe/unsafe"), shown on H3 res-8
   cells, not points. Rents are **ZIP-level asking rents** and must be labelled as such.
   Synthetic commute contours are labelled **Synthetic** in the UI.
@@ -72,6 +76,8 @@ After any data change: rebuild → validate → `pytest` → `npm test`.
 - `scripts/download_datasets.py` — sources registry (verified endpoints), idempotent downloads.
 - `scripts/process_datasets.py` — one `step_*` per dataset + `neighbourhood_metrics.json` merge.
 - `scripts/build_commute_fixtures.py` — GTFS schedule model + synthetic speed models.
+- `scripts/build_area_cells.py` — canonical matching cells and source-resolution-aware indicators.
+- `scripts/street_gradients.py` — street-aligned elevation windows and H3 summaries.
 - `scripts/build_content.py` + `data/sf/content/neighbourhoods.yaml` — editorial text + Commons photos
   (optimised copies committed in `public/images/neighbourhoods/`).
 - `server/routing-proxy.mjs` — TravelTime proxy (inbound, arrive-by), cache in `data/cache/`.

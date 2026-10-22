@@ -6,6 +6,17 @@ import { num, pct, usd } from '../../lib/format';
 
 const LABELS = { strong: 'Strong match', partial: 'Partial match', excluded: 'Excluded', unknown: 'Insufficient information' };
 
+export function CellSummary({ result: r, workplaces }: { result: CellResult; workplaces: Workplace[] }) {
+  return <div className={`cell-summary ${r.state}`}>
+    <b>{LABELS[r.state]} · local cell</b>
+    <p>{r.cell.street_grade_pct == null ? 'Street gradient unavailable' : `${num(r.cell.street_grade_pct, 1)}% median DEM-derived street grade`}.</p>
+    {r.eligible && <p>All workplace catchments and Must-haves satisfied.</p>}
+    {r.reasons.map((reason, i) => <p key={i}>{reasonText(reason, workplaces)}</p>)}
+    {r.unchecked.length > 0 && <p>Required information unavailable: {r.unchecked.map((id) => PREFERENCES.find((d) => d.id === id)?.label ?? id).join(', ')}.</p>}
+    <small>Full local evidence and parent neighbourhood context below.</small>
+  </div>;
+}
+
 export function CellDetail({ result: r, workplaces }: { result: CellResult; workplaces: Workplace[] }) {
   const p = r.cell;
   return <section className={`cell-detail ${r.state}`} aria-label="Selected local cell">

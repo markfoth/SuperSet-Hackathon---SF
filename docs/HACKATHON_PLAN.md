@@ -1,6 +1,24 @@
 # Hackathon plan — 22 October 2026
 
-## Ready (prepared 21 Oct)
+## Fine-area implementation — 22 October
+
+- [x] Clean `main` baseline inspected; feature branch `hack/fine-area-discovery`, sequential work
+- [x] Baseline: 27 Python tests, 8 frontend tests, validators, production build
+- [x] Canonical 1,226 H3-9 land cells, stable ids and one parent each; real local access indicators
+- [x] Official street centrelines verified/downloaded; street-aligned 40 m DEM gradients replace terrain means
+- [x] Coverage/null preservation; H3-8 reports, tract pollution and ZIP rents retain original precision
+- [x] Same-cell AND commute gate; exact shared polygon overlay; disjoint-halves regression
+- [x] User-approved priority-first bands, accessible ordering, explanations and exclusion previews
+- [x] Green/yellow/red-hatched/grey cells, local detail, near misses, shortlist comparison
+- [x] Desktop/mobile full-flow tests, context-layer checks and production build
+- [x] Fixed mobile map picking removing Leaflet container classes and intercepting tabs
+- [x] User selected **local demo/build only**; no push or public deployment
+
+Live-provider validation remains pending credentials in local `.env`; offline fixtures are
+explicitly approximate/synthetic. No live travel times have been claimed as verified.
+See `VERIFICATION.md` for final commands and results, `DATA_ACCURACY_AUDIT.md` for limitations.
+
+## Historical preparation (21 Oct)
 
 - [x] Repo on GitHub (private), `main` pushed; clone → `npm install` → `npm run dev` verified
 - [x] Data, all in `data/sf/manifest.yaml` and validated:
@@ -31,17 +49,11 @@ After adding `API_511_KEY`:
 .venv/Scripts/python.exe scripts/rebuild_all.py --offline --dataset transit
 ```
 
-## Tomorrow, in priority order
+## Remaining external inputs
 
-1. **Arbitrary workplaces** (needs TravelTime keys): add a workplace search box (geocoder), confirm
-   live isochrones for transit/walk/cycle/drive, keep fixtures as the offline fallback.
-2. **Demo script and rehearsal** on the default SFO + FiDi scenario: commute overlap → set "Parks:
-   Must" (exclusion preview) → turn on crime + transit + air layers → open Mission / Noe Valley.
-3. **Ranking explanations**: "why this rank" breakdown on cards; one-click "relax this must-have"
-   on excluded areas.
-4. **Comparison view** for 2–3 shortlisted neighbourhoods.
-5. **Polish**: review editorial descriptions; check mobile layout; deploy the static build (needs
-   Stadia domain auth for tiles).
+1. Add TravelTime keys locally, run the proxy and verify a live inbound polygon. No paid plan.
+2. Optionally provide a 511 token to refresh Muni and include SamTrans; stale feed remains labelled.
+3. Before any future public hosting, review unresolved data licences and configure basemap domain auth.
 
 Stop adding datasets (agreed). Deferred: noise, fog/sun, trees, flood/seismic, schools, Peninsula
 neighbourhoods.

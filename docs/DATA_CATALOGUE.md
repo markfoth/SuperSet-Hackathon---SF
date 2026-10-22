@@ -1,6 +1,6 @@
 # Data catalogue
 
-Status as of 2026-10-21 (final prep pass). **Downloaded/processed** rows are recorded in
+Status as of 2026-10-22. **Downloaded/processed** rows are recorded in
 [`data/sf/manifest.yaml`](../data/sf/manifest.yaml) with counts, dates and limitations; licence
 "verified" means the terms were read tonight. Candidate rows marked *verify* have not had their
 endpoint or dataset ID checked; confirm before building.
@@ -11,7 +11,9 @@ Priority: **P0** core demo · **P1** valuable next · **P2** later · **Omit** n
 
 | Dataset | Source | Priority | Resolution | Licence | Status | Complexity | Usage |
 |---|---|---|---|---|---|---|---|
-| Analysis Neighborhoods (41) | [DataSF j2bu-swwd](https://data.sf.gov/d/j2bu-swwd) (map view p5b7-5n3h) | P0 | Neighbourhood polygon | PDDL (verified) | Processed | Low | Cards, ranking unit, map |
+| Analysis Neighborhoods (41) | [DataSF j2bu-swwd](https://data.sf.gov/d/j2bu-swwd) (map view p5b7-5n3h) | P0 | Neighbourhood polygon | PDDL (verified) | Processed | Low | Content, grouping, boundaries |
+| Canonical area cells (1,226) | H3 + existing processed sources | P0 | H3 **9**, clipped to SF land | Inherits inputs | Processed: `area_cells.geojson` | Medium | Commute eligibility, priorities, local evidence; coarse source ids retained |
+| Active street centrelines | [DataSF 3psu-pn9h](https://data.sf.gov/d/3psu-pn9h), DPW | P0 | Street segments | PDDL (verified) | 16,378 active records, 14,585 usable line parts | Medium | Road-aligned DEM sampling, residential evidence |
 | Police incident reports | [DataSF wg3w-h783](https://data.sf.gov/d/wg3w-h783) | P0 | Point (anonymised to intersection/block) → H3 res-8 + neighbourhood | PDDL (verified) | Processed: 49,515 incidents, 2025-10-01 → 2026-10-01 | Medium | Reported-crime layer and preference |
 | SFMTA bike network | [DataSF ygmz-vaxd](https://data.sf.gov/d/ygmz-vaxd) | P0 | Street segment | PDDL (verified) | Processed: 5,499 segments | Low | Cycling layer, bike-lane preference, segment grade |
 | Rec & Park properties | [DataSF gtr9-ntp6](https://data.sf.gov/d/gtr9-ntp6) | P0 | Polygon | PDDL (verified) | Processed | Low | Parks layer, park access |
@@ -23,7 +25,7 @@ Priority: **P0** core demo · **P1** valuable next · **P2** later · **Omit** n
 | SamTrans GTFS | [511.org](https://511.org/open-data/transit) (samtrans.com developer page is gone) | P1 | Stop / shape | 511 terms forbid redistribution without developer agreement | **Blocked: needs API_511_KEY** (a mirrored copy exists but was not used) | Low once keyed | SFO buses (292, 398, ECR) |
 | Neighbourhood content | Editorial YAML + Wikimedia Commons | P0 | Neighbourhood | Text: own; photos CC/PD per photo | Processed: 41/41 photos, cached locally | Low | Detail panel |
 | Commute fixtures | Derived (GTFS schedule model + synthetic) | P0 | H3 res-9 → polygons | Inherits GTFS | Processed: 32 polygons | Medium | Offline commute gate |
-| Elevation (3DEP) | [USGS National Map](https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer) | P1 | 10 m raster → H3 res-9 + segment | Public domain (verified) | Processed | Medium | Hills layer, flatness preference, bike grades |
+| Elevation (3DEP) | [USGS National Map](https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer) | P0 | ~10 m raster → 40 m street windows → H3-9 | Public domain (verified) | 1,013 cells have sufficient street coverage | Medium | Local street flatness; no terrain-average substitute |
 | Supermarkets/greengrocers | OpenStreetMap | P1 | Point | ODbL | Processed: 208 | Low | Grocery access |
 | Injury traffic crashes | [DataSF ubvf-ztfx](https://data.sf.gov/d/ubvf-ztfx) | P1 | Point → H3 res-8 + neighbourhood | PDDL | Processed: 3 years | Low | Crash layer, detail panel |
 | Zillow ZORI by ZIP | [Zillow Research](https://www.zillow.com/research/data/) | P1 | ZIP (monthly 2015–2026-09) | Free with attribution; **derived redistribution unresolved** | Processed: 34 ZIPs | Low | Rent trend (asking rents) |

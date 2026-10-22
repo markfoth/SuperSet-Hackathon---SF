@@ -14,7 +14,7 @@ from shapely.geometry import LineString
 from shapely.ops import substring
 
 from _common import METRIC_CRS, PROCESSED_DIR, rel, today, update_manifest
-from process_datasets import dem_sampler, dl, raw, write_geojson, write_summary
+from process_datasets import dem_sampler, dl, raw, slug, write_geojson, write_summary
 
 STREET_LAYERS = {"STREETS", "STREETS_TI", "STREETS_YBI", "STREETS_HUNTERSP", "PRIVATE"}
 MIN_CELL_STREET_M = 100
@@ -132,7 +132,18 @@ def build_street_gradients() -> dict:
                                "p90_grade_pct": weighted_quantile(grades, lengths, 0.9),
                                "cell_min_pct": float(local.min()) if len(local) else None,
                                "cell_max_pct": float(local.max()) if len(local) else None}
-    write_summary("street_gradient_validation.json", {"method": "Unmodified computed values; geographical contrasts are validation, not calibration", "areas": validation})
+    # Traceable individual blocks, including contrasting portions of the same named street.
+    check_streets = {"mission": "VALENCIA ST", "sunset-parkside": "IRVING ST", "nob-hill": "JONES ST",
+                     "russian-hill": "HYDE ST", "potrero-hill": "22ND ST", "bernal-heights": "FOLSOM ST"}
+    segment_checks = []
+    for nid, street in check_streets.items():
+        pairs = [(road, summary) for (_, road), summary in zip(roads.iterrows(), summaries)
+                 if road["streetname"] == street and slug(str(road["analysis_neighborhood"])) == nid and summary["grade_pct"] is not None]
+        pairs.sort(key=lambda pair: pair[1]["grade_pct"])
+        for road, summary in ([pairs[0], pairs[-1]] if len(pairs) > 1 else pairs):
+            segment_checks.append({"nhood_id": nid, "cnn": summary["cnn"], "street": street,
+                                   "from": road["f_st"], "to": road["t_st"], "median_grade_pct": summary["grade_pct"]})
+    write_summary("street_gradient_validation.json", {"method": "Unmodified computed values; geographical contrasts are validation, not calibration", "areas": validation, "street_segments": segment_checks})
     entry = {
         "source": "USGS 3DEP bare-earth DEM + SF DPW Streets – Active and Retired (DataSF 3psu-pn9h)",
         "source_url": "https://data.sf.gov/d/3psu-pn9h; https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer",

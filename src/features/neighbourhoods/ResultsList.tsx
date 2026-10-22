@@ -69,7 +69,7 @@ export function ResultsList(p: Props) {
               <li key={r.id} className="card compact" onClick={() => p.onSelect(r.id)}>
                 <div className="card-title">{r.name}</div>
                 <span className="hint">{r.state === 'unknown' ? 'Insufficient information' : 'No eligible candidate cells'}</span>
-                <ul className="reasons">{r.reasons.map((x, j) => <li key={j}>{reasonText(x, p.workplaces)}</li>)}</ul>
+                <ul className="reasons">{r.reasons.map((x, j) => <li key={j}>{x.kind === 'mustHave' ? 'Example cell: ' : ''}{reasonText(x, p.workplaces)}</li>)}</ul>
                 {r.unchecked.length > 0 && <p className="hint">Missing required information: {r.unchecked.join(', ')}</p>}
               </li>
             ))}

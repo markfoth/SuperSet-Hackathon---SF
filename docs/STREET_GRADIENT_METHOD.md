@@ -27,6 +27,13 @@ are retained. A cell needs 100 m measured streets and 75% valid length. No terra
 missing streets. Bike segment grades retain their separate steepest-window meaning and now
 use the corrected sampler.
 
+An independent USGS elevation-unit cross-check at Twin Peaks (37.7544, -122.4477) returned
+250.198 m from the official [Elevation Point Query Service](https://apps.nationalmap.gov/epqs/)
+(`units=Meters`, 1 m source). The local bilinear ~10 m raster returned 249.435 m at the same
+coordinate. The 0.763 m difference is consistent with differing sample resolution; it also
+rules out a feet/metres scale mismatch at that location. This is a unit check, not a vertical
+accuracy certification.
+
 Computed contrasts (not calibrated to expectations):
 
 | Area | Street median | Street p90 | Range of H3 cell medians |

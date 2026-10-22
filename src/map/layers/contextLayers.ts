@@ -40,8 +40,8 @@ const BIKE_STYLE: Record<string, { color: string; weight: number; dashArray?: st
 export const CONTEXT_LAYERS: ContextLayerDef[] = [
   {
     id: 'crime',
-    label: 'Reported crime',
-    note: 'SFPD reported incidents, last 12 months, per ~0.7 km² hexagon. Reported ≠ all crime; busy commercial areas score high.',
+    label: 'Reported incidents',
+    note: 'SFPD reported incidents, last 12 months, per ~0.7 km² hexagon. Reported ≠ all crime; busy commercial areas can have higher reported rates.',
     legend: CRIME_COLORS.map((c, i) => ({
       color: c,
       label: i === 0 ? `< ${CRIME_BREAKS[0]} per km²` : i === CRIME_COLORS.length - 1 ? `${num(CRIME_BREAKS[i - 1])}+` : `${CRIME_BREAKS[i - 1]}–${CRIME_BREAKS[i]}`,

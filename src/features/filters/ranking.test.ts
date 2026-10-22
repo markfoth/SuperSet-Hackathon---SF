@@ -39,6 +39,11 @@ describe('fine-area feasibility and priorities', () => {
     expect(r.eligible).toBe(true); expect(r.state).toBe('partial');
     expect(r.assessed).toBe(1); expect(r.priorityVector[0]).toBeNull(); expect(r.warnings.length).toBeGreaterThan(0);
   });
+  it('even entirely missing soft preferences never remove a commute-feasible cell', () => {
+    const r = evaluate({ ...input([{ street_grade_pct: null }]), prefs: { flat: 'nice' } })[0];
+    expect(r.eligible).toBe(true); expect(r.state).toBe('partial');
+    expect(r.assessed).toBe(0); expect(r.priorityVector).toEqual([null]);
+  });
   it('explicit priority changes the winner', () => {
     const base = { ...input(), prefs: { flat: 'important' as const, parks: 'important' as const } };
     expect(ranked(evaluate(base))[0].id).toBe('0');
