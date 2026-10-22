@@ -21,7 +21,20 @@ panel; exclusions remain explained in the results. Individual commute borders us
 and a solid bold green border shows their shared overlap. Matching checks a representative point per cell; it does
 not guarantee an entire hexagon or every address is reachable.
 
-Demo defaults: **SFO Airport** (transit, ≤ 60 min) and **Financial District** (transit, ≤ 45 min).
+The (i) buttons beside **What matters to you?** and **Map layers** explain sources, measures
+and limitations without filling the normal panels with dataset notes. Selected-district
+matches use **gold outlines**. **Nightlife** adds a pink density heatmap of mapped bars,
+pubs and nightclubs, smoothed over 300 m; it is context, not a ranking input or opening-hours
+guide. All 53 residential card groups have credited local photos; nearby landmarks are
+explicitly captioned. See [area names and photo context](docs/AREA_LABELS_AND_PHOTOS.md).
+
+A fresh session opens with a plain map and no workplaces. **Reset to demo** opts into
+**SFO Airport** (transit, ≤ 60 min) and **Financial District** (transit, ≤ 45 min).
+With no commute or active preference, matching shapes and their legend stay hidden.
+Selecting a district highlights its eligible cells above every context layer. Displayed
+hexagons are cut around mapped parks/open space even when the Parks layer is off;
+remaining cells retain their original representative-point measurements. Fully covered
+cells cannot contribute a match or an area-found count.
 
 ## Quick start (Windows; tested 2026-10-21 with Node 24, Python 3.11)
 
@@ -130,7 +143,7 @@ npm.cmd run preview -- --host localhost --port 4173
 ```
 
 The production preview is at `http://localhost:4173`. The static `dist/` artifact is ready for
-a future hosting decision. Nothing is pushed or publicly deployed. Live routing needs the
+a future hosting decision. Nothing is publicly deployed. Live routing needs the
 separate proxy; Vite's development `/api` proxy is not part of a static production build.
 
 Rebuild the fine cells from cached sources:
@@ -144,11 +157,18 @@ Rebuild the fine cells from cached sources:
 
 `area_cells.geojson` is the canonical ~2.50 MB matching input (**2,408 cells**); raw street/raster
 files never load in the browser. **Topographic map** replaces the street-line overlay: a local
-USGS elevation colour gradient (~315 KB PNG), with metres above sea level in its legend. It needs
+USGS elevation colour gradient (~308 KB PNG), from pale blue at sea level to darker purple
+at higher elevations, distinct from the green/yellow match colours. Its legend uses metres. It needs
 no key and covers SF through SFO; water and missing coverage are transparent. Street gradients
 still drive the Flatter streets preference, independently of elevation. Browser tests use an isolated port 5187 and installed
 Google Chrome; if absent, install Chrome or change the Playwright channel. Screenshots/traces
 are generated in gitignored `test-results/`.
+
+`area_cell_display.geojson` (~827 KB) contains 2,229 park-cut display footprints keyed by
+the same H3 ids; 179 fully park-covered cells have no display footprint. Rebuild it after
+changing canonical cells or parks with `scripts/build_cell_display.py`; the full rebuild
+pipeline runs this step automatically. Park cut-outs follow mapped source boundaries,
+not a verified housing-parcel inventory.
 
 Limitations: offline transit catchments remain approximate and use an expired Muni timetable;
 other offline modes are synthetic. DEM grades are not surveyed and can be biased by bridges,

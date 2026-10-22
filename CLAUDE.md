@@ -42,6 +42,15 @@ out to rental platforms.
   No excluded legend graphic. Individual isochrone borders are 20% opaque; shared overlap has a
   bold solid green border. The topographic layer shows USGS elevation, not street slope; street
   gradients remain the ranking input. Rent sorting never changes eligibility; missing rents stay last.
+  Fresh sessions start with no workplaces and a plain map; Reset to demo opts in. With no
+  commute or active preference, hide matching shapes/legend. Selecting a district highlights
+  only eligible cells above all context overlays. Render `area_cell_display.geojson` park-cut
+  footprints; keep measurements in canonical `area_cells.geojson`. Rebuild display footprints
+  after parks or canonical cells change. Elevation uses blue-purple, distinct from match colours.
+  Selected-district eligible cells use gold outlines. Dataset explanations live behind the
+  section (i) buttons; keep essential missing-coverage/timetable warnings visible. Nightlife
+  is mapped bar/pub/nightclub density with a fixed 300 m bandwidth, display context only.
+  Editorial display names preserve source names and stable ids. Nearby photos need clear captions.
 
 ## Architecture (see docs/ARCHITECTURE.md)
 

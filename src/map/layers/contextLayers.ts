@@ -11,6 +11,7 @@ export interface ContextLayerDef {
   id: string;
   label: string;
   note: string;
+  warning?: string;
   legend: LegendItem[];
   build: (map: L.Map) => Promise<L.Layer>;
 }
@@ -39,6 +40,7 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
   {
     id: 'crime',
     label: 'Reported incidents',
+    warning: 'SF only · Peninsula measurements unavailable.',
     note: 'SF coverage only; Peninsula data unavailable. SFPD reported incidents, last 12 months, per ~0.7 km² hexagon. Reported ≠ all crime.',
     legend: CRIME_COLORS.map((c, i) => ({
       color: c,
@@ -59,8 +61,8 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
   {
     id: 'topography',
     label: 'Topographic map',
-    note: 'USGS land elevation above sea level, in metres, from San Francisco to SFO. Colour shows elevation, not street steepness. Water and missing coverage are transparent.',
-    legend: ['#c3e3df', '#dbe5ac', '#eee0a4', '#d8b379', '#ab825d', '#ede6de'].map((color, i) => ({
+    note: 'USGS land elevation above sea level, in metres, from San Francisco to SFO. Pale blue is low; darker purple is high. Green and yellow hexagons show matches. Water and missing coverage are transparent.',
+    legend: ['#edf2fa', '#d6dff0', '#b9c6e2', '#939bc9', '#746fa9', '#514579'].map((color, i) => ({
       color, label: ['0 m · sea level', '50 m', '100 m', '200 m', '300 m', '450 m+'][i],
     })),
     build: async () => {
@@ -95,6 +97,7 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
   {
     id: 'transit',
     label: 'Public transport',
+    warning: 'Muni timetable is out of date; see (i).',
     note: 'BART, Muni, Caltrain and SamTrans routes and rail stations; bus stops appear when zoomed in.',
     legend: [
       { color: '#0099d8', label: 'BART' }, { color: '#c4122f', label: 'Caltrain' },
@@ -198,6 +201,20 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
           l.bindPopup(`<b>Census tract ${esc(p.geoid)}</b><br>${[row('PM2.5', 'pm'), row('Diesel PM', 'diesel'), row('Traffic', 'traffic'), row('Ozone', 'ozone'), row('Toxic releases', 'RSEIhaz'), row('Lead risk (housing)', 'lead')].join('<br>')}<br>Pollution burden: ${p.ces_pollution_burden_pctl == null ? 'no data' : `${Math.round(p.ces_pollution_burden_pctl)}th pct`}${p.population != null ? `<br><small>${num(p.population)} residents (ACS 2020–24)</small>` : ''}<br><small>Statewide percentiles, CalEnviroScreen 5.0 (OEHHA)</small>`);
         },
       });
+    },
+  },
+  {
+    id: 'nightlife',
+    label: 'Nightlife',
+    note: 'OpenStreetMap bars, pubs and nightclubs. Darker pink means more mapped venues nearby, using a 300 m smoothing distance and a fixed density scale. Values are smoothed mapped venues per km². This measures venue concentration, not opening hours, attendance, noise or reviews. Sparse colour can mean incomplete mapping. Context only; does not affect ranking.',
+    legend: ['#fbcfe8', '#f9a8d4', '#f472b6', '#db2777', '#9d174d'].map((color, i) => ({
+      color, label: ['2 · fewer mapped venues', '5', '10', '20', '40+ · more mapped venues'][i] + ' / km²',
+    })),
+    build: async () => {
+      const data = await loadData<{ image: string; bounds: [[number, number], [number, number]] }>('nightlife.json');
+      const url = `${import.meta.env.BASE_URL}data/${data.image}`;
+      const image = new Image(); image.src = url; await image.decode();
+      return L.imageOverlay(url, data.bounds, { pane: 'context-fill', opacity: 0.85, interactive: false, className: 'nightlife-overlay' });
     },
   },
   {

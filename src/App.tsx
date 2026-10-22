@@ -15,13 +15,14 @@ import { readStored, writeStored } from './lib/storage';
 import { LayerPanel } from './map/controls/LayerPanel';
 import { MapView } from './map/MapView';
 import type {
-  AreaCellCollection, NeighbourhoodCollection, NeighbourhoodContent, NeighbourhoodMetrics, PreferenceLevel, Workplace, ZipRent,
+  AreaCellCollection, AreaCellDisplayCollection, NeighbourhoodCollection, NeighbourhoodContent, NeighbourhoodMetrics, PreferenceLevel, Workplace, ZipRent,
 } from './types';
 
 interface AppData {
   neighbourhoods: NeighbourhoodCollection;
   metrics: Record<string, NeighbourhoodMetrics>;
   cells: AreaCellCollection;
+  displayCells: AreaCellDisplayCollection;
   content: Record<string, NeighbourhoodContent>;
   rents: Record<string, ZipRent>;
 }
@@ -33,7 +34,7 @@ export default function App() {
   const [data, setData] = useState<AppData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   // Workplaces are precise locations: session-scoped. Preferences/layers/shortlist are harmless UI state: local.
-  const [workplaces, setWorkplaces] = useState<Workplace[]>(() => readStored('cg:workplaces', DEFAULT_WORKPLACES, 'session'));
+  const [workplaces, setWorkplaces] = useState<Workplace[]>(() => readStored('cg:workplaces', [], 'session'));
   const [prefs, setPrefs] = useState<Record<string, PreferenceLevel>>(() => readStored('cg:prefs', {}));
   const [priorityOrder, setPriorityOrder] = useState<string[]>(() => readStored('cg:priority:v1', DEFAULT_PRIORITY));
   const [layers, setLayers] = useState<Set<string>>(() => new Set(readStored<string[]>('cg:layers', []).map((id) => id === 'hills' ? 'topography' : id)));
@@ -58,10 +59,17 @@ export default function App() {
       loadData<AreaCellCollection>('area_cells.geojson'),
       loadData<{ neighbourhoods: Record<string, NeighbourhoodContent> }>('neighbourhood_content.json'),
       loadData<{ zips: Record<string, ZipRent> }>('rents_zori_zip.json'),
-    ]).then(([neighbourhoods, metrics, cells, content, rents]) => setData({
-      neighbourhoods, metrics: metrics.neighbourhoods, cells,
-      content: content.neighbourhoods, rents: rents.zips,
-    })).catch((e: Error) => setLoadError(e.message));
+      loadData<AreaCellDisplayCollection>('area_cell_display.geojson'),
+    ]).then(([neighbourhoods, metrics, cells, content, rents, displayCells]) => {
+      const nameFor = (id: string, fallback: string) => content.neighbourhoods[id]?.name ?? fallback;
+      setData({
+        neighbourhoods: { ...neighbourhoods, features: neighbourhoods.features.map((f) => ({ ...f,
+          properties: { ...f.properties, name: nameFor(f.properties.id, f.properties.name) },
+        })) },
+        metrics: Object.fromEntries(Object.entries(metrics.neighbourhoods).map(([id, m]) => [id, { ...m, name: nameFor(id, m.name) }])),
+        cells, content: content.neighbourhoods, rents: rents.zips, displayCells,
+      });
+    }).catch((e: Error) => setLoadError(e.message));
   }, []);
 
   useEffect(() => writeStored('cg:workplaces', workplaces, 'session'), [workplaces]);
@@ -91,9 +99,16 @@ export default function App() {
   const failed = workplaces.map((w) => [w, commute[w.id]] as const).find(([, r]) => r && !r.ok);
   const blocked = failed ? `${failed[0].name}: ${(failed[1] as { reason: string }).reason}` : null;
 
-  const cellCoverage = useMemo(() => data ? cellCommutes(data.cells, workplaces, commute) : {}, [data, keys, commute]);
+  // A fully park-covered cell has no displayable land and cannot be a suggested home area.
+  // Keep the original indicators/representative points for every remaining cell.
+  const candidateCells = useMemo(() => {
+    if (!data) return null;
+    const footprints = new Set(data.displayCells.features.map((f) => f.properties.h3));
+    return { ...data.cells, features: data.cells.features.filter((f) => footprints.has(f.properties.h3)) };
+  }, [data]);
+  const cellCoverage = useMemo(() => candidateCells ? cellCommutes(candidateCells, workplaces, commute) : {}, [candidateCells, keys, commute]);
   const overlap = useMemo(() => !pending && !blocked ? commonReachableGeometry(areas, workplaces.length) : null, [areas, workplaces.length, pending, blocked]);
-  const input: EvaluateInput | null = useMemo(() => data ? { cells: data.cells, metrics: data.metrics, commutes: cellCoverage, prefs, priorityOrder } : null, [data, cellCoverage, prefs, priorityOrder]);
+  const input: EvaluateInput | null = useMemo(() => data && candidateCells ? { cells: candidateCells, metrics: data.metrics, commutes: cellCoverage, prefs, priorityOrder } : null, [data, candidateCells, cellCoverage, prefs, priorityOrder]);
   const cellResults = useMemo(() => input ? evaluate(input) : [], [input]);
   const cellById = useMemo(() => Object.fromEntries(cellResults.map((r) => [r.id, r])), [cellResults]);
   const results = useMemo(() => input ? summarize(input, cellResults) : [], [input, cellResults]);
@@ -112,6 +127,7 @@ export default function App() {
   const selectCell = (id: string) => { const r = cellById[id]; if (r) { setSelectedCellId(id); setSelectedId(r.nhoodId); setPanel('results'); } };
   const selectNeighbourhood = (id: string) => { setSelectedId(id); setSelectedCellId(null); setPanel('results'); };
   const eligibleCells = cellResults.filter((r) => r.eligible).length;
+  const matchingActive = workplaces.length > 0 || Object.values(prefs).some((level) => level !== 'off');
 
   return (
     <div className="app">
@@ -140,7 +156,8 @@ export default function App() {
         <section className="map-wrap">
           <MapView
             neighbourhoods={data.neighbourhoods} results={byId} selectedId={selectedId}
-            cells={data.cells} cellResults={cellById} selectedCellId={selectedCellId} onSelectCell={selectCell}
+            cells={data.displayCells} cellResults={cellById} selectedCellId={selectedCellId} onSelectCell={selectCell}
+            matchingActive={matchingActive}
             overlap={overlap} onSelect={selectNeighbourhood}
             areas={areas} workplaces={workplaces} addingWorkplace={adding}
             onMoveWorkplace={(id, lat, lon) => updateWorkplace(id, { lat, lon })}
@@ -152,11 +169,12 @@ export default function App() {
           />
           {pending && workplaces.length > 0 && <div className="map-badge">Calculating commute areas…</div>}
           {!pending && blocked && <div className="map-badge error">Commute unavailable · results blocked</div>}
-          <div className="match-legend" aria-label="Cell matching legend">
+          {matchingActive && <div className="match-legend" aria-label="Cell matching legend">
             <b>{eligibleCells} eligible cells · {rankedList.length} areas</b>
             <div><span className="match-dot strong" /> Strong <span className="match-dot partial" /> Partial <span className="match-dot unknown" /> Unknown</div>
             <small>~0.1 km² areas · representative-location matching<br />Bold green border: shared commute area{areas.some((a) => a.source === 'fixture') ? ' · approximate demo' : ''}</small>
-          </div>
+            {selected?.eligible && <small>Gold outlines: matches in {selected.name}.<br />Mapped parks and open space are cut out.</small>}
+          </div>}
         </section>
         <aside className={`resultsbar ${panel === 'results' ? 'show' : ''}`}>
           {selected ? (

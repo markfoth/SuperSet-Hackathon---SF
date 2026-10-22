@@ -16,7 +16,7 @@ from rasterio.warp import reproject, Resampling, transform_bounds
 from _common import PROCESSED_DIR, RAW_DIR, STUDY_BBOX, rel, today, update_manifest, write_json
 
 STOPS = [0, 50, 100, 200, 300, 450]
-COLOURS = ["#c3e3df", "#dbe5ac", "#eee0a4", "#d8b379", "#ab825d", "#ede6de"]
+COLOURS = ["#edf2fa", "#d6dff0", "#b9c6e2", "#939bc9", "#746fa9", "#514579"]
 
 
 def build() -> dict:

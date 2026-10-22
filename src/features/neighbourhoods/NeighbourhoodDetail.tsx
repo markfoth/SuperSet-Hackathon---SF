@@ -32,15 +32,16 @@ export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, wor
       {cellResult && <CellSummary result={cellResult} workplaces={workplaces} />}
       {photo && (
         <figure className="detail-photo">
-          <NeighbourhoodPhoto photo={photo} />
+          <NeighbourhoodPhoto key={photo.local ?? photo.url} photo={photo} />
           <figcaption>
+            {photo.caption && <span className="photo-context">{photo.caption}<br /></span>}
             Photo: {photo.credit} · <a href={photo.licence_url ?? photo.page} target="_blank" rel="noreferrer">{photo.licence}</a> ·{' '}
             <a href={photo.page} target="_blank" rel="noreferrer">Wikimedia Commons</a>
           </figcaption>
         </figure>
       )}
       <h2>{m.name}</h2>
-      {m.region === 'peninsula' && <p className="hint">Peninsula {m.boundary_kind ?? 'area'} grouping, limited to land north of SFO’s southern edge. Local incident and injury-crash data are unavailable here.</p>}
+      {m.region === 'peninsula' && <p className="hint">Peninsula {m.boundary_kind === 'unincorporated area' ? 'county community' : m.boundary_kind ?? 'area'} grouping, limited to land north of SFO’s southern edge. Local incident and injury-crash data are unavailable here.</p>}
       <p className="suitability"><b>{result.eligibleCount} area{result.eligibleCount === 1 ? '' : 's'} found.</b> {result.unknownCount > 0 ? `${result.unknownCount} areas have insufficient information.` : ''}</p>
       {cellResult && <CellDetail result={cellResult} workplaces={workplaces} />}
       {!cellResult && <div className="local-choices"><p className="hint">Choose a hexagon on the map for local measurements, or explore a leading eligible cell:</p>
@@ -120,7 +121,7 @@ export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, wor
 
       <h3>Search for homes here</h3>
       <div className="row">
-        {rentalSearchLinks(m.name, m.region).map((l) => <a key={l.label} className="btn" href={l.url} target="_blank" rel="noreferrer">{l.label} ↗</a>)}
+        {rentalSearchLinks(c?.rental_search_name ?? m.name, m.region).map((l) => <a key={l.label} className="btn" href={l.url} target="_blank" rel="noreferrer">{l.label} ↗</a>)}
       </div>
     </div>
   );

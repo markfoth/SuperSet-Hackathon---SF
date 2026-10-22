@@ -5,6 +5,7 @@
                                                               │
                         scripts/process_datasets.py  ◄────────┘
                         scripts/build_area_cells.py
+                        scripts/build_cell_display.py
                         scripts/build_commute_fixtures.py
                         scripts/build_content.py  ◄── data/sf/content/neighbourhoods.yaml
                                    │
@@ -32,8 +33,10 @@ when live routing is added, to keep keys server-side.
 | `build_content.py` | Editorial YAML + one freely-licensed Wikimedia Commons photo per neighbourhood (cached) |
 | `street_gradients.py` | Hills step: official streets + bilinear DEM sampling; 40 m windows and length-weighted cell median/p90/steep share/coverage |
 | `build_area_cells.py` | 2,408 H3-9 cells through SFO; clipped land polygons, SF neighbourhood / county jurisdiction parents, local distances and original coarse source ids |
+| `build_cell_display.py` | Display-only H3 footprints minus mapped parks/open space; polygons retain cut-out holes and H3 ids; fully masked cells omitted |
 | `peninsula.py` | County jurisdiction/water masks, streets, existing bikeways and park adapters; explicit local incident/crash gaps |
 | `build_topography.py` | USGS elevation colour raster in Web Mercator, masked to study land minus water; manifest and Leaflet image bounds |
+| `build_nightlife.py` | OSM bar/pub/nightclub points, same-name duplicate checks, fixed 300 m ground-distance Gaussian density; pink Web Mercator heatmap |
 | `validate_datasets.py` | Structural + semantic checks; also run by `pytest` |
 | `rebuild_all.py` | Orchestrates the above in order; `--offline`, `--refresh`, `--from`, `--dataset` |
 
@@ -47,6 +50,25 @@ when live routing is added, to keep keys server-side.
   gradients/access distances, explicit nulls and coarse-source identifiers. Only this fine
   dataset enters matching and preference ranking. The map's optional topographic overlay loads
   a local elevation PNG; street gradients remain measured ranking inputs, not a displayed layer.
+* **Display footprints**: `area_cell_display.geojson` (~827 KB), 2,229 park-cut polygons.
+  Original measurements and representative points remain in the canonical matching dataset.
+  Cells with no remaining display footprint are removed from suggestion candidates, including
+  four fully park-covered cells with supporting street evidence; they cannot inflate counts.
+  A fresh session has no workplaces and no matching overlay; Reset to demo loads the two
+  example workplaces. District selection draws only its eligible cells in a separate SVG
+  pane above all context layers, independently of layer toggles. Blue-purple topography
+  remains distinct from green/yellow matches; individual commute borders have 0.2 opacity.
+  Selected district matches now use gold outlines; green/yellow fills still indicate match state.
+* **Dataset information**: native modal dialogs behind each section's (i) button explain
+  sources and measures. Normal panels retain legends and critical coverage/timetable warnings.
+  Dialogs use browser focus containment, Escape dismissal and focus return, and are portalled
+  outside scrolling panels. Source links are shared in `datasetSources.ts`.
+* **Nightlife context**: lazily loaded `nightlife.json` and a ~56 KB PNG, generated from
+  570 mapped land bars/pubs/nightclubs. The Gaussian bandwidth is 300 m in local ground metres;
+  scale is fixed in mapped venues/km² across zooms. Venue density never enters ranking.
+  Original venue points are retained in `nightlife_venues.geojson` for reproducibility.
+  Readable county labels come from editorial display names while retaining stable ids/source
+  names. Nearby photos carry explicit captions; see [label and photo provenance](AREA_LABELS_AND_PHOTOS.md).
 * **Neighbourhood summaries for context cards**: `neighbourhood_metrics.json` — one object per
   neighbourhood, one block per dataset, explicit `null` when not measured. Neighbourhood-wide
   measurements never fill missing cell measurements.

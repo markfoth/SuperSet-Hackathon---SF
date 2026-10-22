@@ -376,6 +376,9 @@ def sources() -> list[Source]:
             "https://publish.data.ca.gov/dataset/72b28c84-ceac-4886-9f71-d422470d2223/resource/"
             "31ddb21a-44bb-4cb0-81d8-6e2f80ee359d/download/final-calenviroscreen-5.0-data-dictionary.pdf"),
                pdf_valid, priority="P1"),
+        Source("osm_nightlife", "osm_nightlife.json", fetch_overpass(
+            f'[out:json][timeout:120];nwr["amenity"~"^(bar|pub|nightclub)$"]({ss},{sw},{sn},{se});out center tags;'),
+               overpass_min(100), priority="P1", note="Mapped bars, pubs and nightclubs from SF through SFO; nightlife density context"),
         Source("osm_food_drink", "osm_food_drink.json", fetch_overpass(
             f"[out:json][timeout:180];"
             f"(nwr[\"amenity\"~\"^(cafe|restaurant|bar|pub)$\"]({ss},{sw},{sn},{se});"

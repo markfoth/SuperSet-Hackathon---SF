@@ -3,7 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { CommuteArea } from '../features/commute/provider';
 import type { AreaResult, CellResult, MatchState } from '../features/filters/ranking';
-import type { AreaCellCollection, AreaGeometry, NeighbourhoodCollection, Workplace } from '../types';
+import type { AreaCellDisplayCollection, AreaGeometry, NeighbourhoodCollection, Workplace } from '../types';
 import { reasonText } from '../features/neighbourhoods/reasons';
 import { CONTEXT_LAYERS } from './layers/contextLayers';
 
@@ -17,10 +17,12 @@ const DATA_ATTRIBUTION = 'Data: DataSF, San Mateo County, SamTrans, SFMTA, BART,
 export const WORKPLACE_COLORS = ['#e8590c', '#7048e8', '#0c8599', '#c2255c'];
 
 export const MATCH_COLORS: Record<MatchState, string> = { strong: '#27824d', partial: '#e4b63f', excluded: '#ba4e48', unknown: '#858e9b' };
+const ISOCHRONE_BORDER_OPACITY = 0.2;
 
 interface Props {
   neighbourhoods: NeighbourhoodCollection;
-  cells: AreaCellCollection;
+  cells: AreaCellDisplayCollection;
+  matchingActive: boolean;
   cellResults: Record<string, CellResult>;
   selectedCellId: string | null;
   onSelectCell: (id: string) => void;
@@ -41,6 +43,8 @@ export function MapView(props: Props) {
   const map = useRef<L.Map | null>(null);
   const nhLayer = useRef<L.GeoJSON | null>(null);
   const cellLayer = useRef<L.GeoJSON | null>(null);
+  const selectionLayer = useRef<L.GeoJSON | null>(null);
+  const selectionRenderer = useRef<L.Renderer | undefined>(undefined);
   const areaLayer = useRef<L.LayerGroup | null>(null);
   const areaRenderer = useRef<L.Renderer | undefined>(undefined);
   const wpLayer = useRef<L.LayerGroup | null>(null);
@@ -59,11 +63,13 @@ export function MapView(props: Props) {
     L.tileLayer(BASEMAP_URL, { attribution: BASEMAP_ATTRIBUTION, maxZoom: 19 }).addTo(m);
     m.attributionControl.addAttribution(DATA_ATTRIBUTION);
     // Pane order (bottom → top): context fills, neighbourhoods, commute areas, lines, points.
-    ([['context-fill', 380], ['cells', 390], ['neighbourhoods', 400], ['commute', 410], ['context-lines', 420], ['context-points', 430]] as const)
+    ([['context-fill', 380], ['cells', 390], ['neighbourhoods', 400], ['commute', 410], ['context-lines', 420], ['context-points', 430], ['selection', 440]] as const)
       .forEach(([name, z]) => { m.createPane(name).style.zIndex = String(z); });
+    m.getPane('selection')!.style.pointerEvents = 'none';
     m.on('click', (e) => { if (latest.current.addingWorkplace) latest.current.onMapPick(e.latlng.lat, e.latlng.lng); });
     areaLayer.current = L.layerGroup().addTo(m);
     areaRenderer.current = L.svg({ pane: 'commute' }) ?? undefined;
+    selectionRenderer.current = L.svg({ pane: 'selection' }) ?? undefined;
     wpLayer.current = L.layerGroup().addTo(m);
     map.current = m;
     return () => { m.remove(); map.current = null; ctx.current.clear(); building.current.clear(); };
@@ -99,9 +105,9 @@ export function MapView(props: Props) {
   useEffect(() => {
     nhLayer.current?.setStyle((f) => {
       const selected = f!.properties.id === props.selectedId;
-      return { fill: false, stroke: Boolean(props.results[f!.properties.id]?.eligible), color: selected ? '#1d2433' : '#697586', weight: selected ? 2.5 : 0.7, opacity: selected ? 1 : 0.2 };
+      return { fill: false, stroke: props.matchingActive && Boolean(props.results[f!.properties.id]?.eligible), color: selected ? '#1d2433' : '#697586', weight: selected ? 2.5 : 0.7, opacity: selected ? 1 : 0.2 };
     });
-  }, [props.results, props.selectedId]);
+  }, [props.results, props.selectedId, props.matchingActive]);
 
   // Fine SVG cells: built once, restyled on preference changes.
   useEffect(() => {
@@ -134,26 +140,58 @@ export function MapView(props: Props) {
   }, [props.cells]);
 
   useEffect(() => {
-    const contextFill = ['topography', 'crime', 'parks', 'collisions', 'air'].some((id) => props.visibleLayers.has(id));
+    const contextFill = ['topography', 'crime', 'parks', 'collisions', 'air', 'nightlife'].some((id) => props.visibleLayers.has(id));
     cellLayer.current?.eachLayer((l) => {
       const pathLayer = l as L.Path & { feature: { properties: { h3: string } } };
       const id = pathLayer.feature.properties.h3, r = props.cellResults[id];
       if (!r) return;
       const selected = id === props.selectedCellId;
       const excluded = r.state === 'excluded';
-      pathLayer.setStyle({ stroke: r.state !== 'excluded', color: selected ? '#102a43' : MATCH_COLORS[r.state], weight: r.state === 'excluded' ? 0 : selected ? 3 : 0.6,
-        fill: !excluded, fillColor: MATCH_COLORS[r.state], fillOpacity: excluded ? 0 : contextFill ? 0.2 : 0.55,
+      const hidden = excluded || !props.matchingActive;
+      pathLayer.setStyle({ stroke: !hidden, color: selected ? '#102a43' : MATCH_COLORS[r.state], weight: hidden ? 0 : selected ? 3 : 0.6,
+        fill: !hidden, fillColor: MATCH_COLORS[r.state], fillOpacity: hidden ? 0 : contextFill ? 0.2 : 0.55,
         dashArray: r.state === 'unknown' ? '1 3' : undefined });
       const element = pathLayer.getElement();
       if (element) {
         element.setAttribute('data-match-state', r.state);
-        element.setAttribute('display', excluded ? 'none' : 'inline');
-        element.setAttribute('aria-hidden', String(excluded));
-        element.setAttribute('tabindex', excluded ? '-1' : '0');
+        element.setAttribute('data-h3', id);
+        element.setAttribute('display', hidden ? 'none' : 'inline');
+        element.setAttribute('aria-hidden', String(hidden));
+        element.setAttribute('tabindex', hidden ? '-1' : '0');
         element.setAttribute('aria-label', `${r.name}, cell ${id}, ${r.state}. ${r.reasons.map((x) => reasonText(x, props.workplaces)).join('. ')}`);
       }
     });
-  }, [props.cells, props.cellResults, props.selectedCellId, props.visibleLayers, props.workplaces]);
+  }, [props.cells, props.cellResults, props.selectedCellId, props.visibleLayers, props.workplaces, props.matchingActive]);
+
+  // Selection is independent of context toggles and sits above every context overlay.
+  // Only eligible cells contribute to a district's rank; unknown/excluded cells stay out.
+  useEffect(() => {
+    selectionLayer.current?.remove();
+    selectionLayer.current = null;
+    const m = map.current;
+    if (!m || !props.matchingActive || !props.selectedId) return;
+    selectionLayer.current = L.geoJSON(props.cells, {
+      pane: 'selection', interactive: false,
+      filter: (f) => {
+        const r = props.cellResults[f.properties.h3];
+        return r?.nhoodId === props.selectedId && r.eligible;
+      },
+      style: (f) => {
+        const r = props.cellResults[f!.properties.h3];
+        const best = props.results[props.selectedId!]?.bestCellId === r.id;
+        return { renderer: selectionRenderer.current, className: 'selected-district-cell',
+          color: '#b8860b', weight: best || r.id === props.selectedCellId ? 3.5 : 2.5,
+          opacity: 1, fillColor: MATCH_COLORS[r.state], fillOpacity: 0.6 };
+      },
+      onEachFeature: (f, layer) => {
+        layer.on('add', () => {
+          const element = (layer as L.Path).getElement();
+          element?.setAttribute('data-h3', f.properties.h3);
+          element?.setAttribute('aria-hidden', 'true');
+        });
+      },
+    }).addTo(m);
+  }, [props.cells, props.cellResults, props.results, props.selectedId, props.selectedCellId, props.matchingActive]);
 
   // Commute areas, one outline per workplace.
   useEffect(() => {
@@ -163,7 +201,7 @@ export function MapView(props: Props) {
     props.areas.forEach((a) => {
       const i = props.workplaces.findIndex((w) => w.id === a.workplaceId);
       const color = WORKPLACE_COLORS[i % WORKPLACE_COLORS.length];
-      L.geoJSON(a.geometry, { pane: 'commute', interactive: false, style: { renderer: areaRenderer.current, className: 'individual-isochrone', color, weight: 2, opacity: 0.2, dashArray: a.source === 'fixture' ? '6 5' : undefined, fill: false } }).addTo(g);
+      L.geoJSON(a.geometry, { pane: 'commute', interactive: false, style: { renderer: areaRenderer.current, className: 'individual-isochrone', color, weight: 2, opacity: ISOCHRONE_BORDER_OPACITY, dashArray: a.source === 'fixture' ? '6 5' : undefined, fill: false } }).addTo(g);
     });
     if (props.overlap) L.geoJSON(props.overlap, { pane: 'commute', interactive: false,
       style: { renderer: areaRenderer.current, className: 'commute-overlap', color: '#126b38', opacity: 1, weight: 5, fillColor: '#66b883', fillOpacity: 0.08 } }).addTo(g);

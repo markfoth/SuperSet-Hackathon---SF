@@ -15,7 +15,7 @@ export function DataNotice({ onClose }: { onClose: () => void }) {
           <li><b>Street gradients</b> — U.S. Geological Survey 3DEP elevation and official SF / San Mateo County street centrelines. Rolling 40 m DEM estimates, not surveyed road grades.</li>
           <li><b>Residents and rent paid</b> — U.S. Census Bureau, American Community Survey 2020–2024 (tract).</li>
           <li><b>Air pollution</b> — CalEnviroScreen 5.0, California OEHHA (tract; pollution indicators only).</li>
-          <li><b>Extra parks, supermarkets, cafés, restaurants, bars</b> — © OpenStreetMap contributors (ODbL); map tiles © Stadia Maps / OpenMapTiles.</li>
+          <li><b>Extra parks, supermarkets, cafés, restaurants, bars, pubs and nightclubs</b> — © OpenStreetMap contributors (ODbL); map tiles © Stadia Maps / OpenMapTiles. Nightlife shows smoothed mapped venue density, not opening hours or attendance.</li>
           <li><b>Rents</b> — Zillow Observed Rent Index (ZORI), Zillow Group. ZIP-level asking rents.</li>
           <li><b>Photos</b> — Wikimedia Commons; author and licence shown with each photo.</li>
           <li><b>Commute areas</b> — live TravelTime estimates when configured. Offline estimates: public transport from a GTFS schedule model; walking, cycling and driving are synthetic straight-line models.</li>

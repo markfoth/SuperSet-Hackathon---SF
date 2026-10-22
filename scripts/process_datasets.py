@@ -1235,6 +1235,11 @@ def step_metrics(results: dict[str, dict]) -> dict:
     return {"neighbourhoods": len(out), "coverage": coverage}
 
 
+def step_nightlife() -> dict:
+    from build_nightlife import build
+    return build()
+
+
 STEPS: dict[str, Callable[[], dict]] = {
     "neighbourhoods": step_neighbourhoods,
     "crime": step_crime,
@@ -1248,6 +1253,7 @@ STEPS: dict[str, Callable[[], dict]] = {
     "rents": step_rents,
     "tracts": step_tracts,
     "pois": step_pois,
+    "nightlife": step_nightlife,
 }
 
 

@@ -253,33 +253,46 @@ burlingame:
   tags:
   - Peninsula
   - partial city
+  commons: "File:Burlingame Avenue, Burlingame, California, September 2002.jpg"
+  photo_caption: "Burlingame Avenue in 2002; city context beyond the study area's northern fragment."
   wiki: []
 broadmoor:
-  description: Unincorporated community within the northern Peninsula, grouped using the county jurisdiction boundary.
+  description: Named county community beside Daly City, grouped using the county boundary rather than a city neighbourhood boundary.
   tags:
   - Peninsula
-  - unincorporated community
+  - county community
   wiki:
   - Broadmoor, California
+  commons: "File:Westmoor Park, Daly City, California, US.jpg"
+  photo_caption: "Nearby Westmoor Park, Daly City."
 country-club-park:
-  description: Small unincorporated area inside the SF-to-SFO corridor. County boundaries provide grouping context; suitability
-    is assessed in individual cells.
+  description: Small residential county community near San Bruno and South San Francisco. County boundaries provide grouping context; suitability is assessed in individual cells.
   tags:
   - Peninsula
-  - unincorporated area
+  - county community
+  commons: "File:See's Candies headquarters - December 2025 - Sarah Stierch 01.jpg"
+  photo_caption: "Nearby See’s Candies headquarters, South San Francisco."
   wiki: []
 unincorporated-colma:
-  description: Unincorporated land near Colma, shown using the county jurisdiction boundary.
+  display_name: Colma station area
+  rental_search_name: Colma
+  description: County community around Colma BART, with residential, commercial and industrial land. This area is separate from the Town of Colma; the county boundary provides the grouping.
   tags:
   - Peninsula
-  - unincorporated area
+  - county community
+  - Colma BART
+  commons: "File:Colma station from the northwest, July 2023.jpg"
   wiki: []
 northern-peninsula-unincorporated-areas:
-  description: Remaining unincorporated land within the northern Peninsula cutoff. This grouping can contain separate pieces;
-    inspect local evidence before choosing an area.
+  display_name: San Bruno hills & county land
+  rental_search_name: San Bruno
+  description: Combined county land near San Bruno. The county community map identifies most of this boundary as San Francisco watershed lands and the county jail site. It is not a single neighbourhood or a verified housing area; inspect local evidence carefully.
   tags:
   - Peninsula
-  - unincorporated area
+  - county land
+  - mixed land uses
+  commons: "File:Sweeney Ridge Trail Panorama.jpg"
+  photo_caption: "Sweeney Ridge, in the surrounding hills."
   wiki: []
 sfo-airport:
   description: Airport land shown for geographic and commute context; excluded from residential candidates.

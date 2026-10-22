@@ -27,6 +27,22 @@ acs_tracts:
     tenants (incl. long-standing rent-controlled leases), not asking rent. The Census API needs a key;
     these official bulk files do not.
   status: processed
+area_cell_display:
+  source: Canonical H3 cells minus SF / San Mateo County / OpenStreetMap mapped parks and open space
+  source_url: https://data.sf.gov/d/gtr9-ntp6
+  licence: Inherits area_cells and parks input licences; see those entries
+  downloaded_at: '2026-10-22'
+  measurement_period: Per input dataset
+  resolution: H3 resolution 9 display footprints cut to mapped park boundaries
+  feature_count: 2229
+  raw_path: Processed area_cells.geojson and parks.geojson
+  processed_path:
+  - data/sf/processed/area_cell_display.geojson
+  script: scripts/build_cell_display.py
+  refresh: after area_cells or parks changes
+  limitations: Display footprint only, not verified housing parcels. Does not alter representative-point
+    matching or source-resolution indicators.
+  status: processed
 area_cells:
   source: H3 + DataSF SF neighbourhoods + San Mateo County land jurisdictions; contextual inputs recorded
     separately
@@ -274,9 +290,9 @@ neighbourhood_content:
   - public/images/neighbourhoods/
   script: scripts/build_content.py
   refresh: as needed
-  limitations: 48/58 groups have a photo; 48 cached locally (4378 KB, max 800 px). Descriptions are drafts
-    and avoid demographic claims. Photos are mostly Wikipedia lead images (3 hand-picked); some show a
-    landmark rather than streets.
+  limitations: 53/58 groups have a photo; 53 cached locally (4751 KB, max 800 px). Descriptions are drafts
+    and avoid demographic claims. Photos are mostly Wikipedia lead images or 11 hand-picked files; nearby/city-context
+    photos are explicitly captioned.
   status: processed
 neighbourhood_metrics:
   source: Derived — merge of the processed datasets above
@@ -315,6 +331,27 @@ neighbourhoods:
     not neighbourhood boundaries. Clipped at 37.60 N (SFO southern edge); bay/ocean/lakes removed. Geometry
     simplified at 5 m. `id` is a slug of the name and is the stable key used by every other dataset; renaming
     a neighbourhood changes it.
+  status: processed
+nightlife:
+  source: OpenStreetMap mapped bars, pubs and nightclubs via Overpass API
+  source_url: https://overpass-api.de/api/interpreter
+  licence: ODbL 1.0 — © OpenStreetMap contributors
+  downloaded_at: '2026-10-22'
+  measurement_period: OSM snapshot at download date
+  resolution: Venue points/way centroids; 300 m ground-distance Gaussian density, ~60 m Mercator display
+    pixels
+  feature_count: 570
+  raw_path: data/sf/raw/osm_nightlife.json; peninsula_water.geojson; peninsula_lakes.geojson
+  processed_path:
+  - data/sf/processed/nightlife_venues.geojson
+  - data/sf/processed/nightlife.json
+  - data/sf/processed/nightlife.png
+  script: scripts/build_nightlife.py via process_datasets.py --only nightlife
+  refresh: after refreshing osm_nightlife
+  limitations: Mapped venue concentration, not opening hours, noise, reviews, attendance or a completeness
+    guarantee. Low density may mean missing mapping. Display context only; never used to rank homes. Equal-weight
+    Gaussian density, 300 m ground-distance bandwidth, cut at 900 m. Same named OSM places within 25 m
+    deduplicated. Fixed scale at all zooms. Water/outside land and density below 0.25 transparent.
   status: processed
 parks:
   source: SF Rec & Park + San Mateo County GIS parks; supplemented by OpenStreetMap
