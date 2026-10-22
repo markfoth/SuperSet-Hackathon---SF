@@ -5,7 +5,7 @@ test('workplace → priorities → local cell → neighbourhood → shortlist', 
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/');
   await expect(page.locator('.match-legend b')).toContainText(/\d+ eligible cells/);
-  await expect(page.locator('.leaflet-cells-pane path[role="button"]')).toHaveCount(1226);
+  await expect(page.locator('.leaflet-cells-pane path[role="button"]')).toHaveCount(2408);
   await expect(page.locator('.sidebar')).toBeVisible();
   await expect(page.locator('.workplace')).toHaveCount(2);
   await page.screenshot({ path: `test-results/${testInfo.project.name}-overview.png`, fullPage: true });
@@ -27,13 +27,10 @@ test('workplace → priorities → local cell → neighbourhood → shortlist', 
   await expect(page.locator('.shortlist-count')).toContainText('1 saved');
   await page.getByRole('button', { name: '← Results' }).click();
   if (testInfo.project.name === 'mobile') await page.getByRole('button', { name: 'Commute & priorities', exact: true }).click();
-  await page.getByRole('checkbox', { name: 'Hills & street gradients', exact: true }).check();
-  // Street gradients deliberately appear only at street zoom, to avoid city-wide clutter.
-  for (let i = 0; i < 3; i++) {
-    await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
-    await expect(page.locator('.map')).not.toHaveClass(/leaflet-zoom-anim/);
-  }
-  await expect(page.locator('.leaflet-context-lines-pane canvas').first()).toBeVisible({ timeout: 20000 });
+  await expect(page.getByRole('checkbox', { name: 'Hills & street gradients', exact: true })).toHaveCount(0);
+  await page.getByRole('checkbox', { name: 'Topographic map', exact: true }).check();
+  await expect(page.locator('.topography-overlay')).toBeVisible();
+  await expect.poll(() => page.locator('.topography-overlay').evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
   await expect(page.locator('.map-layer-error')).toHaveCount(0);
   await page.screenshot({ path: `test-results/${testInfo.project.name}-discovery.png`, fullPage: true });
   expect(errors).toEqual([]);
@@ -63,6 +60,16 @@ test('near misses remain excluded until a deliberate relaxation; missing routes 
   await expect(page.locator('.near-misses')).toBeVisible();
   await page.locator('.near-miss').first().click();
   await expect(page.locator('.cell-detail')).toHaveClass(/excluded/);
+  const excluded = page.locator('.leaflet-cells-pane path[data-match-state="excluded"]');
+  expect(await excluded.count()).toBeGreaterThan(0);
+  expect(await excluded.evaluateAll((cells) => cells.every((cell) => getComputedStyle(cell).display === 'none'))).toBe(true);
+  await expect(excluded.first()).toHaveAttribute('tabindex', '-1');
+  await expect(page.locator('.match-legend')).not.toContainText('Excluded');
+  // Showing excluded results in the panel must never make them visible on the map.
+  await page.getByRole('button', { name: '← Results' }).click();
+  await page.getByRole('button', { name: 'Show other areas', exact: true }).click();
+  expect(await excluded.evaluateAll((cells) => cells.every((cell) => getComputedStyle(cell).display === 'none'))).toBe(true);
+  await page.locator('.near-miss').first().click();
   await expect(page.locator('.cell-detail')).toContainText('needs median DEM-derived street grade under 8%');
   if (testInfo.project.name === 'mobile') await page.getByRole('button', { name: 'Commute & priorities', exact: true }).click();
   await flat.getByRole('radio', { name: 'Important', exact: true }).click();
@@ -73,6 +80,39 @@ test('near misses remain excluded until a deliberate relaxation; missing routes 
   await page.getByRole('button', { name: 'Remove Financial District', exact: true }).click();
   await expect(page.locator('.match-legend b')).toContainText('0 eligible cells');
   await expect(page.locator('.leaflet-cells-pane path[fill="#858e9b"]').first()).toBeAttached();
+});
+
+test('rent sorting keeps feasible results and unknown prices last; map emphasises shared overlap', async ({ page }, testInfo) => {
+  await page.goto('/');
+  await expect.poll(() => page.locator('.cards > .card[data-area-id]').count()).toBeGreaterThan(1);
+  const outlines = page.locator('.individual-isochrone');
+  await expect(outlines.first()).toHaveAttribute('stroke-opacity', '0.2');
+  expect(await outlines.evaluateAll((paths) => paths.every((p) => p.getAttribute('stroke-opacity') === '0.2'))).toBe(true);
+  await expect(page.locator('.commute-overlap').first()).toHaveAttribute('stroke-opacity', '1');
+  await expect(page.locator('.commute-overlap').first()).toHaveAttribute('stroke-width', '5');
+  await expect(page.locator('.commute-overlap').first()).not.toHaveAttribute('stroke-dasharray');
+  if (testInfo.project.name === 'mobile') await page.getByRole('button', { name: /Results \(/ }).click();
+  const cards = page.locator('.cards > .card[data-area-id]');
+  const original = await cards.evaluateAll((nodes) => nodes.map((n) => n.getAttribute('data-area-id')!));
+  const metrics = (await page.request.get('/data/neighbourhood_metrics.json').then((r) => r.json())).neighbourhoods;
+  const sort = page.getByRole('combobox', { name: 'Sort by', exact: true });
+  await expect(cards.first()).toContainText(/\d+ areas? found/);
+  await expect(cards.first()).not.toContainText('candidate cells fit');
+  for (const direction of ['rent-asc', 'rent-desc']) {
+    await sort.selectOption(direction);
+    const ids = await cards.evaluateAll((nodes) => nodes.map((n) => n.getAttribute('data-area-id')!));
+    expect([...ids].sort()).toEqual([...original].sort());
+    const prices: (number | null)[] = ids.map((id) => metrics[id].rents?.typical_rent_zip_weighted ?? null);
+    const known = prices.filter((v): v is number => v != null);
+    expect(known).toEqual([...known].sort((a, b) => direction === 'rent-asc' ? a - b : b - a));
+    const firstMissing = prices.indexOf(null);
+    if (firstMissing >= 0) expect(prices.slice(firstMissing).every((p) => p == null)).toBe(true);
+  }
+  await page.reload();
+  if (testInfo.project.name === 'mobile') await page.getByRole('button', { name: /Results \(/ }).click();
+  await expect(sort).toHaveValue('rent-desc');
+  await sort.selectOption('recommended');
+  await expect.poll(() => cards.evaluateAll((nodes) => nodes.map((n) => n.getAttribute('data-area-id')!))).toEqual(original);
 });
 
 test('saved neighbourhood comparison and independent context layers', async ({ page }, testInfo) => {
@@ -96,4 +136,24 @@ test('saved neighbourhood comparison and independent context layers', async ({ p
   await crime.uncheck(); await expect(parks).toBeChecked(); await expect(transit).toBeChecked();
   await expect(page.locator('.map-layer-error')).toHaveCount(0);
   expect(errors).toEqual([]);
+});
+
+test('Peninsula cells show local evidence and missing incidents stay unknown under a Must', async ({ page }, testInfo) => {
+  await page.goto('/');
+  await expect(page.locator('.match-legend b')).toContainText(/\d+ eligible cells/);
+  const cell = page.locator('.leaflet-cells-pane path[aria-label^="South San Francisco, cell"]:is([data-match-state="strong"], [data-match-state="partial"])').first();
+  await cell.press('Enter');
+  await expect(page.locator('.detail h2')).toHaveText('South San Francisco');
+  await expect(page.locator('.detail')).toContainText('Peninsula city grouping');
+  await expect(page.locator('.detail')).toContainText('Local incident and injury-crash data are unavailable');
+  await expect(page.locator('.detail-photo img')).toBeVisible();
+  await expect.poll(() => page.locator('.detail-photo img').evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+  await expect(page.locator('.detail a').filter({ hasText: 'Craigslist' })).toHaveAttribute('href', /\/search\/pen\/apa/);
+  await expect(page.locator('.detail a').filter({ hasText: 'Zillow' })).toHaveAttribute('href', /San%20Mateo%20County/);
+  if (testInfo.project.name === 'mobile') await page.getByRole('button', { name: 'Commute & priorities', exact: true }).click();
+  await page.locator('.pref').filter({ hasText: 'Fewer reported incidents' }).getByRole('radio', { name: 'Must', exact: true }).click();
+  if (testInfo.project.name === 'mobile') await page.getByRole('button', { name: /Results \(/ }).click();
+  await expect(page.locator('.cell-detail')).toHaveClass(/unknown/);
+  await expect(page.locator('.cell-detail')).toContainText('Required information unavailable');
+  await page.screenshot({ path: `test-results/${testInfo.project.name}-peninsula.png`, fullPage: true });
 });

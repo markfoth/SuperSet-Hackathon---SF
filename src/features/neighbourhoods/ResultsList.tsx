@@ -4,6 +4,7 @@ import { usd } from '../../lib/format';
 import type { AreaResult, nearMisses } from '../filters/ranking';
 import type { NeighbourhoodContent, NeighbourhoodMetrics, Workplace } from '../../types';
 import { reasonText } from './reasons';
+import { sortResults, type ResultSort } from './sortResults';
 
 interface Props {
   ranked: AreaResult[];
@@ -21,6 +22,8 @@ interface Props {
   hasWorkplaces: boolean;
   nearMisses: ReturnType<typeof nearMisses>;
   onSelectCell: (id: string) => void;
+  sort: ResultSort;
+  onSortChange: (sort: ResultSort) => void;
 }
 
 export function ResultsList(p: Props) {
@@ -39,17 +42,24 @@ export function ResultsList(p: Props) {
   return (
     <div className="results">
       <div className="results-head">
-        <h2>{p.ranked.length} neighbourhood{p.ranked.length === 1 ? '' : 's'} with matches</h2>
+        <h2>{p.ranked.length} area{p.ranked.length === 1 ? '' : 's'} with matches</h2>
         <button className="btn link" onClick={p.onToggleExcluded}>
           {p.showExcluded ? 'Hide' : 'Show'} other areas
         </button>
       </div>
-      <p className="hint">Ranked by the best eligible local cell in each neighbourhood. Suitability varies within every boundary.</p>
+      <label className="results-sort">Sort by
+        <select aria-label="Sort by" value={p.sort} onChange={(e) => p.onSortChange(e.target.value as ResultSort)}>
+          <option value="recommended">Best match</option>
+          <option value="rent-asc">Rent: low to high</option>
+          <option value="rent-desc">Rent: high to low</option>
+        </select>
+      </label>
+      <p className="hint">Rent sorting uses ZIP-level asking estimates. Unavailable prices appear last.</p>
       {p.ranked.length === 0 && (
-        <div className="notice">No neighbourhood meets every requirement. Relax a “Must” or increase a commute time — the excluded list shows why each area was removed.</div>
+        <div className="notice">No area meets every requirement. Relax a “Must” or increase a commute time — the excluded list shows why each area was removed.</div>
       )}
       <ol className="cards">
-        {p.ranked.map((r, i) => (
+        {sortResults(p.ranked, p.metrics, p.sort).map((r, i) => (
           <Card key={r.id} r={r} rank={i + 1} {...p} />
         ))}
       </ol>
@@ -80,13 +90,13 @@ export function ResultsList(p: Props) {
   );
 }
 
-function Card({ r, rank, content, metrics, workplaces, onSelect, shortlist, onToggleShortlist }: Props & { r: AreaResult; rank: number }) {
+function Card({ r, rank, content, metrics, onSelect, shortlist, onToggleShortlist }: Props & { r: AreaResult; rank: number }) {
   const c = content[r.id];
   const m = metrics[r.id];
   const photo = c?.photos[0];
   const saved = shortlist.includes(r.id);
   return (
-    <li className="card" onClick={() => onSelect(r.id)}>
+    <li className="card" data-area-id={r.id} onClick={() => onSelect(r.id)}>
       <div className="card-photo">
         <NeighbourhoodPhoto photo={photo} />
         <span className="rank" style={{ background: MATCH_COLORS[r.state] }}>{rank}</span>
@@ -97,15 +107,13 @@ function Card({ r, rank, content, metrics, workplaces, onSelect, shortlist, onTo
       </div>
       <div className="card-body">
         <div className="card-title">{r.name}</div>
-        <div className="suitability"><b>{r.eligibleCount} of {r.candidateCount} candidate cells fit</b> · ~{Math.round(r.eligibleShare * 100)}% of candidate land</div>
-        <div className="share-bar" aria-hidden="true"><span style={{ width: `${r.eligibleShare * 100}%` }} /></div>
+        <div className="suitability"><b>{r.eligibleCount} area{r.eligibleCount === 1 ? '' : 's'} found</b></div>
         <div className="tags">{c?.tags.slice(0, 3).map((t) => <span key={t} className="tag">{t}</span>)}</div>
         <div className="card-facts">
-          {r.commute && workplaces.map((w) => (
-            <span key={w.id}>{Math.round((r.commute!.byWorkplace[w.id] ?? 0) * 100)}% of candidate land in {w.name} catchment</span>
-          ))}
-          {r.commute && <span><b>{Math.round(r.commute.all * 100)}% in all workplace catchments together</b></span>}
-          {m.rents?.typical_rent_zip_weighted != null && <span>~{usd(m.rents.typical_rent_zip_weighted)}/mo asking (ZIP-level)</span>}
+          {r.commute && <span>Within all workplace commute limits</span>}
+          {m.rents?.typical_rent_zip_weighted != null
+            ? <span className="asking-rent">~{usd(m.rents.typical_rent_zip_weighted)}/mo asking (ZIP-level)</span>
+            : <span>ZIP-level asking rent unavailable</span>}
         </div>
         {r.active > 0 && r.assessed < r.active && <div className="card-warn">{r.assessed} of {r.active} preferences could be assessed here</div>}
         {r.unchecked.length > 0 && <div className="card-warn">Couldn’t check a must-have (no data)</div>}

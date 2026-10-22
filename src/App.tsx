@@ -8,6 +8,7 @@ import { evaluate, summarize, nearMisses, ranked as rankResults, type EvaluateIn
 import { DEFAULT_PRIORITY } from './features/filters/preferences';
 import { NeighbourhoodDetail } from './features/neighbourhoods/NeighbourhoodDetail';
 import { ResultsList } from './features/neighbourhoods/ResultsList';
+import { RESULT_SORTS, type ResultSort } from './features/neighbourhoods/sortResults';
 import { ShortlistComparison } from './features/neighbourhoods/ShortlistComparison';
 import { loadData } from './lib/data';
 import { readStored, writeStored } from './lib/storage';
@@ -35,12 +36,16 @@ export default function App() {
   const [workplaces, setWorkplaces] = useState<Workplace[]>(() => readStored('cg:workplaces', DEFAULT_WORKPLACES, 'session'));
   const [prefs, setPrefs] = useState<Record<string, PreferenceLevel>>(() => readStored('cg:prefs', {}));
   const [priorityOrder, setPriorityOrder] = useState<string[]>(() => readStored('cg:priority:v1', DEFAULT_PRIORITY));
-  const [layers, setLayers] = useState<Set<string>>(() => new Set(readStored<string[]>('cg:layers', [])));
+  const [layers, setLayers] = useState<Set<string>>(() => new Set(readStored<string[]>('cg:layers', []).map((id) => id === 'hills' ? 'topography' : id)));
   const [shortlist, setShortlist] = useState<string[]>(() => readStored('cg:shortlist', []));
   const [commuteCache, setCommuteCache] = useState<Record<string, CommuteResult | undefined>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedCellId, setSelectedCellId] = useState<string | null>(null);
   const [showExcluded, setShowExcluded] = useState(false);
+  const [resultsSort, setResultsSort] = useState<ResultSort>(() => {
+    const saved = readStored<string>('cg:results-sort', 'recommended');
+    return RESULT_SORTS.includes(saved as ResultSort) ? saved as ResultSort : 'recommended';
+  });
   const [adding, setAdding] = useState(false);
   const [about, setAbout] = useState(false);
   const [compareSaved, setCompareSaved] = useState(false);
@@ -60,6 +65,7 @@ export default function App() {
   }, []);
 
   useEffect(() => writeStored('cg:workplaces', workplaces, 'session'), [workplaces]);
+  useEffect(() => writeStored('cg:results-sort', resultsSort), [resultsSort]);
   useEffect(() => writeStored('cg:prefs', prefs), [prefs]);
   useEffect(() => writeStored('cg:priority:v1', priorityOrder), [priorityOrder]);
   useEffect(() => writeStored('cg:layers', [...layers]), [layers]);
@@ -110,7 +116,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand"><span className="logo">◐</span> Common Ground <span className="tagline">Find where to live in San Francisco</span></div>
+        <div className="brand"><span className="logo">◐</span> Common Ground <span className="tagline">Find where to live from San Francisco to SFO</span></div>
         <div className="topbar-right">
           {shortlist.length > 0 && <button className="btn link shortlist-count" onClick={() => setCompareSaved(true)} title="Compare your saved areas">♥ {shortlist.length} saved</button>}
           <button className="btn link" onClick={() => setAbout(true)}>About the data</button>
@@ -133,7 +139,7 @@ export default function App() {
         </aside>
         <section className="map-wrap">
           <MapView
-            neighbourhoods={data.neighbourhoods} results={byId} showExcluded={showExcluded} selectedId={selectedId}
+            neighbourhoods={data.neighbourhoods} results={byId} selectedId={selectedId}
             cells={data.cells} cellResults={cellById} selectedCellId={selectedCellId} onSelectCell={selectCell}
             overlap={overlap} onSelect={selectNeighbourhood}
             areas={areas} workplaces={workplaces} addingWorkplace={adding}
@@ -147,9 +153,9 @@ export default function App() {
           {pending && workplaces.length > 0 && <div className="map-badge">Calculating commute areas…</div>}
           {!pending && blocked && <div className="map-badge error">Commute unavailable · results blocked</div>}
           <div className="match-legend" aria-label="Cell matching legend">
-            <b>{eligibleCells} eligible cells · {rankedList.length} neighbourhoods</b>
-            <div><span className="match-dot strong" /> Strong <span className="match-dot partial" /> Partial <span className="match-dot excluded" /> Excluded <span className="match-dot unknown" /> Unknown</div>
-            <small>~0.1 km² cells · representative-location matching<br />Teal dashed outline: shared commute area{areas.some((a) => a.source === 'fixture') ? ' · approximate demo' : ''}</small>
+            <b>{eligibleCells} eligible cells · {rankedList.length} areas</b>
+            <div><span className="match-dot strong" /> Strong <span className="match-dot partial" /> Partial <span className="match-dot unknown" /> Unknown</div>
+            <small>~0.1 km² areas · representative-location matching<br />Bold green border: shared commute area{areas.some((a) => a.source === 'fixture') ? ' · approximate demo' : ''}</small>
           </div>
         </section>
         <aside className={`resultsbar ${panel === 'results' ? 'show' : ''}`}>
@@ -166,6 +172,7 @@ export default function App() {
               showExcluded={showExcluded} onToggleExcluded={() => setShowExcluded((s) => !s)}
               onSelect={selectNeighbourhood} shortlist={shortlist} onToggleShortlist={toggleShortlist} blocked={blocked}
               pending={pending} hasWorkplaces={workplaces.length > 0} nearMisses={misses} onSelectCell={selectCell}
+              sort={resultsSort} onSortChange={setResultsSort}
             />
           )}
         </aside>

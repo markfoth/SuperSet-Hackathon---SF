@@ -81,6 +81,7 @@ def round_geom(geom):
 
 def write_geojson(gdf: gpd.GeoDataFrame, name: str, meta: dict | None = None) -> tuple[Path, int]:
     gdf = gdf.to_crs(4326).copy()
+    gdf["geometry"] = gdf.geometry.intersection(shapely.box(*STUDY_BBOX))
     gdf["geometry"] = gdf.geometry.apply(round_geom)
     gdf = gdf[~gdf.geometry.is_empty & gdf.geometry.notna()]
     fc = json.loads(gdf.to_json(drop_id=True))
@@ -159,13 +160,18 @@ def step_neighbourhoods() -> dict:
     src["id"] = src["name"].map(slug)
     if src["id"].duplicated().any():
         raise ValueError("neighbourhood slugs are not unique")
+    src["region"], src["boundary_kind"] = "sf", "analysis neighbourhood"
+    from peninsula import regions
+    extra = regions(src.geometry.union_all())
+    src = gpd.GeoDataFrame(pd.concat([src[["id", "name", "region", "boundary_kind", "geometry"]], extra],
+                                     ignore_index=True), crs=4326)
     m = src.to_crs(METRIC_CRS)
     src["area_km2"] = (m.area / 1e6).round(3)
     rp = m.representative_point().to_crs(4326)
     src["label_lat"], src["label_lon"] = rp.y.round(5), rp.x.round(5)
     # Simplify in metres (5 m tolerance) — invisible at city zoom, ~5x smaller file.
     m["geometry"] = m.geometry.simplify(5, preserve_topology=True)
-    out = gpd.GeoDataFrame(src[["id", "name", "area_km2", "label_lat", "label_lon"]],
+    out = gpd.GeoDataFrame(src[["id", "name", "region", "boundary_kind", "area_km2", "label_lat", "label_lon"]],
                            geometry=m.geometry, crs=METRIC_CRS).sort_values("id")
     path, n = write_geojson(out, "neighbourhoods.geojson")
     # Sample points for client-side commute eligibility ("62% of this area is within your commute").
@@ -176,15 +182,16 @@ def step_neighbourhoods() -> dict:
         "neighbourhoods": samples})
     d = dl("neighbourhoods")
     update_manifest("neighbourhoods", {
-        "source": "DataSF — Analysis Neighborhoods (SF Planning)",
-        "source_url": "https://data.sf.gov/d/j2bu-swwd (map view: https://data.sf.gov/d/p5b7-5n3h)",
-        "licence": "ODC Public Domain Dedication and License (PDDL)",
+        "source": "DataSF Analysis Neighborhoods + San Mateo County GIS jurisdictions, ocean/bay and lakes",
+        "source_url": "https://data.sf.gov/d/j2bu-swwd; https://gis.smcgov.org/maps/rest/services/ODP/Jurisdictions/FeatureServer/0; see peninsula_water / peninsula_lakes",
+        "licence": "SF: ODC PDDL; public San Mateo County GIS (no explicit redistribution licence in REST metadata)",
         "downloaded_at": d.get("downloaded_at"),
         "measurement_period": "Boundaries as published (last updated 2023-10)",
-        "resolution": "41 neighbourhood polygons",
-        "feature_count": n, "raw_path": "data/sf/raw/neighbourhoods.geojson",
+        "resolution": f"41 SF analysis neighbourhoods + {len(extra)} Peninsula city/unincorporated groups",
+        "feature_count": n, "raw_path": "data/sf/raw/neighbourhoods.geojson; peninsula_jurisdictions.geojson; peninsula_water.geojson; peninsula_lakes.geojson",
         "processed_path": [rel(path), rel(p_samples)], "script": SCRIPT, "refresh": "yearly",
-        "limitations": "Planning analysis boundaries, not official or colloquial neighbourhood names. "
+        "limitations": "SF uses planning analysis boundaries; Peninsula groups use county city/unincorporated boundaries, not neighbourhood boundaries. "
+                       "Clipped at 37.60 N (SFO southern edge); bay/ocean/lakes removed. "
                        "Geometry simplified at 5 m. `id` is a slug of the name and is the stable key "
                        "used by every other dataset; renaming a neighbourhood changes it.",
         "status": "processed",
@@ -240,7 +247,7 @@ def step_crime() -> dict:
     # Neighbourhood assignment: point-in-polygon where coordinates exist, else SFPD's own field.
     has_xy = df["lat"].notna() & df["lon"].notna()
     pts = gpd.GeoDataFrame(df[has_xy], geometry=gpd.points_from_xy(df.loc[has_xy, "lon"], df.loc[has_xy, "lat"]), crs=4326)
-    joined = gpd.sjoin(pts, nh[["id", "geometry"]], how="left", predicate="within")
+    joined = gpd.sjoin(pts, nh.loc[nh["region"].eq("sf"), ["id", "geometry"]], how="left", predicate="within")
     joined = joined[~joined.index.duplicated()]
     df["nhood_id"] = None
     df.loc[joined.index, "nhood_id"] = joined["id"]
@@ -254,7 +261,7 @@ def step_crime() -> dict:
     totals = df.dropna(subset=["nhood_id"]).groupby("nhood_id")["incident_id"].nunique()
     per_group = exploded.dropna(subset=["nhood_id"]).groupby(["nhood_id", "groups"])["incident_id"].nunique()
     cats = df.dropna(subset=["nhood_id"]).groupby(["nhood_id", "incident_category"])["incident_id"].nunique()
-    for nid in nh["id"]:
+    for nid in nh.loc[nh["region"].eq("sf"), "id"]:
         g = {grp: int(per_group.get((nid, grp), 0)) for grp in CRIME_GROUPS}
         total = int(totals.get(nid, 0))
         top = cats.loc[nid].sort_values(ascending=False).head(6) if nid in cats.index.get_level_values(0) else pd.Series(dtype=int)
@@ -269,6 +276,7 @@ def step_crime() -> dict:
         ranks = percentile_ranks({k: v[key] for k, v in by_nhood.items()})
         for k in by_nhood:
             by_nhood[k][f"{key}_pctile"] = ranks[k]
+    by_nhood.update({nid: None for nid in nh.loc[nh["region"].eq("peninsula"), "id"]})
 
     meta = {
         "window_start": window[0] if window else None, "window_end_exclusive": window[1] if len(window) > 1 else None,
@@ -420,6 +428,12 @@ def step_cycling() -> dict:
         "installed": pd.to_numeric(m["install_yr"], errors="coerce").astype("Int64"),
         "length_m": m["length_m"], "grade_pct": m["grade_pct"],
     }, geometry=m.geometry, crs=METRIC_CRS)
+    from peninsula import cycling
+    out["source"] = "SFMTA"
+    county = cycling()
+    if dem:
+        county["grade_pct"] = [segment_grade(g, dem[0]) for g in county.geometry]
+    out = gpd.GeoDataFrame(pd.concat([out, county], ignore_index=True), crs=METRIC_CRS)
     path, n = write_geojson(out, "cycling_network.geojson", meta={
         "categories": {"protected": "Class IV separated bikeway", "path": "Class I off-street path",
                        "lane": "Class II painted bike lane", "neighborway": "Neighborway (traffic-calmed)",
@@ -442,14 +456,14 @@ def step_cycling() -> dict:
     counts = Counter(out["cat"])
     d = dl("bike_network")
     update_manifest("cycling_network", {
-        "source": "DataSF — MTA Bike Network Linear Features (SFMTA)",
-        "source_url": "https://data.sf.gov/d/ygmz-vaxd",
-        "licence": "ODC Public Domain Dedication and License (PDDL)",
+        "source": "SFMTA bike network + San Mateo County GIS existing bikeways",
+        "source_url": "https://data.sf.gov/d/ygmz-vaxd; https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/17",
+        "licence": "SF: ODC PDDL; public San Mateo County GIS (see peninsula_cycling)",
         "downloaded_at": d.get("downloaded_at"), "measurement_period": "Network as of download date",
         "resolution": "Street segment (block-level line geometry)",
-        "feature_count": n, "raw_path": "data/sf/raw/bike_network.geojson",
+        "feature_count": n, "raw_path": "data/sf/raw/bike_network.geojson; data/sf/raw/peninsula_cycling.geojson",
         "processed_path": [rel(path)], "script": SCRIPT, "refresh": "quarterly",
-        "limitations": "San Francisco only (no Peninsula facilities). One feature per direction where "
+        "limitations": "County Peninsula facilities require Existing status; proposed/unknown-status facilities are omitted. Source update dates differ. One feature per direction where "
                        "facilities differ, so km totals count each side. Category counts: "
                        + ", ".join(f"{k} {v}" for k, v in sorted(counts.items()))
                        + ". grade_pct is a terrain estimate, not a surveyed street grade.",
@@ -499,7 +513,9 @@ def step_parks() -> dict:
     added = 0
     osm_note = "OSM supplement not available"
     osm_path = RAW_DIR / "osm_parks.json"
-    frames = [rpd_out]
+    from peninsula import parks as county_parks
+    county = county_parks()
+    frames = [rpd_out, county]
     if osm_path.exists():
         els = json.loads(osm_path.read_text(encoding="utf-8")).get("elements", [])
         polys = [(t, g) for t, g in osm_polygons(els) if t.get("leisure") in ("park", "nature_reserve") and t.get("name")]
@@ -509,12 +525,15 @@ def step_parks() -> dict:
                                    geometry=[g for _, g in polys], crs=4326).to_crs(METRIC_CRS)
             osm["geometry"] = osm.geometry.buffer(0)
             osm = osm[osm.area >= 2000]  # ≥0.2 ha
-            rpd_union = unary_union(rpd_out.geometry.values)
+            rpd_union = unary_union([*rpd_out.geometry.values, *county.geometry.values])
             # Keep only OSM parks mostly *outside* RPD land, then subtract the overlap.
             overlap = osm.geometry.intersection(rpd_union).area / osm.area
             osm = osm[overlap < 0.5].copy()
             osm["geometry"] = osm.geometry.difference(rpd_union)
             osm = osm[osm.area >= 2000]
+            osm["geometry"] = osm.geometry.intersection(
+                gpd.GeoSeries([shapely.box(*STUDY_BBOX)], crs=4326).to_crs(METRIC_CRS).iloc[0])
+            osm = osm[~osm.geometry.is_empty & (osm.area >= 2000)]
             # Drop OSM parks nested inside bigger OSM parks (e.g. sub-areas of the Presidio).
             osm = osm.assign(_area=osm.area).sort_values("_area", ascending=False).drop(columns="_area")
             kept, acc = [], None
@@ -548,12 +567,12 @@ def step_parks() -> dict:
                             "park_land_share": round(park_area / r.geometry.area, 3)}
     d = dl("parks_rpd")
     update_manifest("parks", {
-        "source": "DataSF — Recreation and Parks Properties (SF Rec & Park); supplemented by OpenStreetMap",
-        "source_url": "https://data.sf.gov/d/gtr9-ntp6 ; https://www.openstreetmap.org (Overpass API)",
-        "licence": "RPD: ODC PDDL. OSM supplement: ODbL 1.0 — attribution '© OpenStreetMap contributors' required",
+        "source": "SF Rec & Park + San Mateo County GIS parks; supplemented by OpenStreetMap",
+        "source_url": "https://data.sf.gov/d/gtr9-ntp6; https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/37; https://www.openstreetmap.org (Overpass API)",
+        "licence": "RPD: ODC PDDL. County: public GIS (see peninsula_parks). OSM: ODbL 1.0 — © OpenStreetMap contributors",
         "downloaded_at": d.get("downloaded_at"), "measurement_period": "Properties as of download date",
         "resolution": "Park polygons; neighbourhood access shares from H3 res-9 sample points",
-        "feature_count": n, "raw_path": "data/sf/raw/parks_rpd.geojson, data/sf/raw/osm_parks.json",
+        "feature_count": n, "raw_path": "data/sf/raw/parks_rpd.geojson; data/sf/raw/peninsula_parks.geojson; data/sf/raw/osm_parks.json",
         "processed_path": [rel(path)], "script": SCRIPT, "refresh": "yearly",
         "limitations": "RPD covers only city-owned parks; federal (Presidio, GGNRA) and state land comes from "
                        f"OSM. {osm_note}. Non-park RPD property types (libraries, concessions, Camp Mather, "
@@ -570,8 +589,8 @@ FEEDS = {
     "bart": {"files": ["gtfs_bart.zip"], "agency": "BART"},
     "muni": {"files": ["gtfs_muni_511.zip", "gtfs_muni.zip"], "agency": "Muni"},
     "caltrain": {"files": ["gtfs_caltrain.zip"], "agency": "Caltrain"},
-    # Only published through 511.org (needs API_511_KEY); included automatically once downloaded.
-    "samtrans": {"files": ["gtfs_samtrans.zip"], "agency": "SamTrans", "optional": True},
+    # Official keyless SamTrans feed, with 511 as an optional alternative.
+    "samtrans": {"files": ["gtfs_samtrans.zip", "gtfs_samtrans_public.zip"], "agency": "SamTrans", "optional": True},
 }
 
 
@@ -748,13 +767,13 @@ def step_transit() -> dict:
         update_manifest(f"gtfs_{fk}", {
             "source": {"bart": "BART GTFS (bart.gov developer data)", "muni": "SFMTA Muni GTFS",
                        "caltrain": "Caltrain GTFS (Trillium-hosted official feed)",
-                       "samtrans": "SamTrans GTFS via 511.org"}[fk],
+                       "samtrans": "Official SamTrans GTFS (public developer download or 511.org)"}[fk],
             "source_url": d.get("url"),
             "licence": {"bart": "BART Developer License Agreement (https://www.bart.gov/schedules/developers/developer-license-agreement) — revocable; no BART trademarks",
                         "muni": "SFMTA Transit Data License Agreement — derivative data must carry the notice "
                                 "'Reproduced with permission granted by the City and County of San Francisco…'",
                         "caltrain": "Caltrain developer terms — unresolved; attribute Caltrain",
-                        "samtrans": "511.org Open Data terms — review"}[fk],
+                        "samtrans": "SamTrans Developer License Agreement (https://www.samtrans.com/developer); revocable; no trademarks"}[fk],
             "downloaded_at": d.get("downloaded_at"),
             "measurement_period": (f"Timetable valid {feed_notes[fk]['valid_from']} to {feed_notes[fk]['valid_to']}; "
                                    + (f"COVERS target {TARGET_SERVICE_DATE} ({feed_notes[fk]['weekday_trips']} trips)"
@@ -774,7 +793,7 @@ def step_transit() -> dict:
             "status": "processed",
         })
     update_manifest("transit", {
-        "source": "Combined BART + Muni + Caltrain static GTFS", "source_url": "see gtfs_bart / gtfs_muni / gtfs_caltrain",
+        "source": "Combined BART + Muni + Caltrain + SamTrans static GTFS", "source_url": "see gtfs_* entries",
         "licence": "Per-feed (see gtfs_* entries); SFMTA notice required on the map attribution",
         "downloaded_at": today(), "measurement_period": "Representative weekday per feed",
         "resolution": "Stops (rail rolled up to parent stations) and one representative shape per route",
@@ -782,7 +801,8 @@ def step_transit() -> dict:
         "processed_path": [rel(p_stops), rel(p_routes)], "script": SCRIPT, "refresh": "quarterly",
         "limitations": f"{n_stops} stops, {n_routes} routes inside the study area. weekday_departures counts all "
                        "trips serving the stop on the representative day. 'Frequent' = >=120 weekday departures. "
-                       "SamTrans missing (511 key). Not a routing engine.",
+                       + ("SamTrans included from its official public feed. " if "samtrans" in available_feeds() else "SamTrans missing. ")
+                       + "Not a routing engine.",
         "status": "processed", "route_count": n_routes,
     })
     return {"stops": n_stops, "routes": n_routes, "summary": summary}
@@ -795,6 +815,11 @@ def step_hills() -> dict:
     # adjacent hillsides rather than gradients along the street network.
     from street_gradients import build_street_gradients
     return build_street_gradients()
+
+
+def step_topography() -> dict:
+    from build_topography import build
+    return build()
 
 
 # --- P1 groceries ----------------------------------------------------------------------------
@@ -850,6 +875,9 @@ def step_collisions() -> dict:
     j = gpd.sjoin(pts, nh[["id", "area_km2", "geometry"]], predicate="within")
     summary = {}
     for nid in nh["id"]:
+        if nh.loc[nh["id"].eq(nid), "region"].iloc[0] != "sf":
+            summary[nid] = None  # SF TransBASE has no Peninsula coverage; never report a false zero.
+            continue
         g = j[j["id"] == nid]
         a = float(nh.loc[nh["id"] == nid, "area_km2"].iloc[0])
         summary[nid] = {"injury_crashes": int(len(g)), "pedestrian": int((g["kind"] == "pedestrian").sum()),
@@ -960,11 +988,12 @@ def read_acs(path: Path, prefixes: tuple[str, ...]) -> dict[str, tuple[float | N
 
 
 def tract_weights(tracts: gpd.GeoDataFrame) -> pd.DataFrame:
-    """Area-weighted tract -> neighbourhood shares, by each tract's land inside SF neighbourhoods."""
+    """Land-area apportionment; clipped Peninsula tracts retain their full land denominator."""
     nh = load_nhoods().to_crs(METRIC_CRS)
-    t = tracts[tracts["GEOID"].str.startswith("06075")].to_crs(METRIC_CRS)[["GEOID", "geometry"]].copy()  # SF County only
-    land = unary_union(nh.geometry.values)
-    t["land_area"] = t.geometry.intersection(land).area
+    t = tracts[tracts["GEOID"].str.startswith(("06075", "06081"))].to_crs(METRIC_CRS)[["GEOID", "AREALAND", "geometry"]].copy()
+    sf_land = nh.loc[nh["region"].eq("sf"), "geometry"].union_all()
+    t["land_area"] = np.where(t["GEOID"].str.startswith("06075"), t.geometry.intersection(sf_land).area,
+                             pd.to_numeric(t["AREALAND"], errors="coerce"))
     t = t[t["land_area"] > 0]
     inter = gpd.overlay(t, nh[["id", "geometry"]], how="intersection")
     inter["w"] = inter.area / inter["land_area"]
@@ -991,7 +1020,7 @@ def step_tracts() -> dict:
     # every value stays the whole tract's).
     w_, s_, e_, n_ = STUDY_BBOX
     box = shapely.box(w_, s_, e_, n_)
-    tracts = tracts[tracts.geometry.representative_point().within(box)].copy()
+    tracts = tracts[tracts["GEOID"].str.startswith(("06075", "06081")) & tracts.geometry.intersects(box)].copy()
     tracts["geometry"] = tracts.geometry.intersection(box)
     land_km2 = tracts["AREALAND"].astype(float) / 1e6
     tracts["population"] = [pop.get(g, (None, None))[0] for g in tracts["GEOID"]]
@@ -1117,7 +1146,7 @@ def step_pois() -> dict:
         "downloaded_at": dl("osm_food_drink").get("downloaded_at"), "measurement_period": "OSM snapshot at download date",
         "resolution": "Point (way/relation centroids)", "feature_count": sum(counts.values()),
         "raw_path": "data/sf/raw/osm_food_drink.json", "processed_path": paths, "script": SCRIPT, "refresh": "6 months",
-        "limitations": "San Francisco only. Unnamed places dropped. Volunteer-mapped: openings/closures lag. "
+        "limitations": "SF and northern Peninsula through SFO. Unnamed places dropped. Volunteer-mapped: openings/closures lag. "
                        + ", ".join(f"{k} {v}" for k, v in counts.items())
                        + ". Discovery context only — never a ranking input.",
         "status": "processed",
@@ -1153,7 +1182,7 @@ def step_metrics(results: dict[str, dict]) -> dict:
         nid = r["id"]
         c = crime.get(nid)
         out[nid] = {
-            "name": r["name"], "area_km2": r["area_km2"],
+            "name": r["name"], "area_km2": r["area_km2"], "region": r["region"], "boundary_kind": r["boundary_kind"],
             "crime": {k: c[k] for k in ("total", "per_km2", "violent", "property", "vehicle_breakin",
                                         "violent_per_km2", "property_per_km2", "per_km2_pctile",
                                         "top_categories")} if c else None,
@@ -1197,10 +1226,10 @@ def step_metrics(results: dict[str, dict]) -> dict:
         "source": "Derived — merge of the processed datasets above", "source_url": "n/a (derived)",
         "licence": "Inherits the most restrictive input (Zillow terms for the rents block)",
         "downloaded_at": today(), "measurement_period": "Per input dataset",
-        "resolution": "Neighbourhood (41), computed from finer inputs",
+        "resolution": f"{len(out)} SF neighbourhood / Peninsula jurisdiction groups, computed from finer inputs",
         "feature_count": len(out), "raw_path": "n/a", "processed_path": [rel(path)], "script": SCRIPT,
         "refresh": "after any input rebuild",
-        "limitations": "Coverage (neighbourhoods with data): " + ", ".join(f"{k} {v}/41" for k, v in coverage.items()),
+        "limitations": "Coverage (groups with data): " + ", ".join(f"{k} {v}/{len(out)}" for k, v in coverage.items()),
         "status": "processed",
     })
     return {"neighbourhoods": len(out), "coverage": coverage}
@@ -1213,6 +1242,7 @@ STEPS: dict[str, Callable[[], dict]] = {
     "parks": step_parks,
     "transit": step_transit,
     "hills": step_hills,
+    "topography": step_topography,
     "groceries": step_groceries,
     "collisions": step_collisions,
     "rents": step_rents,

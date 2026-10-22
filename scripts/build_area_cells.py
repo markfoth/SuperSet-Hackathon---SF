@@ -35,6 +35,7 @@ def canonical_grid() -> gpd.GeoDataFrame:
     overlaps["overlap_m2"] = overlaps.area
     parents = overlaps.sort_values(["h3", "overlap_m2", "id"]).drop_duplicates("h3", keep="last").set_index("h3")["id"]
     grid["nhood_id"] = grid["h3"].map(parents)
+    grid["region"] = grid["nhood_id"].map(nh.set_index("id")["region"])
     grid["area_m2"] = grid.area.round().astype(int)
     grid["land_share"] = (grid.area / grid["h3"].map(lambda c: h3.cell_area(c, unit="m^2"))).round(3)
     points = []
@@ -103,6 +104,11 @@ def add_indicators(grid):
     grid["crime_source_h3"] = grid["h3"].map(lambda c: h3.cell_to_parent(c, 8))
     # Missing coarse cells are not automatically zero reports: source coverage is unknown.
     grid["incidents_per_km2"] = grid["crime_source_h3"].map(crime_lookup)
+    grid.loc[grid["region"].eq("peninsula"), "incidents_per_km2"] = None
+    dedicated = grid["nhood_id"].isin(["sfo-airport", "california-golf-club", "olympic-country-club",
+                                      "san-bruno-mountain-park", "brisbane-quarry"])
+    grid.loc[dedicated, "residential"] = False
+    grid.loc[dedicated, "residential_reason"] = "Dedicated airport, golf, park or quarry jurisdiction; not a residential candidate"
     tracts = read_layer("census_tracts.geojson")
     grid["tract_id"], grid["pm25_percentile"] = None, None
     if tracts is not None:
@@ -129,8 +135,8 @@ def build() -> dict:
     grid = add_indicators(grid)
     path, count = write_geojson(grid, "area_cells.geojson", meta={
         "generated": today(), "h3_resolution": 9,
-        "parent_method": "largest overlap with one of 41 neighbourhood polygons",
-        "geometry": "H3 polygons clipped to SF neighbourhood land; <1000 m² coastal slivers omitted",
+        "parent_method": "largest overlap with one SF analysis neighbourhood or Peninsula city/unincorporated group",
+        "geometry": "H3 polygons clipped to SF / northern Peninsula land through SFO; <1000 m² coastal slivers omitted",
         "matching_point": "H3 centre, or representative land point for coastal clipped cells",
         "null": "measurement unavailable, never a zero, pass or failure",
         "sources": {
@@ -143,7 +149,7 @@ def build() -> dict:
         },
     })
     update_manifest("area_cells", {
-        "source": "Derived from H3 and DataSF Analysis Neighborhoods; contextual inputs recorded separately",
+        "source": "H3 + DataSF SF neighbourhoods + San Mateo County land jurisdictions; contextual inputs recorded separately",
         "source_url": "https://data.sf.gov/d/j2bu-swwd", "licence": "Inherits inputs; H3 Apache-2.0",
         "downloaded_at": today(), "measurement_period": "Per input dataset",
         "resolution": "H3 resolution 9 (~0.105 km²); coarser indicators retain original source ids",

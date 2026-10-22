@@ -9,8 +9,8 @@ labelled with its method; none of them is a live routing result.
            wait of half the route's headway (capped at 10 min), walking
            transfers between stops ≤ 400 m, and walking access/egress. It is
            solved *backwards from the workplace*, i.e. travel from each home
-           cell TO work (inbound, arrive-by in spirit). No SamTrans (needs a
-           511 key), no timetable-exact connections, no fares.
+           cell TO work (inbound, arrive-by in spirit). Includes SamTrans when
+           its official public or 511 feed is present; no timetable-exact connections or fares.
   walk     SYNTHETIC — straight-line distance × 1.3 detour at 4.8 km/h.
   bike     SYNTHETIC — straight-line distance × 1.3 detour at 14 km/h; ignores hills.
   drive    SYNTHETIC — straight-line distance × 1.4 detour at 32 km/h + 5 min
@@ -71,14 +71,11 @@ def to_min(t: str) -> float | None:
 
 
 def land_mask():
-    """SF neighbourhoods ∪ Census ZCTAs in the study box — a cheap land polygon for the Peninsula."""
-    parts = [gpd.read_file(PROCESSED_DIR / "neighbourhoods.geojson").to_crs(METRIC_CRS).union_all()]
-    z = RAW_DIR / "zcta_2020.geojson"
-    if z.exists():
-        parts.append(gpd.read_file(z).to_crs(METRIC_CRS).union_all())
+    """The same SF / county jurisdiction land as matching, with county water removed."""
+    land = gpd.read_file(PROCESSED_DIR / "neighbourhoods.geojson").to_crs(METRIC_CRS).union_all()
     w, s, e, n = STUDY_BBOX
     box = gpd.GeoSeries([shapely.box(w, s, e, n)], crs=4326).to_crs(METRIC_CRS).iloc[0]
-    return unary_union(parts).intersection(box)
+    return land.intersection(box)
 
 
 def origin_cells(mask) -> gpd.GeoDataFrame:
@@ -257,7 +254,7 @@ def main() -> int:
     })
     update_manifest("commute_fixtures", {
         "source": "Derived — Common Ground commute fixtures (GTFS schedule model + synthetic speed models)",
-        "source_url": "n/a (derived from gtfs_bart, gtfs_muni, gtfs_caltrain)",
+        "source_url": "n/a (derived from the available gtfs_* feeds, including SamTrans when present)",
         "licence": "Inherits GTFS terms (SFMTA notice required)", "downloaded_at": today(),
         "measurement_period": "Representative weekday AM peak 07:00-10:00 per feed",
         "resolution": f"H3 res-{CELL_RES} origin cells (~174 m) dissolved to polygons, simplified 20 m",
@@ -266,7 +263,8 @@ def main() -> int:
         "limitations": (f"Timetables not covering {TARGET_SERVICE_DATE}: {', '.join(EXPIRED_FEEDS)} — labelled in the UI. "
                         if EXPIRED_FEEDS else "") +
                        "Transit: approximate, not timetable-exact; waits = half headway (cap 10 min); "
-                       "SamTrans absent; SFO uses an assumed 10 min AirTrain link from SFO BART. Walk/bike/drive "
+                       + ("SamTrans included; " if "samtrans" in available_feeds() else "SamTrans absent; ")
+                       + "SFO uses an assumed 10 min AirTrain link from SFO BART. Walk/bike/drive "
                        "are SYNTHETIC straight-line models and must be labelled as such in the UI.",
         "status": "processed",
     })

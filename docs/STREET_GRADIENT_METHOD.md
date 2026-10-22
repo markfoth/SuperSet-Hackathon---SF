@@ -18,6 +18,20 @@ street layers and road classes 2–5, plus addressed private streets. Freeways, 
 park, pseudo and pedestrian/stair layers are excluded. Class 5 plus a nonzero address range
 supports residential eligibility but does not prove parcel land use.
 
+The northern Peninsula extension adds **6,337 line parts** from the official San Mateo County
+[street layer](https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/26).
+Only unexpired LOCAL, ARTERIAL, COLLECTOR and SERVICE roads are used; freeways, ramps, tracks,
+trails and SFO-only road classes are omitted. Addressed LOCAL roads support residential evidence.
+County lines are clipped to the water-free study land before sampling. The same DEM method,
+minimum length and valid-coverage thresholds apply. SF and county lines are separate lazy-loaded
+GeoJSON files to keep each below 3 MB; **1,877 of 2,408 cells** have sufficient street coverage.
+
+UI follow-up: the user replaced the displayed street-gradient layer with a topographic elevation
+overlay. Street gradients above remain the Flatter streets ranking input. The street GeoJSON
+files stay available for audit but are no longer requested by the map. `build_topography.py`
+separately exports a 30 m Web Mercator display grid from the same DEM, colours by elevation above
+sea level and masks county bay/ocean/lakes. Elevation colours never substitute for road grades.
+
 Each original road is split into approximately 10 m pieces. A piece's grade is the absolute
 elevation difference over a 40 m window centred on it; end windows shift inward. Short
 roads (<40 m) have null grades. Windows are calculated before clipping at H3 boundaries.

@@ -10,7 +10,7 @@ mkdirSync(dest, { recursive: true });
 let n = 0;
 let bytes = 0;
 for (const f of readdirSync(src)) {
-  if (f.startsWith('_') || !/\.(geo)?json$/.test(f)) continue;
+  if (f.startsWith('_') || !/\.(?:(geo)?json|png)$/.test(f)) continue;
   cpSync(join(src, f), join(dest, f));
   bytes += statSync(join(src, f)).size;
   n += 1;

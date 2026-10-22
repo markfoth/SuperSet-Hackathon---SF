@@ -1,6 +1,6 @@
 # Common Ground — working instructions
 
-Common Ground helps people decide **which San Francisco neighbourhood to live in** from their
+Common Ground helps people decide **where to live from San Francisco through the northern Peninsula to SFO** from their
 commute(s) and priorities. It is an area-discovery tool, **not** a listings site: it ends by linking
 out to rental platforms.
 
@@ -17,6 +17,9 @@ out to rental platforms.
 - **Missing data is never a pass or a fail.** `null` stays `null`. A missing Must or required route
   makes the cell unknown and prevents it appearing as a confirmed match. Missing soft values are
   disclosed and sorted after measured evidence, never converted to zero.
+- **Peninsula coverage is explicit.** County city/unincorporated groups are not SF neighbourhoods.
+  Stop at SFO's southern edge (37.60 N), remove county bay/ocean/lakes, and keep local police/crash
+  measurements null until a compatible source exists. SamTrans has a public keyless GTFS feed.
 - **No universal liveability score.** Ranking compares absolute measurement bands in the user's
   explicit priority order. Important uses finer bands than Nice. See `docs/RANKING_METHOD.md`.
 - **Street gradients, not terrain averages.** Use length-weighted 40 m DEM-derived gradients along
@@ -35,6 +38,10 @@ out to rental platforms.
 - **POIs (cafes, restaurants, bars) are discovery context**, never ranking inputs; drawn at zoom >= 15.
 - Routing: TravelTime **free Basic plan only** (approved for the hackathon; no paid plan) via
   `server/routing-proxy.mjs`. Keys never reach the browser. Offline fixtures must keep working.
+- Map presentation: excluded cells are always hidden, including selection and “Show other areas”.
+  No excluded legend graphic. Individual isochrone borders are 20% opaque; shared overlap has a
+  bold solid green border. The topographic layer shows USGS elevation, not street slope; street
+  gradients remain the ranking input. Rent sorting never changes eligibility; missing rents stay last.
 
 ## Architecture (see docs/ARCHITECTURE.md)
 

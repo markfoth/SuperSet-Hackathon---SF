@@ -1,11 +1,12 @@
 import { defineConfig } from 'vitest/config';
+import { loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
-  // `npm run proxy` serves live routing on :8787; the app calls it as /api (VITE_ROUTING_PROXY_URL=/api).
-  server: { proxy: { '/api': { target: 'http://localhost:8787', changeOrigin: false } } },
+  // Match the server's configured port; the browser calls /api without seeing credentials.
+  server: { proxy: { '/api': { target: `http://localhost:${loadEnv(mode, '.', 'ROUTING_').ROUTING_PROXY_PORT || 8787}`, changeOrigin: false } } },
   test: {
     include: ['src/**/*.test.ts'],
   },
-});
+}));

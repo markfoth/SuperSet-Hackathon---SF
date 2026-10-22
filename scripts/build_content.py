@@ -172,11 +172,11 @@ def main(argv=None) -> int:
     update_manifest("neighbourhood_content", {
         "source": "Common Ground editorial drafts (data/sf/content/neighbourhoods.yaml) + Wikimedia Commons photos",
         "source_url": "https://commons.wikimedia.org", "licence": "Text: project's own. Photos: per-photo CC BY / CC BY-SA / CC0 / PD — attribution shown in UI",
-        "downloaded_at": today(), "measurement_period": "n/a", "resolution": "Neighbourhood (41)",
+        "downloaded_at": today(), "measurement_period": "n/a", "resolution": f"{len(out)} SF neighbourhood / Peninsula jurisdiction groups",
         "feature_count": len(out), "raw_path": "data/sf/content/neighbourhoods.yaml",
         "processed_path": [rel(path), "public/images/neighbourhoods/"], "script": "scripts/build_content.py",
         "refresh": "as needed",
-        "limitations": f"{with_photo}/41 neighbourhoods have a photo; {local} cached locally ({local_kb:.0f} KB, "
+        "limitations": f"{with_photo}/{len(out)} groups have a photo; {local} cached locally ({local_kb:.0f} KB, "
                        f"max {MAX_WIDTH} px). Descriptions are drafts and avoid demographic claims. Photos are mostly "
                        "Wikipedia lead images (3 hand-picked); some show a landmark rather than streets.",
         "status": "processed",

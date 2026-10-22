@@ -10,5 +10,7 @@ export default defineConfig({
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1512, height: 982 } } },
     { name: 'mobile', use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium' } },
   ],
-  webServer: { command: 'npm run dev -- --host localhost --port 5187 --strictPort', url: 'http://localhost:5187', reuseExistingServer: false },
+  // Keep regression tests offline even when the developer has live credentials in .env.
+  webServer: { command: 'npm run dev -- --host localhost --port 5187 --strictPort', url: 'http://localhost:5187', reuseExistingServer: false,
+    env: { VITE_COMMUTE_PROVIDER: 'fixture' } },
 });

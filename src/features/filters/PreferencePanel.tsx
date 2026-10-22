@@ -60,6 +60,6 @@ export function PreferencePanel({ input, onChange, onOrderChange }: Props) {
 }
 
 function mustText(p: { excluded: number; eligibleNow: number; unchecked: number; neighbourhoodsLost: number }) {
-  const base = `Must: ${p.excluded}/${p.eligibleNow} eligible cells excluded · ${p.neighbourhoodsLost} neighbourhood${p.neighbourhoodsLost === 1 ? '' : 's'} lose all matches.`;
+  const base = `Must: ${p.excluded}/${p.eligibleNow} eligible cells excluded · ${p.neighbourhoodsLost} area${p.neighbourhoodsLost === 1 ? '' : 's'} lose all matches.`;
   return p.unchecked ? `${base} ${p.unchecked} cells become unknown (no measurement).` : base;
 }

@@ -23,6 +23,8 @@ export type PreferenceLevel = 'off' | 'nice' | 'important' | 'must';
 /** One neighbourhood's row in neighbourhood_metrics.json. A null block = not measured. */
 export interface NeighbourhoodMetrics {
   name: string;
+  region?: 'sf' | 'peninsula';
+  boundary_kind?: string;
   area_km2: number;
   crime: {
     total: number;
@@ -94,6 +96,8 @@ export interface ZipRent {
 export interface NeighbourhoodProps {
   id: string;
   name: string;
+  region?: 'sf' | 'peninsula';
+  boundary_kind?: string;
   area_km2: number;
   label_lat: number;
   label_lon: number;

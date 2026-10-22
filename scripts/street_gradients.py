@@ -31,7 +31,8 @@ def usable_streets() -> gpd.GeoDataFrame:
                   & (classes | (roads["layer"].eq("PRIVATE") & addressed))
                   & roads.geometry.geom_type.eq("LineString")].copy()
     roads["residential_evidence"] = addressed.loc[roads.index] & roads["classcode"].astype(str).eq("5")
-    return roads.to_crs(METRIC_CRS)
+    from peninsula import streets
+    return gpd.GeoDataFrame(pd.concat([roads.to_crs(METRIC_CRS), streets()], ignore_index=True), crs=METRIC_CRS)
 
 
 def weighted_quantile(values, weights, q):
@@ -84,11 +85,16 @@ def build_street_gradients() -> dict:
                           "grade_pct": weighted_quantile(values, lengths, 0.5) if coverage >= MIN_COVERAGE else None,
                           "geometry": road.geometry.simplify(2)})
         pieces.extend(windows)
-    segment_path, segment_count = write_geojson(gpd.GeoDataFrame(summaries, crs=METRIC_CRS), "street_gradients.geojson", meta={
+    segments = gpd.GeoDataFrame(summaries, crs=METRIC_CRS)
+    segment_meta = {
         "method": "USGS DEM-derived, not surveyed; absolute grade over rolling 40 m windows, sampled every ~10 m",
-        "filter": "active street layers, road classes 2-5; addressed private streets; no freeway, ramp, park/paper/stair layer",
+        "filter": "SF active road classes 2-5 and addressed private streets; county local/arterial/collector/service roads; no freeway, ramp or trail",
         "coverage": "fraction of street length with valid elevation at both ends of a rolling window; null grade if <75% or <40 m",
-    })
+    }
+    county = segments["cnn"].str.startswith("smc:")
+    # Independent lazy-loaded files keep each regional layer under the 3 MB budget.
+    segment_path, segment_count = write_geojson(segments[~county], "street_gradients.geojson", meta=segment_meta)
+    county_path, county_count = write_geojson(segments[county], "street_gradients_peninsula.geojson", meta=segment_meta)
     grid = canonical_grid()
     micro = gpd.GeoDataFrame(pieces, crs=METRIC_CRS)
     inter = gpd.overlay(micro, grid[["h3", "nhood_id", "geometry"]], how="intersection", keep_geom_type=True)
@@ -145,12 +151,12 @@ def build_street_gradients() -> dict:
                                    "from": road["f_st"], "to": road["t_st"], "median_grade_pct": summary["grade_pct"]})
     write_summary("street_gradient_validation.json", {"method": "Unmodified computed values; geographical contrasts are validation, not calibration", "areas": validation, "street_segments": segment_checks})
     entry = {
-        "source": "USGS 3DEP bare-earth DEM + SF DPW Streets – Active and Retired (DataSF 3psu-pn9h)",
-        "source_url": "https://data.sf.gov/d/3psu-pn9h; https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer",
-        "licence": "USGS US public domain; DataSF ODC PDDL", "downloaded_at": dl("streets_active").get("downloaded_at") or today(),
+        "source": "USGS 3DEP bare-earth DEM + official SF DPW and San Mateo County street centrelines",
+        "source_url": "https://data.sf.gov/d/3psu-pn9h; https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/26; https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer",
+        "licence": "USGS US public domain; DataSF ODC PDDL; public San Mateo County GIS (see peninsula_streets)", "downloaded_at": dl("streets_active").get("downloaded_at") or today(),
         "measurement_period": "Street snapshot at download; DEM composite of lidar acquisitions",
         "resolution": "Street centrelines sampled every ~10 m; 40 m rolling windows; length-weighted H3-9 aggregates",
-        "raw_path": "data/sf/raw/streets_active.geojson; data/sf/raw/elevation_3dep_10m.tif",
+        "raw_path": "data/sf/raw/streets_active.geojson; data/sf/raw/peninsula_streets.geojson; data/sf/raw/elevation_3dep_10m.tif",
         "script": "scripts/street_gradients.py via process_datasets.py --only hills", "refresh": "after street or DEM refresh",
         "limitations": "DEM-derived street-gradient estimates, not surveyed. Bare-earth DEM cannot resolve bridge decks, tunnels, "
                         "retaining walls or stairs. No windows on roads <40 m. Null cell grade below 100 m valid street length or 75% coverage. "
@@ -158,5 +164,6 @@ def build_street_gradients() -> dict:
         "status": "processed",
     }
     update_manifest("street_gradients", {**entry, "feature_count": segment_count, "processed_path": [rel(segment_path), "data/sf/processed/street_gradient_validation.json"]})
+    update_manifest("street_gradients_peninsula", {**entry, "feature_count": county_count, "processed_path": [rel(county_path)]})
     update_manifest("elevation", {**entry, "feature_count": count, "processed_path": [rel(cell_path), "data/sf/processed/cycling_network.geojson (grade_pct)"]})
-    return {"cells": count, "streets": segment_count, "summary": neighbourhoods}
+    return {"cells": count, "streets": segment_count + county_count, "summary": neighbourhoods}

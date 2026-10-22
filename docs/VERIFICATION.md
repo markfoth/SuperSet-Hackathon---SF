@@ -76,13 +76,9 @@ ordinary frontend development never needs Python or raw downloads.
 
 ## Remaining limitations and external input
 
-- **Live-provider validation pending:** user offered to add `TRAVELTIME_APP_ID` and
-  `TRAVELTIME_API_KEY` to gitignored `.env`; no keys were available during verification.
-  The server/client path and HTTP failure handling are tested, but no genuine TravelTime
-  polygon has been claimed as verified. After adding keys, run `npm.cmd run proxy`; in another
-  PowerShell terminal set `$env:VITE_COMMUTE_PROVIDER='proxy'` and
-  `$env:VITE_ROUTING_PROXY_URL='/api'`, then start development. Check `/health` and verify the
-  workplace label says TravelTime rather than the disclosed fixture fallback.
+- **Live-provider validation completed in the follow-up below.** Credentials are now in
+  gitignored `.env`; they remain necessary on any other checkout. Offline regression tests
+  explicitly select fixture mode so the presence of local credentials cannot consume API quota.
 - Offline transit uses the documented GTFS approximation and expired Muni timetable; other
   offline modes remain explicitly **Synthetic**. Custom workplaces block when neither routing
   nor a supported fixture is available.
@@ -96,3 +92,99 @@ ordinary frontend development never needs Python or raw downloads.
   remain available in cell details, canonical metadata and the manifest.
 - Existing unresolved data redistribution terms and basemap hosting requirements still apply
   before any future public deployment; no such deployment is part of this handoff.
+
+## TravelTime and excluded borders follow-up — 22 October 2026
+
+The reported custom-workplace error came from fixture mode: `.env` selected
+`VITE_COMMUTE_PROVIDER=fixture`, so no API request was attempted. It also enabled
+`ROUTING_DRY_RUN=1`, which previews a request without calculating an area. The existing proxy
+on 8787 reported `configured: false`; port 5173 served a different, older checkout.
+
+Local `.env` now selects `proxy`, `/api`, `ROUTING_DRY_RUN=0`, and port **8789**. This checkout's
+Vite server runs on **5188**, forwarding `/api` to the configured routing port. Real credentials
+were preserved in `.env` and cleared from tracked `.env.example`. Exact credential values were
+checked against the example and production JS/CSS: no matches. No credentials were printed.
+
+A real arrival search for a new workplace at 37.7765, -122.4167 (transit, 45 minutes,
+08:45 next weekday) returned **HTTP 200**, `source: traveltime`, and a **12-part MultiPolygon**.
+A fresh desktop browser then loaded both default workplaces and added a third location through
+the map: every routing response was **200 / traveltime / MultiPolygon**, workplace labels showed
+TravelTime, and **51 eligible cells in 10 neighbourhoods** remained. No browser page errors.
+This verifies the full browser → Vite → routing proxy → TravelTime → map flow.
+
+Excluded hexagons now have no stroke, including selected and keyboard-focused cells. Hatching
+and neighbourhood/commute context remain. Proxy mode defaults to `/api` if no URL is supplied;
+dry-run responses now explain how to enable real routing. Updated setup steps are in README.
+
+Follow-up checks: **26 frontend tests**, **4 proxy tests**, **8 desktop/mobile browser tests**,
+and the production build pass (JS 478.00 kB / 149.19 kB gzip). Browser checks also cover excluded borders after a Must
+change and keyboard selection. Browser screenshots and traces remain gitignored in `test-results/`.
+
+For the local demo, open **http://localhost:5188**. Restart using the two terminal commands in
+README if the local processes have stopped; restart both after editing `.env`. Live calls use
+the approved TravelTime plan and the proxy's configured request cap and cache.
+
+## Northern Peninsula extension — 22 October 2026
+
+At the user's request, matching now extends through South San Francisco to SFO's southern edge
+(37.60 N), with county bay/ocean/lakes removed. **2,408 unique H3-9 cells** cover **41 original SF
+neighbourhoods and 17 Peninsula city/unincorporated groups**. County borders are disclosed as
+city/group boundaries. South San Francisco has **233 cells**, **209 usable street grades**,
+233 pollution measurements and 225 actual-ZIP rent observations. **1,877 cells** overall have
+sufficient street measurement coverage.
+
+County streets, Existing-status bikeways and parks were downloaded from official public GIS;
+OSM parks and food/drink were refreshed across the study area. The official keyless SamTrans
+feed was found and included; its 20 September–14 November timetable covers the demo date.
+Offline fixtures use all four available transit agencies and the same water-free matching land.
+Seven new licensed city photos are cached locally. Every processed GeoJSON remains below 3 MB;
+street lines are split into SF and Peninsula files and loaded together only on request.
+
+Local police/crash feeds remain unavailable and explicitly null; SF reports never become
+Peninsula zeroes. A missing incident Must becomes unknown. Airport/golf/park/quarry jurisdictions
+are excluded from housing candidates. Selected-area notices, layer notes, About Data and source
+metadata disclose these distinctions. Rental links use Peninsula locations and Craigslist's
+Peninsula section. See [coverage and sources](PENINSULA_COVERAGE.md).
+
+Final checks: **37 Python data tests**, **26 frontend tests**, **4 proxy tests**, **10 desktop/mobile
+browser tests**, **9 validators with zero errors**, and the production build pass. JS is
+479.26 kB / 149.71 kB gzip; matching data is approximately 2.50 MB. The browser suite additionally
+checks South San Francisco details, actual photo decoding, rental links, missing-data Must
+behaviour and the retained no-borders rule for excluded cells.
+
+A separate real browser run at `http://localhost:5188` used SFO, FiDi and a new South San Francisco
+workplace (37.6547, -122.4077). All routing succeeded through TravelTime; 10 SSF cells remained
+eligible across all three workplaces, with no page errors. The new SSF local photo decoded at
+800 px wide. Source credentials remain private. No push or deployment; the local demo remains
+available at **http://localhost:5188** and needs a page refresh to load changed static data.
+
+## Map presentation, prices and topography — 22 October 2026
+
+User-requested presentation changes are complete:
+
+- Excluded cells have no fill/stroke and `display: none`, are removed from keyboard navigation,
+  and have no map legend graphic. Inspecting a near miss or enabling Show other areas never
+  reveals excluded geometry. Explanations remain available in the panel.
+- Individual workplace borders have **0.2 stroke opacity**. Actual shared overlap uses an
+  opaque, solid green **5 px** border. The legend explains this as shared commute feasibility.
+- Result cards/details show **X areas found**. Cards no longer repeat candidate-land percentages.
+- Sort by supports **Best match**, **Rent: low to high**, **Rent: high to low**; unknown rents
+  remain last, ties retain priority order, and the eligible set never changes. Sort survives
+  detail navigation and reload. ZIP-level asking estimates remain labelled.
+- Left-panel actions and preference controls have stronger colours and selected-state contrast.
+- Topographic map replaces Hills & street gradients in the entire layer list. Existing stored
+  hills selections migrate to topography. The overlay is a **315,310-byte** local PNG generated
+  from the existing USGS DEM, with a metre elevation legend. It requires no extra API key.
+  Its display grid is Web Mercator, ~30 m per projected pixel, while the source is ~10 m;
+  water, missing elevation and out-of-study land are transparent. Street gradients still drive
+  ranking separately from the elevation illustration.
+
+Checks: **29 frontend tests**, **38 Python tests**, **12 desktop/mobile browser tests**, all
+9 validators and the production build pass. Browser checks cover opacity, solid overlap border,
+hidden exclusions after panel selection, actual elevation-image decoding, both price directions,
+null prices last, restored Best match and persisted sorting. The raster check verifies real
+relief, geographic bounds and transparent bay/Lake Merced pixels.
+
+A live local browser additionally verified the topographic layer, stronger controls, sorted
+results, no visible excluded cells and no page errors. JS is 479.13 kB / 149.68 kB gzip;
+topography loads only when selected. The app and TravelTime proxy remain available on 5188/8789.

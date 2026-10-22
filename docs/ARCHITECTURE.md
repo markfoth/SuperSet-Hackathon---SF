@@ -31,7 +31,9 @@ when live routing is added, to keep keys server-side.
 | `build_commute_fixtures.py` | Commute polygons for the default workplaces (see below) |
 | `build_content.py` | Editorial YAML + one freely-licensed Wikimedia Commons photo per neighbourhood (cached) |
 | `street_gradients.py` | Hills step: official streets + bilinear DEM sampling; 40 m windows and length-weighted cell median/p90/steep share/coverage |
-| `build_area_cells.py` | 1,226 stable H3-9 cells; clipped land polygons, parent neighbourhoods, access distances and original coarse source ids |
+| `build_area_cells.py` | 2,408 H3-9 cells through SFO; clipped land polygons, SF neighbourhood / county jurisdiction parents, local distances and original coarse source ids |
+| `peninsula.py` | County jurisdiction/water masks, streets, existing bikeways and park adapters; explicit local incident/crash gaps |
+| `build_topography.py` | USGS elevation colour raster in Web Mercator, masked to study land minus water; manifest and Leaflet image bounds |
 | `validate_datasets.py` | Structural + semantic checks; also run by `pytest` |
 | `rebuild_all.py` | Orchestrates the above in order; `--offline`, `--refresh`, `--from`, `--dataset` |
 
@@ -41,16 +43,18 @@ when live routing is added, to keep keys server-side.
   shapes, census tracts (ACS population and rent paid, CalEnviroScreen pollution indicators), cafe /
   restaurant / bar points (zoom >= 15), H3 res-8 crime/collision cells (≈0.74 km² — deliberately coarse so anonymised SFPD
   points are never shown as addresses), H3 res-9 hill cells (≈0.1 km²).
-* **Canonical matching dataset**: `area_cells.geojson` (~1.25 MB). H3-9 cells, local street
+* **Canonical matching dataset**: `area_cells.geojson` (~2.50 MB). H3-9 cells, local street
   gradients/access distances, explicit nulls and coarse-source identifiers. Only this fine
-  dataset enters matching and preference ranking. Street lines load lazily at zoom 14+.
+  dataset enters matching and preference ranking. The map's optional topographic overlay loads
+  a local elevation PNG; street gradients remain measured ranking inputs, not a displayed layer.
 * **Neighbourhood summaries for context cards**: `neighbourhood_metrics.json` — one object per
   neighbourhood, one block per dataset, explicit `null` when not measured. Neighbourhood-wide
   measurements never fill missing cell measurements.
 
 Access metrics ("share of the area within 400 m of a park") are computed over **H3 res-9 sample
-points** inside each neighbourhood (1,117 points across 41 areas, `neighbourhood_samples.json`),
-using straight-line distance. The same points are used in the browser for commute coverage.
+points** inside 41 SF neighbourhoods and 17 Peninsula jurisdiction groups (`neighbourhood_samples.json`),
+using straight-line distance. Browser commute coverage uses the canonical cell representative
+points; source-summary samples never replace those matching points. See [Peninsula coverage](PENINSULA_COVERAGE.md).
 
 ## Commute model
 

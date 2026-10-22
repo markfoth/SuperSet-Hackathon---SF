@@ -40,7 +40,8 @@ export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, wor
         </figure>
       )}
       <h2>{m.name}</h2>
-      <p className="suitability"><b>{result.eligibleCount} of {result.candidateCount} candidate cells fit</b> · ~{pct(result.eligibleShare)} of candidate land. {result.unknownCount > 0 ? `${result.unknownCount} cells have insufficient information.` : ''}</p>
+      {m.region === 'peninsula' && <p className="hint">Peninsula {m.boundary_kind ?? 'area'} grouping, limited to land north of SFO’s southern edge. Local incident and injury-crash data are unavailable here.</p>}
+      <p className="suitability"><b>{result.eligibleCount} area{result.eligibleCount === 1 ? '' : 's'} found.</b> {result.unknownCount > 0 ? `${result.unknownCount} areas have insufficient information.` : ''}</p>
       {cellResult && <CellDetail result={cellResult} workplaces={workplaces} />}
       {!cellResult && <div className="local-choices"><p className="hint">Choose a hexagon on the map for local measurements, or explore a leading eligible cell:</p>
         {ranked(cellResults).slice(0, 3).map((r) => <button className="btn" key={r.id} onClick={() => onSelectCell(r.id)}>{r.state === 'strong' ? 'Strong' : 'Partial'} · {r.cell.street_grade_pct == null ? 'Grade unavailable' : `${r.cell.street_grade_pct}% street grade`}</button>)}
@@ -66,10 +67,10 @@ export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, wor
         </>
       )}
 
-      <h3>Neighbourhood context</h3>
+      <h3>Area context</h3>
       <ul className="facts">
-        {m.parks?.share_within_400m != null && <li><span>Neighbourhood within 400 m of parks</span><b>{pct(m.parks.share_within_400m)}</b></li>}
-        {m.cycling && <li><span>Bike lane/path density (neighbourhood)</span><b>{num(m.cycling.dedicated_km_per_km2, 1)} km/km²</b></li>}
+        {m.parks?.share_within_400m != null && <li><span>Area within 400 m of parks</span><b>{pct(m.parks.share_within_400m)}</b></li>}
+        {m.cycling && <li><span>Bike lane/path density (area)</span><b>{num(m.cycling.dedicated_km_per_km2, 1)} km/km²</b></li>}
         {m.population?.population != null && <li><span>Residents (ACS 2020–24)</span><b>{num(m.population.population)}</b></li>}
         {m.crime && <li><span>Reported incidents (12 mo)</span><b>{num(m.crime.total)} · violent {num(m.crime.violent)} · property {num(m.crime.property)}</b></li>}
         {m.crime?.per_1000_residents != null && <li><span>Incidents per 1,000 residents</span><b>{num(m.crime.per_1000_residents)}</b></li>}
@@ -109,7 +110,7 @@ export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, wor
           <RentSparkline series={zipRent.series} />
           <p className="hint">
             ZIP-level Zillow Observed Rent Index (asking rents for listed homes, all types). ZIP {mainZip.zip} covers {pct(mainZip.share)} of this
-            neighbourhood{m.rents!.zips.length > 1 ? `; it also overlaps ${m.rents!.zips.slice(1).map((z) => z.zip).join(', ')}` : ''}. Not neighbourhood-specific.
+            area{m.rents!.zips.length > 1 ? `; it also overlaps ${m.rents!.zips.slice(1).map((z) => z.zip).join(', ')}` : ''}. Not area-specific.
           </p>
         </>
       ) : <p className="hint">No rent index available here.</p>}
@@ -119,7 +120,7 @@ export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, wor
 
       <h3>Search for homes here</h3>
       <div className="row">
-        {rentalSearchLinks(m.name).map((l) => <a key={l.label} className="btn" href={l.url} target="_blank" rel="noreferrer">{l.label} ↗</a>)}
+        {rentalSearchLinks(m.name, m.region).map((l) => <a key={l.label} className="btn" href={l.url} target="_blank" rel="noreferrer">{l.label} ↗</a>)}
       </div>
     </div>
   );

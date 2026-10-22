@@ -22,7 +22,7 @@ def test_area_cells_have_unique_h3_9_ids_and_valid_parents():
         assert shape(f["geometry"]).is_valid
         assert p["area_m2"] >= 1000
         assert p["residential"] in (True, False, None)
-        assert 37.7 < p["check_lat"] < 37.84
+        assert 37.60 <= p["check_lat"] < 37.84
         assert -122.53 < p["check_lon"] < -122.35
 
 
@@ -65,7 +65,7 @@ def test_coarse_indicators_retain_their_source_resolution():
     for f in fc["features"]:
         p = f["properties"]
         assert h3.cell_to_parent(p["h3"], 8) == p["crime_source_h3"]
-        assert p["incidents_per_km2"] == crimes.get(p["crime_source_h3"])
+        assert p["incidents_per_km2"] == (None if p["region"] == "peninsula" else crimes.get(p["crime_source_h3"]))
         if p["street_grade_pct"] is None:
             assert p["measured_street_m"] < 100 or (p["grade_coverage"] or 0) < 0.75
 

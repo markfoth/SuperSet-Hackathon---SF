@@ -37,19 +37,26 @@ values are never replaced with zero or a neighbourhood mean. Missing softer pref
 flagged and yellow, even if none can be assessed: Nice/Important never remove feasible cells. This
 explicit total ordering is transitive, including when different cells lack different inputs.
 
-Neighbourhood discovery groups cells; a neighbourhood remains discoverable if **any** candidate
+Area discovery groups cells by SF neighbourhood or Peninsula city/unincorporated boundary;
+an area remains discoverable if **any** candidate
 cell passes. It is ranked by its leading eligible cell's vector. Counts and suitable shares use
-candidate cells (residential true or uncertain), excluding confidently park-only cells. Land
+candidate cells (residential true or uncertain), excluding confidently non-residential cells. Land
 shares weight the clipped cell areas; these are approximate at neighbourhood borders because
-each cell has one parent by largest overlap. Both counts and shares are displayed. A missing
+each cell has one parent by largest overlap. Result cards display the eligible count as “X areas found”. A missing
 critical measurement elsewhere does not erase an eligible part of the neighbourhood.
 
 Green means all hard requirements satisfied and every active softer preference meets its stated
 target. Yellow satisfies hard requirements but has weaker or missing softer measurements. With
 no softer preferences active, green means commute feasibility only. These colours are threshold
-categories, not a numeric score. Red/hatched means a known hard failure; grey means insufficient
-required evidence. Known failures remain excluded
+categories, not a numeric score. Known hard failures are hidden from the map and remain explained
+in the panel; grey means insufficient required evidence. Known failures remain excluded
 even if additional inputs are unavailable.
+
+The results panel can explicitly sort feasible areas by ZIP-level asking rent, ascending or
+descending, with missing values last and original priority order retained for equal prices.
+This is display ordering only: the eligible set is unchanged. Best match restores the original
+priority-vector ordering. The topographic overlay shows elevation and never substitutes for
+street gradients in the Flatter streets preference.
 
 Exclusion previews count currently eligible **cells**, report newly failing and newly unknown
 cells separately, and show neighbourhoods losing all eligible cells. Near misses have exactly

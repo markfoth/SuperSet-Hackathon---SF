@@ -24,9 +24,9 @@ PUBLIC_DATA_DIR = REPO_ROOT / "public" / "data"
 MANIFEST_PATH = DATA_DIR / "manifest.yaml"
 DOWNLOAD_LOG = RAW_DIR / "_downloads.json"
 
-# Study area: San Francisco plus the northern Peninsula down to SFO/Millbrae.
+# Study area: San Francisco plus the northern Peninsula to SFO's southern edge.
 # (west, south, east, north) in EPSG:4326.
-STUDY_BBOX = (-122.53, 37.57, -122.35, 37.835)
+STUDY_BBOX = (-122.53, 37.60, -122.35, 37.835)
 # San Francisco city/county only (used for plausibility checks on DataSF data).
 SF_BBOX = (-122.53, 37.70, -122.35, 37.835)
 

@@ -16,25 +16,26 @@ acs_tracts:
   downloaded_at: '2026-10-21'
   measurement_period: 2020-2024 (5-year estimates)
   resolution: Census tract (2020 boundaries); neighbourhood totals by land-area apportionment
-  feature_count: 310
+  feature_count: 308
   raw_path: data/sf/raw/acs5y2024_b01003.dat, acs5y2024_b25064.dat, census_tracts_2020.geojson
   processed_path:
   - data/sf/processed/census_tracts.geojson
   script: scripts/process_datasets.py
   refresh: yearly (December ACS release)
-  limitations: Estimates with margins of error (kept as *_moe). Neighbourhood population (SF total 830,311)
+  limitations: Estimates with margins of error (kept as *_moe). Neighbourhood population (SF total 1,088,457)
     assumes residents are spread evenly across each tract's land. Median gross rent is rent PAID by current
     tenants (incl. long-standing rent-controlled leases), not asking rent. The Census API needs a key;
     these official bulk files do not.
   status: processed
 area_cells:
-  source: Derived from H3 and DataSF Analysis Neighborhoods; contextual inputs recorded separately
+  source: H3 + DataSF SF neighbourhoods + San Mateo County land jurisdictions; contextual inputs recorded
+    separately
   source_url: https://data.sf.gov/d/j2bu-swwd
   licence: Inherits inputs; H3 Apache-2.0
   downloaded_at: '2026-10-22'
   measurement_period: Per input dataset
   resolution: H3 resolution 9 (~0.105 km²); coarser indicators retain original source ids
-  feature_count: 1226
+  feature_count: 2408
   raw_path: See individual source entries
   processed_path:
   - data/sf/processed/area_cells.geojson
@@ -51,7 +52,7 @@ calenviroscreen5:
   downloaded_at: '2026-10-21'
   measurement_period: Indicator-specific (mostly 2019-2024); release dated 2026-07-01
   resolution: Census tract (2020 boundaries; outlines clipped to the study area, values whole-tract)
-  feature_count: 310
+  feature_count: 308
   raw_path: data/sf/raw/calenviroscreen50_070126.csv, calenviroscreen50_data_dictionary.pdf
   processed_path:
   - data/sf/processed/census_tracts.geojson
@@ -64,9 +65,9 @@ calenviroscreen5:
   status: processed
 commute_fixtures:
   source: Derived — Common Ground commute fixtures (GTFS schedule model + synthetic speed models)
-  source_url: n/a (derived from gtfs_bart, gtfs_muni, gtfs_caltrain)
+  source_url: n/a (derived from the available gtfs_* feeds, including SamTrans when present)
   licence: Inherits GTFS terms (SFMTA notice required)
-  downloaded_at: '2026-10-21'
+  downloaded_at: '2026-10-22'
   measurement_period: Representative weekday AM peak 07:00-10:00 per feed
   resolution: H3 res-9 origin cells (~174 m) dissolved to polygons, simplified 20 m
   feature_count: 32
@@ -76,36 +77,38 @@ commute_fixtures:
   script: scripts/build_commute_fixtures.py
   refresh: after GTFS refresh
   limitations: 'Timetables not covering 2026-10-22: Muni (2026-08 timetable) — labelled in the UI. Transit:
-    approximate, not timetable-exact; waits = half headway (cap 10 min); SamTrans absent; SFO uses an
+    approximate, not timetable-exact; waits = half headway (cap 10 min); SamTrans included; SFO uses an
     assumed 10 min AirTrain link from SFO BART. Walk/bike/drive are SYNTHETIC straight-line models and
     must be labelled as such in the UI.'
   status: processed
 cycling_network:
-  source: DataSF — MTA Bike Network Linear Features (SFMTA)
-  source_url: https://data.sf.gov/d/ygmz-vaxd
-  licence: ODC Public Domain Dedication and License (PDDL)
+  source: SFMTA bike network + San Mateo County GIS existing bikeways
+  source_url: https://data.sf.gov/d/ygmz-vaxd; https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/17
+  licence: 'SF: ODC PDDL; public San Mateo County GIS (see peninsula_cycling)'
   downloaded_at: '2026-10-21'
   measurement_period: Network as of download date
   resolution: Street segment (block-level line geometry)
-  feature_count: 5499
-  raw_path: data/sf/raw/bike_network.geojson
+  feature_count: 5545
+  raw_path: data/sf/raw/bike_network.geojson; data/sf/raw/peninsula_cycling.geojson
   processed_path:
   - data/sf/processed/cycling_network.geojson
   script: scripts/process_datasets.py
   refresh: quarterly
-  limitations: 'San Francisco only (no Peninsula facilities). One feature per direction where facilities
-    differ, so km totals count each side. Category counts: lane 1733, neighborway 121, path 373, protected
-    678, route 2594. grade_pct is a terrain estimate, not a surveyed street grade.'
+  limitations: 'County Peninsula facilities require Existing status; proposed/unknown-status facilities
+    are omitted. Source update dates differ. One feature per direction where facilities differ, so km
+    totals count each side. Category counts: lane 1757, neighborway 121, path 378, protected 678, route
+    2611. grade_pct is a terrain estimate, not a surveyed street grade.'
   status: processed
 elevation:
-  source: USGS 3DEP bare-earth DEM + SF DPW Streets – Active and Retired (DataSF 3psu-pn9h)
-  source_url: https://data.sf.gov/d/3psu-pn9h; https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer
-  licence: USGS US public domain; DataSF ODC PDDL
+  source: USGS 3DEP bare-earth DEM + official SF DPW and San Mateo County street centrelines
+  source_url: https://data.sf.gov/d/3psu-pn9h; https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/26;
+    https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer
+  licence: USGS US public domain; DataSF ODC PDDL; public San Mateo County GIS (see peninsula_streets)
   downloaded_at: '2026-10-22'
   measurement_period: Street snapshot at download; DEM composite of lidar acquisitions
   resolution: Street centrelines sampled every ~10 m; 40 m rolling windows; length-weighted H3-9 aggregates
-  feature_count: 1226
-  raw_path: data/sf/raw/streets_active.geojson; data/sf/raw/elevation_3dep_10m.tif
+  feature_count: 2408
+  raw_path: data/sf/raw/streets_active.geojson; data/sf/raw/peninsula_streets.geojson; data/sf/raw/elevation_3dep_10m.tif
   processed_path:
   - data/sf/processed/hills_grid.geojson
   - data/sf/processed/cycling_network.geojson (grade_pct)
@@ -120,10 +123,10 @@ food_drink_pois:
   source: OpenStreetMap contributors via Overpass API (amenity=cafe|restaurant|bar|pub, shop=coffee)
   source_url: https://overpass-api.de/api/interpreter
   licence: ODbL 1.0 — '© OpenStreetMap contributors'
-  downloaded_at: '2026-10-21'
+  downloaded_at: '2026-10-22'
   measurement_period: OSM snapshot at download date
   resolution: Point (way/relation centroids)
-  feature_count: 3245
+  feature_count: 3550
   raw_path: data/sf/raw/osm_food_drink.json
   processed_path:
   - data/sf/processed/cafes.geojson
@@ -131,8 +134,8 @@ food_drink_pois:
   - data/sf/processed/bars.geojson
   script: scripts/process_datasets.py
   refresh: 6 months
-  limitations: 'San Francisco only. Unnamed places dropped. Volunteer-mapped: openings/closures lag. cafes
-    813, restaurants 1932, bars 500. Discovery context only — never a ranking input.'
+  limitations: 'SF and northern Peninsula through SFO. Unnamed places dropped. Volunteer-mapped: openings/closures
+    lag. cafes 893, restaurants 2125, bars 532. Discovery context only — never a ranking input.'
   status: processed
 groceries:
   source: OpenStreetMap contributors via Overpass API (shop=supermarket|greengrocer)
@@ -141,7 +144,7 @@ groceries:
   downloaded_at: '2026-10-21'
   measurement_period: OSM snapshot at download date
   resolution: Point (way/relation centroids)
-  feature_count: 208
+  feature_count: 200
   raw_path: data/sf/raw/osm_groceries.json
   processed_path:
   - data/sf/processed/groceries.geojson
@@ -165,8 +168,7 @@ gtfs_bart:
   - data/sf/processed/transit_routes.geojson
   script: scripts/process_datasets.py
   refresh: quarterly
-  limitations: Scheduled, not real-time. No SamTrans (511 key required) — SFO buses (292/398/ECR) are
-    absent.
+  limitations: Scheduled, not real-time.
   status: processed
   covers_target_date: true
 gtfs_caltrain:
@@ -183,8 +185,7 @@ gtfs_caltrain:
   - data/sf/processed/transit_routes.geojson
   script: scripts/process_datasets.py
   refresh: quarterly
-  limitations: Scheduled, not real-time. No SamTrans (511 key required) — SFO buses (292/398/ECR) are
-    absent.
+  limitations: Scheduled, not real-time.
   status: processed
   covers_target_date: true
 gtfs_muni:
@@ -205,8 +206,7 @@ gtfs_muni:
   refresh: quarterly
   limitations: 'Timetable does not cover 2026-10-22: route geometry is reliable but departures and commute
     times reflect the 2026-07 schedule. SFMTA''s public ''current'' feed was not updated past this; a
-    current Muni timetable needs the 511.org feed (API_511_KEY -> gtfs_muni_511). Scheduled, not real-time.
-    No SamTrans (511 key required) — SFO buses (292/398/ECR) are absent.'
+    current Muni timetable needs the 511.org feed (API_511_KEY -> gtfs_muni_511). Scheduled, not real-time.'
   status: processed
   covers_target_date: false
 gtfs_muni_511:
@@ -226,20 +226,22 @@ gtfs_muni_511:
     API_511_KEY in .env.'
   status: blocked
 gtfs_samtrans:
-  source: SamTrans GTFS via 511.org Open Data
-  source_url: https://api.511.org/transit/datafeeds?operator_id=SM
-  licence: 511.org Open Data terms — review
-  downloaded_at: null
-  measurement_period: null
-  resolution: Stops and route shapes
+  source: Official SamTrans GTFS (public developer download or 511.org)
+  source_url: https://www.samtrans.com/media/37770/download
+  licence: SamTrans Developer License Agreement (https://www.samtrans.com/developer); revocable; no trademarks
+  downloaded_at: '2026-10-22'
+  measurement_period: Timetable valid 2026-09-20 to 2026-11-14; COVERS target 2026-10-22 (1788 trips)
+  resolution: Stop/station points and route shapes
   feature_count: null
-  raw_path: null
-  processed_path: []
-  script: scripts/download_datasets.py
-  refresh: n/a until unblocked
-  limitations: '511.org returns HTTP 401 without a token. Add API_511_KEY to .env and rerun; processing
-    picks the feed up automatically. Last attempt 2026-10-21: missing API_511_KEY in .env.'
-  status: blocked
+  raw_path: data/sf/raw/gtfs_samtrans_public.zip
+  processed_path:
+  - data/sf/processed/transit_stops.geojson
+  - data/sf/processed/transit_routes.geojson
+  script: scripts/process_datasets.py
+  refresh: quarterly
+  limitations: Scheduled, not real-time.
+  status: processed
+  covers_target_date: true
 injury_collisions:
   source: DataSF — Traffic Crashes Resulting in Injury (SFPD/SFDPH TransBASE)
   source_url: https://data.sf.gov/d/ubvf-ztfx
@@ -262,19 +264,19 @@ neighbourhood_content:
   source_url: https://commons.wikimedia.org
   licence: 'Text: project''s own. Photos: per-photo CC BY / CC BY-SA / CC0 / PD — attribution shown in
     UI'
-  downloaded_at: '2026-10-21'
+  downloaded_at: '2026-10-22'
   measurement_period: n/a
-  resolution: Neighbourhood (41)
-  feature_count: 41
+  resolution: 58 SF neighbourhood / Peninsula jurisdiction groups
+  feature_count: 58
   raw_path: data/sf/content/neighbourhoods.yaml
   processed_path:
   - data/sf/processed/neighbourhood_content.json
   - public/images/neighbourhoods/
   script: scripts/build_content.py
   refresh: as needed
-  limitations: 41/41 neighbourhoods have a photo; 41 cached locally (3717 KB, max 800 px). Descriptions
-    are drafts and avoid demographic claims. Photos are mostly Wikipedia lead images (3 hand-picked);
-    some show a landmark rather than streets.
+  limitations: 48/58 groups have a photo; 48 cached locally (4378 KB, max 800 px). Descriptions are drafts
+    and avoid demographic claims. Photos are mostly Wikipedia lead images (3 hand-picked); some show a
+    landmark rather than streets.
   status: processed
 neighbourhood_metrics:
   source: Derived — merge of the processed datasets above
@@ -282,54 +284,184 @@ neighbourhood_metrics:
   licence: Inherits the most restrictive input (Zillow terms for the rents block)
   downloaded_at: '2026-10-22'
   measurement_period: Per input dataset
-  resolution: Neighbourhood (41), computed from finer inputs
-  feature_count: 41
+  resolution: 58 SF neighbourhood / Peninsula jurisdiction groups, computed from finer inputs
+  feature_count: 58
   raw_path: n/a
   processed_path:
   - data/sf/processed/neighbourhood_metrics.json
   script: scripts/process_datasets.py
   refresh: after any input rebuild
-  limitations: 'Coverage (neighbourhoods with data): crime 41/41, parks 41/41, cycling 41/41, transit
-    41/41, hills 41/41, groceries 41/41, collisions 41/41, rents 41/41, population 41/41, environment
-    41/41, food_drink 41/41'
+  limitations: 'Coverage (groups with data): crime 41/58, parks 58/58, cycling 58/58, transit 58/58, hills
+    58/58, groceries 58/58, collisions 41/58, rents 58/58, population 58/58, environment 58/58, food_drink
+    58/58'
   status: processed
 neighbourhoods:
-  source: DataSF — Analysis Neighborhoods (SF Planning)
-  source_url: 'https://data.sf.gov/d/j2bu-swwd (map view: https://data.sf.gov/d/p5b7-5n3h)'
-  licence: ODC Public Domain Dedication and License (PDDL)
+  source: DataSF Analysis Neighborhoods + San Mateo County GIS jurisdictions, ocean/bay and lakes
+  source_url: https://data.sf.gov/d/j2bu-swwd; https://gis.smcgov.org/maps/rest/services/ODP/Jurisdictions/FeatureServer/0;
+    see peninsula_water / peninsula_lakes
+  licence: 'SF: ODC PDDL; public San Mateo County GIS (no explicit redistribution licence in REST metadata)'
   downloaded_at: '2026-10-21'
   measurement_period: Boundaries as published (last updated 2023-10)
-  resolution: 41 neighbourhood polygons
-  feature_count: 41
-  raw_path: data/sf/raw/neighbourhoods.geojson
+  resolution: 41 SF analysis neighbourhoods + 17 Peninsula city/unincorporated groups
+  feature_count: 58
+  raw_path: data/sf/raw/neighbourhoods.geojson; peninsula_jurisdictions.geojson; peninsula_water.geojson;
+    peninsula_lakes.geojson
   processed_path:
   - data/sf/processed/neighbourhoods.geojson
   - data/sf/processed/neighbourhood_samples.json
   script: scripts/process_datasets.py
   refresh: yearly
-  limitations: Planning analysis boundaries, not official or colloquial neighbourhood names. Geometry
+  limitations: SF uses planning analysis boundaries; Peninsula groups use county city/unincorporated boundaries,
+    not neighbourhood boundaries. Clipped at 37.60 N (SFO southern edge); bay/ocean/lakes removed. Geometry
     simplified at 5 m. `id` is a slug of the name and is the stable key used by every other dataset; renaming
     a neighbourhood changes it.
   status: processed
 parks:
-  source: DataSF — Recreation and Parks Properties (SF Rec & Park); supplemented by OpenStreetMap
-  source_url: https://data.sf.gov/d/gtr9-ntp6 ; https://www.openstreetmap.org (Overpass API)
-  licence: 'RPD: ODC PDDL. OSM supplement: ODbL 1.0 — attribution ''© OpenStreetMap contributors'' required'
+  source: SF Rec & Park + San Mateo County GIS parks; supplemented by OpenStreetMap
+  source_url: https://data.sf.gov/d/gtr9-ntp6; https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/37;
+    https://www.openstreetmap.org (Overpass API)
+  licence: 'RPD: ODC PDDL. County: public GIS (see peninsula_parks). OSM: ODbL 1.0 — © OpenStreetMap contributors'
   downloaded_at: '2026-10-21'
   measurement_period: Properties as of download date
   resolution: Park polygons; neighbourhood access shares from H3 res-9 sample points
-  feature_count: 300
-  raw_path: data/sf/raw/parks_rpd.geojson, data/sf/raw/osm_parks.json
+  feature_count: 376
+  raw_path: data/sf/raw/parks_rpd.geojson; data/sf/raw/peninsula_parks.geojson; data/sf/raw/osm_parks.json
   processed_path:
   - data/sf/processed/parks.geojson
   script: scripts/process_datasets.py
   refresh: yearly
   limitations: RPD covers only city-owned parks; federal (Presidio, GGNRA) and state land comes from OSM.
-    59 non-RPD parks added from OpenStreetMap (ODbL), e.g. San Bruno Mountain State and County Park, Presidio
-    of San Francisco, Fort Funston, Candlestick Point State Recreation Area, Lands End, Mount Sutro Open
-    Space Reserve. Non-park RPD property types (libraries, concessions, Camp Mather, Sharp Park outside
-    SF) are excluded. Access uses straight-line distance, not walking routes.
+    71 non-RPD parks added from OpenStreetMap (ODbL), e.g. Presidio of San Francisco, San Francisco Peninsula
+    Watershed, Fort Funston, Candlestick Point State Recreation Area, Lands End, Mussel Rock City Park.
+    Non-park RPD property types (libraries, concessions, Camp Mather, Sharp Park outside SF) are excluded.
+    Access uses straight-line distance, not walking routes.
   status: processed
+peninsula_cycling:
+  source: San Mateo County GIS — County bikeways (existing status only in processed output)
+  source_url: https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/17
+  licence: Public county GIS; no explicit redistribution licence in REST metadata; attribute San Mateo
+    County
+  downloaded_at: '2026-10-22'
+  measurement_period: Published snapshot; individual feature dates vary
+  resolution: Source geometry; clipped to study land during processing
+  feature_count: 170
+  raw_path: data/sf/raw/peninsula_cycling.geojson
+  processed_path: []
+  script: scripts/peninsula.py via process_datasets.py
+  refresh: quarterly
+  limitations: County snapshot, not a completeness guarantee. Jurisdiction boundaries include water, removed
+    before matching. Proposed or unknown-status bikeways are not installed facilities.
+  status: downloaded
+peninsula_injury_collisions:
+  source: C/CAG San Mateo County local road safety reports / SWITRS
+  source_url: https://ccag.ca.gov/wp-content/uploads/2024/04/4.1-A3_CCAG-Individual-LRSP-Combined-compressed.pdf
+  licence: Source agency terms
+  downloaded_at: '2026-10-22'
+  measurement_period: No compatible geocoded extract available
+  resolution: Reports, not a comparable local incident feed
+  feature_count: null
+  raw_path: null
+  processed_path: []
+  script: scripts/peninsula.py
+  refresh: when a compatible source is available
+  limitations: SF police / TransBASE feeds do not cover Peninsula jurisdictions. City-wide or historical
+    report totals cannot be copied into fine cells or treated as zero. Local values remain null.
+  status: blocked
+peninsula_jurisdictions:
+  source: San Mateo County GIS — County city / unincorporated boundaries
+  source_url: https://gis.smcgov.org/maps/rest/services/ODP/Jurisdictions/FeatureServer/0
+  licence: Public county GIS; no explicit redistribution licence in REST metadata; attribute San Mateo
+    County
+  downloaded_at: '2026-10-22'
+  measurement_period: Published snapshot; individual feature dates vary
+  resolution: Source geometry; clipped to study land during processing
+  feature_count: 17
+  raw_path: data/sf/raw/peninsula_jurisdictions.geojson
+  processed_path: []
+  script: scripts/peninsula.py via process_datasets.py
+  refresh: quarterly
+  limitations: County snapshot, not a completeness guarantee. Jurisdiction boundaries include water, removed
+    before matching. Proposed or unknown-status bikeways are not installed facilities.
+  status: downloaded
+peninsula_lakes:
+  source: San Mateo County GIS — Lake polygons
+  source_url: https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/30
+  licence: Public county GIS; no explicit redistribution licence in REST metadata; attribute San Mateo
+    County
+  downloaded_at: '2026-10-22'
+  measurement_period: Published snapshot; individual feature dates vary
+  resolution: Source geometry; clipped to study land during processing
+  feature_count: 17
+  raw_path: data/sf/raw/peninsula_lakes.geojson
+  processed_path: []
+  script: scripts/peninsula.py via process_datasets.py
+  refresh: quarterly
+  limitations: County snapshot, not a completeness guarantee. Jurisdiction boundaries include water, removed
+    before matching. Proposed or unknown-status bikeways are not installed facilities.
+  status: downloaded
+peninsula_parks:
+  source: San Mateo County GIS — County mapped park boundaries
+  source_url: https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/37
+  licence: Public county GIS; no explicit redistribution licence in REST metadata; attribute San Mateo
+    County
+  downloaded_at: '2026-10-22'
+  measurement_period: Published snapshot; individual feature dates vary
+  resolution: Source geometry; clipped to study land during processing
+  feature_count: 80
+  raw_path: data/sf/raw/peninsula_parks.geojson
+  processed_path: []
+  script: scripts/peninsula.py via process_datasets.py
+  refresh: quarterly
+  limitations: County snapshot, not a completeness guarantee. Jurisdiction boundaries include water, removed
+    before matching. Proposed or unknown-status bikeways are not installed facilities.
+  status: downloaded
+peninsula_police_incidents:
+  source: South San Francisco Police crime statistics
+  source_url: https://www.ssf.net/files/assets/public/v/1/police/flyers/2025/2024-pd-crime-stats.pdf
+  licence: Source agency terms
+  downloaded_at: '2026-10-22'
+  measurement_period: No compatible geocoded extract available
+  resolution: Reports, not a comparable local incident feed
+  feature_count: null
+  raw_path: null
+  processed_path: []
+  script: scripts/peninsula.py
+  refresh: when a compatible source is available
+  limitations: SF police / TransBASE feeds do not cover Peninsula jurisdictions. City-wide or historical
+    report totals cannot be copied into fine cells or treated as zero. Local values remain null.
+  status: blocked
+peninsula_streets:
+  source: San Mateo County GIS — County street centrelines
+  source_url: https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/26
+  licence: Public county GIS; no explicit redistribution licence in REST metadata; attribute San Mateo
+    County
+  downloaded_at: '2026-10-22'
+  measurement_period: Published snapshot; individual feature dates vary
+  resolution: Source geometry; clipped to study land during processing
+  feature_count: 7470
+  raw_path: data/sf/raw/peninsula_streets.geojson
+  processed_path: []
+  script: scripts/peninsula.py via process_datasets.py
+  refresh: quarterly
+  limitations: County snapshot, not a completeness guarantee. Jurisdiction boundaries include water, removed
+    before matching. Proposed or unknown-status bikeways are not installed facilities.
+  status: downloaded
+peninsula_water:
+  source: San Mateo County GIS — Ocean / bay polygons
+  source_url: https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/38
+  licence: Public county GIS; no explicit redistribution licence in REST metadata; attribute San Mateo
+    County
+  downloaded_at: '2026-10-22'
+  measurement_period: Published snapshot; individual feature dates vary
+  resolution: Source geometry; clipped to study land during processing
+  feature_count: 9
+  raw_path: data/sf/raw/peninsula_water.geojson
+  processed_path: []
+  script: scripts/peninsula.py via process_datasets.py
+  refresh: quarterly
+  limitations: County snapshot, not a completeness guarantee. Jurisdiction boundaries include water, removed
+    before matching. Proposed or unknown-status bikeways are not installed facilities.
+  status: downloaded
 police_incidents:
   source: 'DataSF — Police Department Incident Reports: 2018 to Present (SFPD)'
   source_url: https://data.sf.gov/d/wg3w-h783
@@ -372,14 +504,15 @@ rents_zori:
     listings have no ZORI series.
   status: processed
 street_gradients:
-  source: USGS 3DEP bare-earth DEM + SF DPW Streets – Active and Retired (DataSF 3psu-pn9h)
-  source_url: https://data.sf.gov/d/3psu-pn9h; https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer
-  licence: USGS US public domain; DataSF ODC PDDL
+  source: USGS 3DEP bare-earth DEM + official SF DPW and San Mateo County street centrelines
+  source_url: https://data.sf.gov/d/3psu-pn9h; https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/26;
+    https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer
+  licence: USGS US public domain; DataSF ODC PDDL; public San Mateo County GIS (see peninsula_streets)
   downloaded_at: '2026-10-22'
   measurement_period: Street snapshot at download; DEM composite of lidar acquisitions
   resolution: Street centrelines sampled every ~10 m; 40 m rolling windows; length-weighted H3-9 aggregates
   feature_count: 14585
-  raw_path: data/sf/raw/streets_active.geojson; data/sf/raw/elevation_3dep_10m.tif
+  raw_path: data/sf/raw/streets_active.geojson; data/sf/raw/peninsula_streets.geojson; data/sf/raw/elevation_3dep_10m.tif
   processed_path:
   - data/sf/processed/street_gradients.geojson
   - data/sf/processed/street_gradient_validation.json
@@ -390,22 +523,59 @@ street_gradients:
     valid street length or 75% coverage. Median may hide a steep street: p90 and steep-length share are
     retained. No neighbourhood terrain mean used.'
   status: processed
+street_gradients_peninsula:
+  source: USGS 3DEP bare-earth DEM + official SF DPW and San Mateo County street centrelines
+  source_url: https://data.sf.gov/d/3psu-pn9h; https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/26;
+    https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer
+  licence: USGS US public domain; DataSF ODC PDDL; public San Mateo County GIS (see peninsula_streets)
+  downloaded_at: '2026-10-22'
+  measurement_period: Street snapshot at download; DEM composite of lidar acquisitions
+  resolution: Street centrelines sampled every ~10 m; 40 m rolling windows; length-weighted H3-9 aggregates
+  feature_count: 6337
+  raw_path: data/sf/raw/streets_active.geojson; data/sf/raw/peninsula_streets.geojson; data/sf/raw/elevation_3dep_10m.tif
+  processed_path:
+  - data/sf/processed/street_gradients_peninsula.geojson
+  script: scripts/street_gradients.py via process_datasets.py --only hills
+  refresh: after street or DEM refresh
+  limitations: 'DEM-derived street-gradient estimates, not surveyed. Bare-earth DEM cannot resolve bridge
+    decks, tunnels, retaining walls or stairs. No windows on roads <40 m. Null cell grade below 100 m
+    valid street length or 75% coverage. Median may hide a steep street: p90 and steep-length share are
+    retained. No neighbourhood terrain mean used.'
+  status: processed
+topography:
+  source: USGS 3DEP bare-earth elevation; study land from SF and San Mateo County boundaries
+  source_url: https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer
+  licence: 'Elevation: US public domain (USGS); land mask inherits boundary sources'
+  downloaded_at: '2026-10-22'
+  measurement_period: DEM composite of source lidar acquisitions
+  resolution: Approximately 10 m source DEM, resampled to 30 m Web Mercator display pixels
+  feature_count: null
+  raw_path: data/sf/raw/elevation_3dep_10m.tif; peninsula_water.geojson; peninsula_lakes.geojson
+  processed_path:
+  - data/sf/processed/topography.json
+  - data/sf/processed/topography.png
+  script: scripts/build_topography.py via process_datasets.py --only topography
+  refresh: after DEM or study-area boundary changes
+  limitations: Bare-earth elevations, not surveyed road gradients or building heights. Colours express
+    elevation above sea level, not slope. Shoreline and vertical accuracy inherit the source data; no
+    coverage outside the study land.
+  status: processed
 transit:
-  source: Combined BART + Muni + Caltrain static GTFS
-  source_url: see gtfs_bart / gtfs_muni / gtfs_caltrain
+  source: Combined BART + Muni + Caltrain + SamTrans static GTFS
+  source_url: see gtfs_* entries
   licence: Per-feed (see gtfs_* entries); SFMTA notice required on the map attribution
-  downloaded_at: '2026-10-21'
+  downloaded_at: '2026-10-22'
   measurement_period: Representative weekday per feed
   resolution: Stops (rail rolled up to parent stations) and one representative shape per route
-  feature_count: 3259
+  feature_count: 3981
   raw_path: data/sf/raw/gtfs_*.zip
   processed_path:
   - data/sf/processed/transit_stops.geojson
   - data/sf/processed/transit_routes.geojson
   script: scripts/process_datasets.py
   refresh: quarterly
-  limitations: 3259 stops, 80 routes inside the study area. weekday_departures counts all trips serving
-    the stop on the representative day. 'Frequent' = >=120 weekday departures. SamTrans missing (511 key).
-    Not a routing engine.
+  limitations: 3981 stops, 112 routes inside the study area. weekday_departures counts all trips serving
+    the stop on the representative day. 'Frequent' = >=120 weekday departures. SamTrans included from
+    its official public feed. Not a routing engine.
   status: processed
-  route_count: 80
+  route_count: 112

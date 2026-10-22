@@ -97,7 +97,8 @@ export function proxyProvider(baseUrl: string): CommuteProvider {
           const detail = await r.json().then((b: { error?: string }) => b.error).catch(() => undefined);
           return { ok: false, reason: `Live routing unavailable${detail ? `: ${detail}` : ` (HTTP ${r.status})`}.` };
         }
-        const body = (await r.json()) as { geometry: AreaGeometry; label?: string; source?: string };
+        const body = (await r.json()) as { geometry: AreaGeometry; label?: string; source?: string; dryRun?: boolean };
+        if (body.dryRun) return { ok: false, reason: 'Live routing is in dry-run mode. Set ROUTING_DRY_RUN=0 in .env and restart the routing proxy.' };
         if (!isAreaGeometry(body.geometry)) return { ok: false, reason: 'Live routing returned no valid reachable area.' };
         return {
           ok: true,
@@ -116,8 +117,8 @@ export function proxyProvider(baseUrl: string): CommuteProvider {
 /** Proxy first when configured; fixtures as the offline fallback. */
 export function getCommuteProvider(): CommuteProvider {
   const kind = import.meta.env.VITE_COMMUTE_PROVIDER;
-  const url = import.meta.env.VITE_ROUTING_PROXY_URL;
-  if (kind === 'proxy' && url) {
+  const url = import.meta.env.VITE_ROUTING_PROXY_URL || '/api';
+  if (kind === 'proxy') {
     const live = proxyProvider(url);
     return {
       id: 'proxy+fixture',

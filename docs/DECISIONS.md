@@ -50,11 +50,11 @@ Fort Funston, Fort Mason) and state parks. OSM parks ≥ 0.2 ha that are mostly 
 added (59), with the RPD overlap subtracted. Non-park RPD property types are dropped.
 
 **D10. Transit from agency GTFS; 511 only with our own token.** BART, Muni and Caltrain publish
-public static feeds. SamTrans no longer has a developer page (samtrans.com returns 404) and is
-published only via 511. 511 returns 401 without a token, and its terms forbid redistribution
-without a developer agreement, so the Mobility Database's mirrored copy of the 511 SamTrans feed
-was **not** used. `API_511_KEY` activates SamTrans and a current Muni feed (`gtfs_muni_511`)
-automatically.
+public static feeds. The 22 October Peninsula extension found the restored
+[official SamTrans developer download](https://www.samtrans.com/developer), which needs no key
+and is now included under the SamTrans developer licence. Its timetable covers the demo day.
+511 remains an optional alternative and requires our own token; no mirrored 511 feed is used.
+`API_511_KEY` enables the current Muni feed (`gtfs_muni_511`) and the alternative SamTrans feed.
 
 **D10a. Timetables must cover the demo day, or say they don't.** `TARGET_SERVICE_DATE`
 (2026-10-22; env `CG_SERVICE_DATE`) is checked at download and processing time. BART (valid to
