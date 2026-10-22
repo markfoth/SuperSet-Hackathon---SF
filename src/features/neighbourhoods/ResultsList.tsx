@@ -98,7 +98,11 @@ function Card({ r, rank, content, metrics, onSelect, shortlist, onToggleShortlis
   return (
     <li className="card" data-area-id={r.id} onClick={() => onSelect(r.id)}>
       <div className="card-photo">
-        <NeighbourhoodPhoto photo={photo} />
+        <NeighbourhoodPhoto key={photo?.local ?? photo?.url} photo={photo} />
+        {photo && <a className="card-photo-credit" href={photo.page} target="_blank" rel="noreferrer"
+          title={`Photo: ${photo.credit} · ${photo.licence}`} onClick={(event) => event.stopPropagation()}>
+          {photo.credit} · {photo.licence}
+        </a>}
         <span className="rank" style={{ background: MATCH_COLORS[r.state] }}>{rank}</span>
         <button
           className={`save ${saved ? 'on' : ''}`} aria-pressed={saved} aria-label={saved ? 'Remove from shortlist' : 'Save to shortlist'}
@@ -106,11 +110,11 @@ function Card({ r, rank, content, metrics, onSelect, shortlist, onToggleShortlis
         >{saved ? '♥' : '♡'}</button>
       </div>
       <div className="card-body">
+        {photo?.caption && <p className="card-photo-caption">{photo.caption}</p>}
         <div className="card-title">{r.name}</div>
         <div className="suitability"><b>{r.eligibleCount} area{r.eligibleCount === 1 ? '' : 's'} found</b></div>
         <div className="tags">{c?.tags.slice(0, 3).map((t) => <span key={t} className="tag">{t}</span>)}</div>
         <div className="card-facts">
-          {r.commute && <span>Within all workplace commute limits</span>}
           {m.rents?.typical_rent_zip_weighted != null
             ? <span className="asking-rent">~{usd(m.rents.typical_rent_zip_weighted)}/mo asking (ZIP-level)</span>
             : <span>ZIP-level asking rent unavailable</span>}

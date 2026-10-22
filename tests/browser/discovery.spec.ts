@@ -1,11 +1,20 @@
 import { expect, test } from '@playwright/test';
+import { DEFAULT_WORKPLACES } from '../../src/features/commute/provider';
+
+// Existing discovery scenarios deliberately start from the opt-in two-workplace demo.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript((workplaces) => {
+    if (sessionStorage.getItem('cg:workplaces') === null) sessionStorage.setItem('cg:workplaces', JSON.stringify(workplaces));
+  }, DEFAULT_WORKPLACES);
+});
 
 test('workplace → priorities → local cell → neighbourhood → shortlist', async ({ page }, testInfo) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/');
   await expect(page.locator('.match-legend b')).toContainText(/\d+ eligible cells/);
-  await expect(page.locator('.leaflet-cells-pane path[role="button"]')).toHaveCount(2408);
+  const display = await page.request.get('/data/area_cell_display.geojson').then((r) => r.json());
+  await expect(page.locator('.leaflet-cells-pane path[role="button"]')).toHaveCount(display.features.length);
   await expect(page.locator('.sidebar')).toBeVisible();
   await expect(page.locator('.workplace')).toHaveCount(2);
   await page.screenshot({ path: `test-results/${testInfo.project.name}-overview.png`, fullPage: true });

@@ -188,3 +188,66 @@ relief, geographic bounds and transparent bay/Lake Merced pixels.
 A live local browser additionally verified the topographic layer, stronger controls, sorted
 results, no visible excluded cells and no page errors. JS is 479.13 kB / 149.68 kB gzip;
 topography loads only when selected. The app and TravelTime proxy remain available on 5188/8789.
+
+## Plain opening map, district highlights and park cut-outs — 22 October 2026
+
+Fresh sessions start with no workplaces; Reset to demo opts into SFO + Financial District.
+With no commute or active preference, matching polygons and their legend are hidden and
+removed from keyboard navigation. Existing session workplaces and saved preferences remain
+resumable. Basemap tiles load in the plain view without a routing request.
+
+Selecting a district highlights its eligible cells with strong green/yellow fills and dark
+borders in an SVG pane above every context overlay. Excluded and unknown cells do not enter
+this highlight. Turning context layers on/off never weakens it; returning to Results clears it.
+The renderer is reused across selections. Individual commute borders remain exactly 0.2
+opacity, while the shared green border remains opaque.
+
+Topography now uses pale blue through dark purple to distinguish elevation from match colours.
+The georeferenced USGS PNG is 308,152 bytes. Source elevations and water transparency are retained.
+
+`build_cell_display.py` subtracts the union of mapped parks/open space from canonical display
+geometry, including polygon holes. It emits 2,229 valid polygon footprints (~827 KB); 179
+fully covered cells are omitted. Two study-boundary geometries needed stray lines removed
+after clipping/rounding. Fully masked cells cannot contribute suggestions or counts, including
+four previously supported by street evidence. Remaining original representative points,
+measurements, H3 ids and ranking rules are retained. Cut-outs apply even with the Parks layer
+off; source completeness is not a parcel-level housing guarantee. The full rebuild pipeline
+includes the display builder after canonical cells.
+
+Validation: 29 frontend tests, 39 Python tests, all 9 data validators, desktop/mobile browser
+coverage and the production build pass. Browser coverage checks fresh/cleared plain maps,
+20% individual borders, visible match counts, exact eligible district highlight ids, shared
+base/highlight display geometry, context-toggle independence, image decoding and no page errors.
+Spatial checks verify no park interior overlap, valid polygon-only footprints, original H3 ids,
+real cut boundaries and fully masked omissions. Screenshots are in ignored `test-results/`.
+
+## Dataset information, nightlife, gold selection and completed cards — 22 October 2026
+
+Both sidebar headings have accessible (i) buttons opening native modal source guides. Detailed
+ranking/source notes moved there; normal panels retain concise instructions, colour legends,
+SF-only incident coverage and expired-Muni warnings. Browser checks confirm Escape, close-button
+dismissal and focus return. Source links include original SF, county, USGS, transit and OSM pages.
+
+Nightlife uses a fresh OSM snapshot: **570 deduplicated land venues** (391 bars, 140 pubs,
+39 nightclubs). `build_nightlife.py` produces source points, metadata and a **55,927-byte**
+pink density PNG. Gaussian smoothing uses **300 m ground distance**, cut at 900 m, normalised
+to mapped venues/km² on a fixed scale. Water/outside land and negligible density are transparent.
+The layer is independent map context and does not affect eligible sets, ordering or counts;
+it does not measure opening hours, attendance, noise or mapping completeness.
+
+Selected-district eligible cells use **gold (#b8860b) outlines** above every context layer;
+fill still shows strong/partial match state. Removed the repeated card sentence about being
+within all workplace commute limits. All **53 residential card groups** have locally cached,
+licensed photos; five remaining non-residential context groups do not have ranked photo cards.
+New nearby/city-context photos are clearly captioned and card/detail credits retain licences.
+Browser checks decode all five new card images and verify card/detail naming plus rental URLs.
+
+County aliases are **Colma station area** and **San Bruno hills & county land**. Boundaries,
+source names and stable ids are preserved; the latter is a combined watershed/county-facility
+boundary rather than an invented neighbourhood. See [sources and photos](AREA_LABELS_AND_PHOTOS.md).
+
+Checks: **29 frontend unit tests**, **42 Python tests**, **22 desktop/mobile browser scenarios**
+(full suite plus added photo cases), all **9 validators**, and the production build pass.
+The heatmap check verifies the metric kernel, venue types and transparent bay/Lake Merced pixels; browser checks cover independent
+layer toggling, decoded imagery, gold borders, source dialogs, photos, names and the retained
+plain-map/park-cut/excluded-cell behavior. Final production JS is 486.75 kB / 151.97 kB gzip.

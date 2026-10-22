@@ -68,6 +68,7 @@ export interface NeighbourhoodMetrics {
 }
 
 export interface Photo {
+  caption?: string;
   url: string;
   local?: string;
   page: string;
@@ -79,6 +80,8 @@ export interface Photo {
 
 export interface NeighbourhoodContent {
   name: string;
+  source_name?: string;
+  rental_search_name?: string | null;
   description: string | null;
   tags: string[];
   residential: boolean;
@@ -136,6 +139,8 @@ export interface AreaCellProps {
   zip_asking_rent: number | null;
 }
 export type AreaCellCollection = FeatureCollection<AreaGeometry, AreaCellProps>;
+/** Display footprints exclude mapped parks; measurements remain in AreaCellCollection. */
+export type AreaCellDisplayCollection = FeatureCollection<AreaGeometry, { h3: string }>;
 export type CommuteFixtureFeature = Feature<AreaGeometry, {
   workplace: string;
   mode: TravelMode;

@@ -1,6 +1,8 @@
 import type { PreferenceLevel } from '../../types';
 import { orderedPreferences } from './preferences';
 import { previewMustHave, type EvaluateInput } from './ranking';
+import { SectionInfo } from '../../components/SectionInfo';
+import { preferenceSources } from '../../map/layers/datasetSources';
 
 const LEVELS: { id: PreferenceLevel; label: string }[] = [
   { id: 'off', label: 'Off' },
@@ -24,9 +26,16 @@ export function PreferencePanel({ input, onChange, onOrderChange }: Props) {
   };
   return (
     <section className="panel-section">
-      <h2>What matters to you?</h2>
-      <p className="hint">Top priorities first. “Nice” and “Important” rank eligible cells; “Must” is required. Use the arrows to change the order.</p>
-      <details className="ranking-method"><summary>How priorities work</summary><p className="hint">Compare the first active preference in broad measurement bands, then the next. Important uses finer bands than Nice. Missing measurements are labelled unavailable and sorted after measured evidence. No combined liveability score.</p></details>
+      <div className="section-heading"><h2>What matters to you?</h2><SectionInfo title="What matters to you?">
+        <p>Nice and Important rank reachable cells. Must is required. Use the arrows to put your top priorities first.</p>
+        <p>Earlier priorities are compared first, in broad measurement bands. Important uses finer bands than Nice. Missing values remain unavailable; a missing Must cannot become a confirmed match. There is no combined liveability score.</p>
+        {ordered.map((p) => <section key={p.id} className="dataset-info"><h3>{p.label}</h3>
+          <p>{p.source}. Measured as {p.resolution}. Must means {p.mustHave.describe}.</p>
+          <p>{preferenceSources(p.id).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.label}</a>)}</p>
+        </section>)}
+        <p>Distances are straight-line estimates, not walking routes or verified entrances. Street grades are elevation-based estimates, not surveyed roads. Incident reports cover SF only and do not measure safety.</p>
+      </SectionInfo></div>
+      <p className="hint">Top priorities first. Must is required.</p>
       {ordered.map((p, index) => {
         const level = input.prefs[p.id] ?? 'off';
         const preview = level !== 'must' ? previewMustHave(input, p.id) : null;
@@ -49,7 +58,7 @@ export function PreferencePanel({ input, onChange, onOrderChange }: Props) {
               ))}
             </div>
             {level === 'must' && <p className="pref-note must">Must have: {p.mustHave.describe}.</p>}
-            {level !== 'must' && preview && (
+            {level !== 'must' && preview && preview.eligibleNow > 0 && (
               <p className="pref-note">{mustText(preview)}</p>
             )}
           </div>

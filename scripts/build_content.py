@@ -6,7 +6,7 @@ neighbourhood from Wikimedia Commons.
 Photos: the lead image of the first candidate Wikipedia article whose image
 is on Commons under a free licence (CC BY / CC BY-SA / CC0 / public domain)
 and is not a map or locator. Credit, licence and source page are recorded per
-photo. Images are hotlinked as Commons thumbnails, not copied into the repo.
+photo. Optimised local copies are committed, with Commons thumbnails as fallbacks.
 Lookups are cached in data/sf/raw/_wikimedia_cache.json so reruns are offline.
 
 Usage:
@@ -153,8 +153,12 @@ def main(argv=None) -> int:
         if photo:
             previous = previous_photos.get(nid, {})
             photo |= cache_image(nid, photo | {"local_source": previous.get("local_source")}, args.refresh)
+            if entry.get("photo_caption"):
+                photo["caption"] = entry["photo_caption"]
         out[nid] = {
-            "name": name, "description": entry.get("description"), "tags": entry.get("tags", []),
+            "name": entry.get("display_name", name), "source_name": name,
+            "rental_search_name": entry.get("rental_search_name"),
+            "description": entry.get("description"), "tags": entry.get("tags", []),
             "residential": entry.get("residential", True),
             "photos": [photo] if photo else [],
             "content_status": "draft" if entry else "missing",
@@ -178,7 +182,7 @@ def main(argv=None) -> int:
         "refresh": "as needed",
         "limitations": f"{with_photo}/{len(out)} groups have a photo; {local} cached locally ({local_kb:.0f} KB, "
                        f"max {MAX_WIDTH} px). Descriptions are drafts and avoid demographic claims. Photos are mostly "
-                       "Wikipedia lead images (3 hand-picked); some show a landmark rather than streets.",
+                       f"Wikipedia lead images or {sum(bool(entry.get('commons')) for entry in src.values())} hand-picked files; nearby/city-context photos are explicitly captioned.",
         "status": "processed",
     })
     log.info("%d/%d neighbourhoods with a photo", with_photo, len(out))

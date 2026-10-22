@@ -44,6 +44,19 @@ button, select, input { font: inherit; color: inherit; }
 .mobile-tabs { display: none; }
 
 .panel-section { padding: 16px; border-bottom: 1px solid var(--line); }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.section-heading h2 { margin: 0; }
+.section-info-button { width: 28px; height: 28px; flex: none; border: 1px solid var(--accent); border-radius: 50%; background: var(--accent-soft); color: var(--accent); cursor: pointer; font: bold 17px Georgia, serif; }
+.section-info-dialog { border: 0; color: var(--ink); margin: auto; }
+.section-info-dialog::backdrop { background: rgba(29,36,51,.45); }
+.section-info-content { line-height: 1.55; }
+.section-info-content h2 { padding-right: 30px; }
+.section-info-content p { font-size: 13px; }
+.dataset-info { border-top: 1px solid var(--line); margin-top: 14px; }
+.dataset-info a { display: inline-block; margin-right: 14px; }
+.layer-warning { margin-top: 6px; }
+.card-photo-caption { color: var(--muted); font-size: 10px; line-height: 1.35; margin: 0 0 6px; }
+.card-photo-credit { position: absolute; bottom: 4px; left: 5px; max-width: calc(100% - 10px); padding: 2px 4px; background: #17212bbd; color: #fff; border-radius: 3px; font-size: 9px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .hint { color: var(--muted); font-size: 12px; margin: 2px 0 10px; line-height: 1.4; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
