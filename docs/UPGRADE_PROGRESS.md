@@ -53,4 +53,5 @@
 - Initial performance evidence exposed an unnecessary 3.36 MB geometry load on the empty opening screen. It is now deferred. Final opening transfer is 0.84 MB, about 80% lower. On constrained 4G/4× CPU it opens in 8.6 seconds; the first uncached search still needs 18.8 seconds. Both costs are disclosed.
 - Final tested DEM view transferred 480,938 bytes in 11 tiles. Drag intervals with real buildings, terrain and matches loaded: 16.8 ms p95 unthrottled, 33.3 ms constrained. Full deployed artefact about 23.45 MB. No console errors in either measurement.
 - Final review captures and measurement/HTTP JSON are stored in `docs/review/`; the verification report distinguishes local preview headers from untested production cache headers.
-- Remaining work: feature-branch commit/push, draft PR and CI result. No merge, production deployment or paid resource creation.
+- Core upgrade committed and pushed. Draft [PR #3](https://github.com/markfoth/SuperSet-Hackathon---SF/pull/3) is open. A final capture review moved the mobile legend clear of attribution. The new CI workflow's colon-containing install command was corrected to a YAML block and parsed locally; full Linux test result remains to be recorded.
+- Production alias was rechecked after the feature push and still points to the original main deployment. No merge, production deployment or paid resource creation.

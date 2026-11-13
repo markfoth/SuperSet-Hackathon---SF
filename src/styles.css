@@ -515,7 +515,7 @@ h1, h2, h3, p { overflow-wrap: break-word; }
   .layers-toggle { font-size: 10px; min-height: 34px; padding: 7px 9px; gap: 4px; }
   .floating-layers { width: 270px; max-height: calc(100dvh - 165px); z-index: 30; }
   .coverage-caption { display: none; }
-  .match-legend, .map-focused .match-legend { left: 14px; bottom: 35px; max-width: calc(100% - 80px); padding: 8px 10px; font-size: 9px; border-radius: 7px; }
+  .match-legend, .map-focused .match-legend { left: 14px; bottom: 64px; max-width: calc(100% - 80px); padding: 8px 10px; font-size: 9px; border-radius: 7px; }
   .match-legend b { font-size: 10px; margin-bottom: 5px; }
   .match-legend small { display: none; }
   .map-badge { left: 14px; top: 62px; transform: none; font-size: 10px; max-width: 230px; }
