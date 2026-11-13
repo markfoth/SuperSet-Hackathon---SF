@@ -1,0 +1,6 @@
+{
+  "node/331389010": {"name":"Caffe Trieste","street":"Vallejo Street","housenumber":"601","url":"https://caffetrieste.com/","verified_on":"2026-11-13","evidence":"Official venue home page explicitly lists Caffe Trieste at 601 Vallejo Street, San Francisco. Page contains older posts; verification confirms venue/address association, not current opening hours."},
+  "node/293632937": {"name":"Safeway","street":"King Street","housenumber":"298","url":"https://local.safeway.com/safeway/ca/san-francisco/298-king-st.html","verified_on":"2026-11-13","evidence":"Official branch page lists 298 King St, San Francisco, CA 94107 and matching telephone number."},
+  "node/61670779": {"name":"Woods Lowside","street":"Haight Street","housenumber":"530","url":"https://www.woodsbeer.com/lowside","verified_on":"2026-11-13","evidence":"Official branch page lists Woods Lowside at 530 Haight Street and matching telephone number. Source mapped hours differ, so current hours should be checked on the venue website."},
+  "node/302448629": {"name":"Mezze and Mooore","street":"Guerrero Street","housenumber":"198","url":"https://www.mezzeandmooore.com/","verified_on":"2026-11-13","evidence":"Official venue page lists the original Guerrero branch at 198 Guerrero Street, San Francisco, CA 94103 with matching telephone number, separately from its Irving Street branch."}
+}

@@ -25,7 +25,7 @@ out to rental platforms.
 - **Street gradients, not terrain averages.** Use length-weighted 40 m DEM-derived gradients along
   official streets, with coverage thresholds. No neighbouring terrain slope substitutes for roads.
 - **Resolution honesty.** Crime is *reported incidents* (never "safe/unsafe"), shown on H3 res-8
-  cells, not points. Rents are **ZIP-level asking rents** and must be labelled as such.
+  overview cells with optional published-intersection count markers. These are approximate, anonymised locations, never exact offence addresses. Deduplicate incidents by source incident ID; category totals can overlap. Rents are **ZIP-level asking rents** and must be labelled as such.
   Synthetic commute contours are labelled **Synthetic** in the UI.
 - **Licences travel with data.** SFMTA's notice (in `DataNotice.tsx`) and OSM/Zillow/USGS/photo
   credits must stay visible.
@@ -35,7 +35,7 @@ out to rental platforms.
   expired feed is labelled *out-of-date* in manifest, fixtures and UI; never presented as current.
 - **CalEnviroScreen: pollution indicators only.** Never use the composite CES score or combine
   pollution with population vulnerability into a score.
-- **POIs (cafes, restaurants, bars) are discovery context**, never ranking inputs; drawn at zoom >= 15.
+- **POIs and neighbourhood character are discovery context**, never ranking inputs. City clusters give way to individual venues from zoom 13 and collision-aware names from zoom 14. Food/coffee excludes nightlife venues. Character labels require reviewed sources.
 - Routing: TravelTime **free Basic plan only** (approved for the hackathon; no paid plan) via
   `server/routing-proxy.mjs`. Keys never reach the browser. Offline fixtures must keep working.
 - Map presentation: excluded cells are always hidden, including selection and “Show other areas”.

@@ -1,0 +1,23 @@
+[
+  {
+    "width": 1280,
+    "height": 800,
+    "errors": [],
+    "overflow": false,
+    "renderer": "maplibre"
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "errors": [],
+    "overflow": false,
+    "renderer": "maplibre"
+  },
+  {
+    "width": 1920,
+    "height": 1080,
+    "errors": [],
+    "overflow": false,
+    "renderer": "maplibre"
+  }
+]

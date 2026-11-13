@@ -4,6 +4,7 @@ import type L from 'leaflet';
 import type { Feature, FeatureCollection } from 'geojson';
 import { loadData } from '../../lib/data';
 import { num } from '../../lib/format';
+import { buildLeafletPlaces } from './placeContext';
 
 // LayerPanel imports metadata from this module. Defer the compatibility renderer
 // until an actual Leaflet layer is requested so normal MapLibre sessions omit it.
@@ -17,7 +18,7 @@ export interface ContextLayerDef {
   note: string;
   warning?: string;
   legend: LegendItem[];
-  build: (map: L.Map) => Promise<L.Layer>;
+  build: (map: L.Map, options?: {airScale?:'local'|'statewide'}) => Promise<L.Layer>;
 }
 
 const esc = (s: unknown) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
@@ -29,7 +30,15 @@ function step(value: number, breaks: number[], colors: string[]): string {
 
 const CRIME_BREAKS = [100, 300, 700, 1500];
 const CRIME_COLORS = ['#fde7d9', '#f9b98f', '#ee8551', '#cf5226', '#8f2d10'];
-const AIR_COLORS = ['#eef3fb', '#c6d6ef', '#93b2df', '#5b84c4', '#2b5797'];
+const AIR_COLORS = ['#e5f5e7', '#abd8c5', '#65b8b6', '#32778e', '#143d63'];
+function airColour(value: number | null, scale:'local'|'statewide'='local') {
+  if (value == null) return '#aab1b6';
+  const stops = scale==='local' ? [5, 12, 20, 28, 35] : [0,25,50,75,100];
+  const high = Math.min(4, Math.max(1, stops.findIndex(x => x >= value) === -1 ? 4 : stops.findIndex(x => x >= value)));
+  const t = Math.max(0, Math.min(1, (value-stops[high-1])/(stops[high]-stops[high-1])));
+  const rgb = [0, 1, 2].map(i => Math.round(parseInt(AIR_COLORS[high-1].slice(1+i*2,3+i*2),16)*(1-t) + parseInt(AIR_COLORS[high].slice(1+i*2,3+i*2),16)*t));
+  return `rgb(${rgb.join(',')})`;
+}
 
 const BIKE_STYLE: Record<string, { color: string; weight: number; dashArray?: string; label: string }> = {
   protected: { color: '#0b6e3a', weight: 4, label: 'Protected bikeway (Class IV)' },
@@ -66,9 +75,9 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
   {
     id: 'topography',
     label: 'Topographic map',
-    note: 'USGS land elevation above sea level, in metres, from San Francisco to SFO. Pale blue is low; darker purple is high. Green and yellow hexagons show matches. Water and missing coverage are transparent.',
-    legend: ['#edf2fa', '#d6dff0', '#b9c6e2', '#939bc9', '#746fa9', '#514579'].map((color, i) => ({
-      color, label: ['0 m · sea level', '50 m', '100 m', '200 m', '300 m', '450 m+'][i],
+    note: 'USGS land elevation above sea level, in metres. A fixed near-white to purple scale shows the study region, observed −7 to 397 m. This coloured USGS picture is separate from Mapterhorn terrain geometry and street-gradient measurements. Water and missing coverage are transparent.',
+    legend: ['#f8f6fc', '#e7def2', '#cfc0e4', '#ad94cd', '#8865ad', '#613d8b'].map((color, i) => ({
+      color, label: ['0 m · sea level', '50 m', '100 m', '200 m', '300 m', '400 m+'][i],
     })),
     build: async () => {
       const L = await getLeaflet();
@@ -77,7 +86,7 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
       const image = new Image();
       image.src = url;
       await image.decode();
-      return L.imageOverlay(url, data.bounds, { pane: 'context-fill', opacity: 0.8, interactive: false, className: 'topography-overlay' });
+      return L.imageOverlay(url, data.bounds, { pane: 'context-fill', opacity: 0.72, interactive: false, className: 'topography-overlay' });
     },
   },
   {
@@ -167,15 +176,7 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
     label: 'Supermarkets',
     note: 'Supermarkets and greengrocers mapped in OpenStreetMap.',
     legend: [{ color: '#d97706', label: 'Supermarket' }, { color: '#65a30d', label: 'Greengrocer' }],
-    build: async () => {
-      const L = await getLeaflet();
-      const fc = await loadData<FeatureCollection>('groceries.geojson');
-      return L.geoJSON(fc, {
-        pane: 'context-points',
-        pointToLayer: (f, ll) => L.circleMarker(ll, { radius: 4, color: '#fff', weight: 1, fillColor: f.properties!.shop === 'supermarket' ? '#d97706' : '#65a30d', fillOpacity: 1 }),
-        onEachFeature: (f, l) => l.bindTooltip(esc(f.properties!.name)),
-      });
-    },
+    build: map => buildLeafletPlaces(map, 'groceries'),
   },
   {
     id: 'collisions',
@@ -198,15 +199,14 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
   {
     id: 'air',
     label: 'Air pollution (PM2.5)',
-    note: 'CalEnviroScreen 5.0, per census tract: statewide PM2.5 percentile (100 = most burdened in California). Click a tract for diesel, traffic and other pollution indicators.',
-    legend: ['< 20th percentile', '20–40th', '40–60th', '60–80th', '80th+'].map((label, i) => ({ color: AIR_COLORS[i], label })),
-    build: async () => {
+    note: 'Choose local contrast (fixed 5–35) or the full California 0–100 percentile range. Local values span 7.6–34.2; the darkest local tract is not California’s worst. True statewide values remain in pop-ups. Tract geography, not building-level pollution. Grey means missing data.',
+    legend: [...[5, 12, 20, 28, 35].map((value, i) => ({ color: AIR_COLORS[i], label: `${value}th California percentile · local contrast` })), {color:'#aab1b6', label:'No published PM2.5 value'}],
+    build: async (_map, options) => {
       const L = await getLeaflet();
       const fc = await loadData<FeatureCollection>('census_tracts.geojson');
       return L.geoJSON(fc, {
         pane: 'context-fill',
-        filter: (f) => f.properties?.ces_pm_pctl != null,
-        style: (f) => ({ fillColor: step(f!.properties!.ces_pm_pctl, [20, 40, 60, 80], AIR_COLORS), fillOpacity: 0.5, weight: 0.6, color: '#fff' }),
+        style: (f) => ({ fillColor: airColour(f!.properties!.ces_pm_pctl,options?.airScale), fillOpacity: 0.64, weight: 0.7, color: '#597475' }),
         onEachFeature: (f, l) => {
           const p = f.properties!;
           const row = (label: string, k: string) => `${label}: ${p[`ces_${k}_pctl`] == null ? 'no data' : `${Math.round(p[`ces_${k}_pctl`])}th pct`}`;
@@ -218,44 +218,33 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
   {
     id: 'nightlife',
     label: 'Nightlife',
-    note: 'OpenStreetMap bars, pubs and nightclubs. Darker pink means more mapped venues nearby, using a 300 m smoothing distance and a fixed density scale. Values are smoothed mapped venues per km². This measures venue concentration, not opening hours, attendance, noise or reviews. Sparse colour can mean incomplete mapping. Context only; does not affect ranking.',
+    note: 'OpenStreetMap bars, pubs and nightclubs, clustered at city zoom, individual dots from neighbourhood zoom and collision-aware names at street zoom. Subtle shading is mapped venues per km² with 300 m smoothing, not street activity, noise or opening hours. Context only; does not affect ranking.',
     legend: ['#fbcfe8', '#f9a8d4', '#f472b6', '#db2777', '#9d174d'].map((color, i) => ({
       color, label: ['2 · fewer mapped venues', '5', '10', '20', '40+ · more mapped venues'][i] + ' / km²',
     })),
-    build: async () => {
+    build: async (map) => {
       const L = await getLeaflet();
       const data = await loadData<{ image: string; bounds: [[number, number], [number, number]] }>('nightlife.json');
       const url = `${import.meta.env.BASE_URL}data/${data.image}`;
       const image = new Image(); image.src = url; await image.decode();
-      return L.imageOverlay(url, data.bounds, { pane: 'context-fill', opacity: 0.85, interactive: false, className: 'nightlife-overlay' });
+      return L.layerGroup([
+        L.imageOverlay(url, data.bounds, { pane: 'context-fill', opacity: 0.32, interactive: false, className: 'nightlife-overlay' }),
+        await buildLeafletPlaces(map, 'nightlife'),
+      ]);
     },
   },
   {
     id: 'food',
-    label: 'Cafés, restaurants & bars',
-    note: 'OpenStreetMap places, shown at street zoom (zoom in to see them). For exploring a neighbourhood; not used in ranking.',
-    legend: [{ color: '#8b5a2b', label: 'Café / coffee' }, { color: '#e03131', label: 'Restaurant' }, { color: '#7048e8', label: 'Bar / pub' }],
-    build: async (map) => {
-      const L = await getLeaflet();
-      const [cafes, restaurants, bars] = await Promise.all([
-        loadData<FeatureCollection>('cafes.geojson'), loadData<FeatureCollection>('restaurants.geojson'), loadData<FeatureCollection>('bars.geojson'),
-      ]);
-      const layer = (fc: FeatureCollection, color: string) => L.geoJSON(fc, {
-        pane: 'context-points',
-        pointToLayer: (_f, ll) => L.circleMarker(ll, { radius: 4, color: '#fff', weight: 1, fillColor: color, fillOpacity: 0.95 }),
-        onEachFeature: (f, l) => l.bindTooltip(`${esc(f.properties!.name)}${f.properties!.cuisine ? ` · ${esc(f.properties!.cuisine)}` : ''}`),
-      });
-      const points = L.layerGroup([layer(cafes, '#8b5a2b'), layer(restaurants, '#e03131'), layer(bars, '#7048e8')]);
-      const group = L.layerGroup();
-      // Zoom-dependent display keeps ~3,000 markers from cluttering the city view.
-      const sync = () => {
-        const show = map.getZoom() >= 15;
-        if (show && !group.hasLayer(points)) group.addLayer(points);
-        if (!show && group.hasLayer(points)) group.removeLayer(points);
-      };
-      group.on('add', () => { map.on('zoomend', sync); sync(); });
-      group.on('remove', () => map.off('zoomend', sync));
-      return group;
-    },
+    label: 'Food and coffee',
+    note: 'OpenStreetMap cafés and restaurants. City clusters separate into individual venues from zoom 13; collision-aware names appear from zoom 14. Bars, pubs and nightclubs belong to Nightlife. Discovery context only.',
+    legend: [{ color: '#8b5a2b', label: 'Cafés and restaurants' }],
+    build: map => buildLeafletPlaces(map, 'food'),
+  },
+  {
+    id: 'character',
+    label: 'Neighbourhood character',
+    note: 'Reviewed descriptions of amenities and place character, with sources and review dates. Broad labels give way to researched districts; unsupported areas remain in the research queue. Descriptive context never changes rankings.',
+    legend: [{ color: '#68546f', label: 'Sourced editorial context · click a label' }],
+    build: map => buildLeafletPlaces(map, 'character'),
   },
 ];

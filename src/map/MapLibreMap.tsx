@@ -6,8 +6,12 @@ import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import type { FeatureCollection } from 'geojson';
 import type { MapProps } from './mapTypes';
 import { commuteFeatures, geometryBounds, matchingFeatures, neighbourhoodFeatures, WORKPLACE_COLORS } from './mapData';
-import { addContext, contextText, type LoadedContext } from './layers/mapLibreContext';
+import { addContext, airColour, contextText, type LoadedContext } from './layers/mapLibreContext';
 import { loadData } from '../lib/data';
+import { installRightDragZoom } from './rightDragZoom';
+import { createTransportAnimation } from './transportAnimation';
+import { placePopup, expandPlaceCluster } from './layers/placeContext';
+import { DEFAULT_EVENT_FILTERS, eventPopup, updateEventContext } from './layers/eventDetails';
 import './map.css';
 
 // MapLibre 6 resolves its default worker beside the library module. Vite moves
@@ -23,6 +27,12 @@ const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)'
 function framePadding(map: maplibregl.Map, amount = 32) {
   const bounds = map.getContainer().getBoundingClientRect();
   const layout = map.getContainer().closest('.layout');
+  const criteria = layout?.querySelector('.criteria-panel:not(.collapsed)')?.getBoundingClientRect();
+  const matches = layout?.querySelector('.matches-panel:not(.collapsed)')?.getBoundingClientRect();
+  if (criteria && window.innerWidth >= 1100) {
+    const inset = (rect: DOMRect | undefined, side: 'left' | 'right') => !rect?.width || rect.bottom <= bounds.top || rect.top >= bounds.bottom ? 0 : Math.max(0, side === 'left' ? rect.right - bounds.left : bounds.right - rect.left);
+    return { top: amount + 60, bottom: amount + 40, left: inset(criteria, 'left') + amount, right: inset(matches, 'right') + amount };
+  }
   const decision = layout?.querySelector('.decision-panel:not([hidden])')?.getBoundingClientRect();
   if (decision && window.innerWidth > 700 && decision.top < bounds.bottom && decision.bottom > bounds.top) {
     return { top: amount + 48, bottom: amount + 40, left: Math.min(Math.max(0, decision.right - bounds.left) + amount, bounds.width * 0.45), right: amount };
@@ -41,6 +51,19 @@ function framePadding(map: maplibregl.Map, amount = 32) {
 
 function setGeo(map: maplibregl.Map, id: string, data: FeatureCollection) {
   (map.getSource(id) as GeoJSONSource | undefined)?.setData(data);
+}
+
+/** Place the whole popup inside the space between the two desktop panels. */
+function showPopup(map: maplibregl.Map, event: maplibregl.MapMouseEvent, node: HTMLElement) {
+  const padding=framePadding(map,12), rect=map.getContainer().getBoundingClientRect();
+  const width=Math.min(300,Math.max(220,rect.width-padding.left-padding.right-32));
+  const left=event.point.x<padding.left+width/2;
+  const right=event.point.x>rect.width-padding.right-width/2;
+  const top=event.point.y<(padding.top+rect.height-padding.bottom)/2;
+  const anchor: maplibregl.PositionAnchor = top ? left?'top-left':right?'top-right':'top' : left?'bottom-left':right?'bottom-right':'bottom';
+  node.style.maxHeight=`${Math.max(130,Math.min(390,top?rect.height-padding.bottom-event.point.y-30:event.point.y-padding.top-30))}px`;
+  node.style.overflowY='auto';
+  return new maplibregl.Popup({maxWidth:`${width}px`,anchor,offset:12}).setLngLat(event.lngLat).setDOMContent(node).addTo(map);
 }
 
 function initialiseSources(map: maplibregl.Map, props: MapProps) {
@@ -76,20 +99,22 @@ function initialiseSources(map: maplibregl.Map, props: MapProps) {
   map.addLayer({ id: 'focused-outline', type: 'line', source: 'matching', filter: ['==', ['get', 'focused'], true], paint: {
     'line-color': '#213f36', 'line-width': 3.5,
   } });
-  if (map.getSource('openmaptiles')) map.addLayer({ id: 'real-buildings', type: 'fill-extrusion', source: 'openmaptiles', 'source-layer': 'building', minzoom: 15,
+  if (map.getSource('openmaptiles')) map.addLayer({ id: 'real-buildings', type: 'fill-extrusion', source: 'openmaptiles', 'source-layer': 'building', minzoom: 14,
     layout: { visibility: 'none' }, filter: ['all', ['!=', ['get', 'hide_3d'], true], ['>', ['coalesce', ['get', 'render_height'], 0], 0], ['<=', ['coalesce', ['get', 'render_height'], 0], 1000]],
     paint: { 'fill-extrusion-color': '#d3d1c5', 'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 0],
-      'fill-extrusion-base': ['min', ['max', 0, ['coalesce', ['get', 'render_min_height'], 0]], ['coalesce', ['get', 'render_height'], 0]], 'fill-extrusion-opacity': 0.88, 'fill-extrusion-vertical-gradient': true },
+      'fill-extrusion-base': ['min', ['max', 0, ['coalesce', ['get', 'render_min_height'], 0]], ['coalesce', ['get', 'render_height'], 0]], 'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0, 14.5, 0.88], 'fill-extrusion-vertical-gradient': true },
   }, before);
 }
 
 export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
+  const activePopup = useRef<maplibregl.Popup | null>(null);
   const latest = useRef(props); latest.current = props;
   const markers = useRef<maplibregl.Marker[]>([]);
   const loaded = useRef(new Map<string, LoadedContext>());
   const loading = useRef(new Set<string>());
+  const styleGeneration = useRef(0);
   const [ready, setReady] = useState(0);
   const [is3D, setIs3D] = useState(false);
   const [tilted, setTilted] = useState(false);
@@ -102,9 +127,13 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
   const [layerErrors, setLayerErrors] = useState<Record<string, string>>({});
   const [zoom, setZoom] = useState(11);
   const [layerAttempt, setLayerAttempt] = useState(0);
+  const [navigationHint, setNavigationHint] = useState(() => { try { return sessionStorage.getItem('cg:navigation-hint') !== 'dismissed'; } catch { return true; } });
+  const openPopup = (m:maplibregl.Map,event:maplibregl.MapMouseEvent,node:HTMLElement) => {
+    activePopup.current?.remove(); activePopup.current=showPopup(m,event,node);
+  };
   function changeTilt(next: boolean) {
     setTilted(next);
-    map.current?.easeTo({ pitch: next ? 52 : 0, duration: reducedMotion() ? 0 : 600 });
+    map.current?.easeTo({ pitch: next ? (is3D ? 50 : 52) : 0, duration: reducedMotion() ? 0 : 600 });
   }
 
   const fit = () => {
@@ -117,7 +146,9 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
     shapes.forEach((f) => { const b = geometryBounds(f.geometry); if (b) { bounds.extend([b[0], b[1]]); bounds.extend([b[2], b[3]]); } });
     p.workplaces.forEach((w) => bounds.extend([w.lon, w.lat]));
     p.homes?.forEach((h) => bounds.extend([h.lon, h.lat]));
-    if (!bounds.isEmpty()) m.fitBounds(bounds, { padding: framePadding(m), maxZoom: 15, duration: reducedMotion() ? 0 : 600 });
+    // MapLibre 6 otherwise adds fit padding to padding retained by easeTo.
+    // With two panels that can leave no fitting viewport after Show pin.
+    if (!bounds.isEmpty()) m.fitBounds(bounds, { padding: framePadding(m), absolutePadding: true, maxZoom: 15, duration: reducedMotion() ? 0 : 600 });
   };
 
   useEffect(() => {
@@ -131,6 +162,7 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
       });
     } catch { props.onWebGLFailure(); return; }
     map.current = m;
+    const removeRightDrag = installRightDragZoom(m);
     // A scoped renderer handle lets browser audits exercise the real production
     // camera and query loaded elevation, without replacing or mocking WebGL.
     Object.defineProperty(el.current, '__commonGroundMap', { value: m, configurable: true });
@@ -138,6 +170,7 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
     m.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: 'Context: DataSF · San Mateo County · USGS · OSM' }), 'bottom-left');
     const onReady = () => {
       if (disposed || m.getSource('matching')) return;
+      styleGeneration.current += 1;
       loaded.current.clear(); loading.current.clear();
       terrainGeneration.current += 1;
       setTerrainBusy(false);
@@ -186,7 +219,9 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
       const id = f?.properties?.h3 as string | undefined;
       if (hover && hover !== id) m.setFeatureState({ source: 'matching', id: hover }, { hover: false });
       hover = id ?? null;
-      m.getCanvas().style.cursor = id ? 'pointer' : '';
+      const interactive=[...loaded.current.values()].flatMap(x=>x.layers).filter(key=>m.getLayer(key)&&['circle','symbol'].includes(m.getLayer(key)!.type));
+      const hasPoint=interactive.length && m.queryRenderedFeatures(event.point,{layers:interactive}).length>0;
+      m.getCanvas().style.cursor = id || hasPoint ? 'pointer' : '';
       if (!id) { tooltip.remove(); if (hoveredNeighbourhood) latest.current.onHoverNeighbourhood?.(null); hoveredNeighbourhood = null; return; }
       m.setFeatureState({ source: 'matching', id }, { hover: true });
       const r = latest.current.cellResults[id];
@@ -199,24 +234,53 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
       const p = latest.current;
       if (p.pickingHome) { p.onHomePick?.(event.lngLat.lat, event.lngLat.lng); return; }
       if (p.addingWorkplace) { p.onMapPick(event.lngLat.lat, event.lngLat.lng); return; }
-      const pointLayers = [...loaded.current.values()].flatMap((x) => x.layers).filter((id) => ['circle', 'line'].includes(m.getLayer(id)?.type ?? ''));
+      const contextLayers = [...loaded.current.values()].flatMap((x) => x.layers).filter(id => m.getLayer(id));
+      const placeLayers = contextLayers.filter(id => id.includes('-places-'));
+      const placeHits = placeLayers.length ? m.queryRenderedFeatures(event.point, {layers: placeLayers}) : [];
+      // A neighbouring venue's label can cross a dot. Actual marker hits take
+      // precedence, with nearest projected centre resolving overlapping circles.
+      const dotHits=placeHits.filter(feature=>feature.layer.type==='circle'&&feature.geometry.type==='Point');
+      dotHits.sort((a,b)=>{
+        const distance=(feature:maplibregl.MapGeoJSONFeature)=>feature.geometry.type==='Point'?m.project(feature.geometry.coordinates.slice(0,2) as [number,number]).dist(event.point):Infinity;
+        return distance(a)-distance(b);
+      });
+      const place = dotHits[0] ?? placeHits[0];
+      if (place) {
+        tooltip.remove();
+        p.onInspectContext?.();
+        if (place.properties.cluster) { void expandPlaceCluster(m, place); return; }
+        const node = placePopup(place);
+        if (node) { openPopup(m,event,node); return; }
+      }
+      const eventLayers = contextLayers.filter(id => /context-(crime|collisions)-(points|point-count|clusters|cluster-count)$/.test(id));
+      const detail = eventLayers.length ? m.queryRenderedFeatures(event.point, {layers: eventLayers})[0] : undefined;
+      if (detail) {
+        tooltip.remove(); const kind = detail.layer.id.startsWith('context-crime-') ? 'crime' : 'collisions';
+        p.onInspectContext?.(); openPopup(m,event,eventPopup(kind, detail.properties)); return;
+      }
+      const pointLayers = contextLayers.filter(id => ['circle', 'symbol', 'line'].includes(m.getLayer(id)?.type ?? '') && !id.includes('context-air-'));
       const point = pointLayers.length ? m.queryRenderedFeatures(event.point, { layers: pointLayers })[0] : undefined;
       if (point) {
+        p.onInspectContext?.();
         const node = document.createElement('div'); node.textContent = contextText(point.layer.id, point.properties);
-        new maplibregl.Popup({ maxWidth: '280px' }).setLngLat(event.lngLat).setDOMContent(node).addTo(m); return;
+        openPopup(m,event,node); return;
       }
       const hit = m.getLayer('matching-fill') ? m.queryRenderedFeatures(event.point, { layers: ['matching-fill'] })[0] : undefined;
       if (hit?.properties?.h3) { p.onSelectCell(String(hit.properties.h3)); return; }
       const ctxLayers = [...loaded.current.values()].flatMap((x) => x.layers).filter((id) => m.getLayer(id)?.type === 'fill');
       const ctx = ctxLayers.length ? m.queryRenderedFeatures(event.point, { layers: ctxLayers })[0] : undefined;
       if (ctx) {
-        const node = document.createElement('div'); node.textContent = contextText(ctx.layer.id, ctx.properties);
-        new maplibregl.Popup({ maxWidth: '280px' }).setLngLat(event.lngLat).setDOMContent(node).addTo(m); return;
+        p.onInspectContext?.();
+        const isEvent = /^context-(crime|collisions)-/.test(ctx.layer.id);
+        const node = isEvent ? eventPopup(ctx.layer.id.startsWith('context-crime-') ? 'crime' : 'collisions', ctx.properties) : document.createElement('div');
+        if (!isEvent) node.textContent = contextText(ctx.layer.id, ctx.properties, latest.current.airScale);
+        openPopup(m,event,node); return;
       }
       const building = m.getLayer('real-buildings') ? m.queryRenderedFeatures(event.point, { layers: ['real-buildings'] })[0] : undefined;
       if (building) {
+        p.onInspectContext?.();
         const node = document.createElement('div'); node.textContent = `OSM building · approximate rendered height ${building.properties.render_height} m. May be inferred from storeys; not a surveyed height or a match rating.`;
-        new maplibregl.Popup().setLngLat(event.lngLat).setDOMContent(node).addTo(m); return;
+        openPopup(m,event,node); return;
       }
       const neighbourhood = m.getLayer('coverage-land') ? m.queryRenderedFeatures(event.point, { layers: ['coverage-land'] })[0] : undefined;
       if (neighbourhood?.properties?.id && p.matchingActive) p.onSelect(String(neighbourhood.properties.id));
@@ -250,7 +314,16 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
       .catch(() => { if (!disposed) { setBaseError('Street tiles could not load. Matching locations and pins remain available.'); setStyleLoading(false); } })
       .finally(() => window.clearTimeout(timeout));
     const resize = new ResizeObserver(() => m.resize()); resize.observe(el.current);
-    return () => { disposed = true; terrainGeneration.current += 1; controller.abort(); window.clearTimeout(timeout); resize.disconnect(); tooltip.remove(); markers.current.forEach((x) => x.remove()); markers.current = []; m.remove(); map.current = null; };
+    const app = el.current.closest('.app');
+    const panelChange = new MutationObserver(() => {
+      if (!m.getLayer('matching-fill') || window.innerWidth < 1100) return;
+      const padding = framePadding(m);
+      // Preserve the viewed location while shifting the vanishing point between
+      // the two panel edges. No fit or zoom reset on a panel collapse.
+      m.easeTo({center:m.getCenter(),padding,duration:0});
+    });
+    if (app) panelChange.observe(app, {attributes:true,attributeFilter:['class']});
+    return () => { disposed = true; terrainGeneration.current += 1; controller.abort(); window.clearTimeout(timeout); resize.disconnect(); panelChange.disconnect(); removeRightDrag(); tooltip.remove(); activePopup.current?.remove(); markers.current.forEach((x) => x.remove()); markers.current = []; m.remove(); map.current = null; };
   }, []);
 
   useEffect(() => {
@@ -304,21 +377,38 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
 
   useEffect(() => {
     const m = map.current; if (!m?.getLayer('matching-fill')) return;
-    for (const id of ['crime', 'topography', 'cycling', 'transit', 'parks', 'groceries', 'collisions', 'air', 'nightlife', 'food']) {
+    for (const id of ['crime', 'topography', 'cycling', 'transit', 'parks', 'groceries', 'collisions', 'air', 'nightlife', 'food', 'character']) {
       const present = loaded.current.get(id);
       if (present) present.layers.forEach((key) => { if (m.getLayer(key)) m.setLayoutProperty(key, 'visibility', props.visibleLayers.has(id) ? 'visible' : 'none'); });
       else if (props.visibleLayers.has(id) && !loading.current.has(id) && !layerErrors[id]) {
         loading.current.add(id);
-        addContext(m, id).then((value) => {
-          if (map.current !== m) return;
+        const generation = styleGeneration.current;
+        const current = () => map.current === m && styleGeneration.current === generation;
+        const filters = id === 'crime' || id === 'collisions' ? (latest.current.eventFilters ?? DEFAULT_EVENT_FILTERS)[id] : undefined;
+        addContext(m, id, current, filters).then((value) => {
+          if (!current()) return;
           loaded.current.set(id, value);
           if (el.current) el.current.dataset.contextLoaded = [...loaded.current.keys()].join(',');
           value.layers.forEach((key) => { if (m.getLayer(key)) m.setLayoutProperty(key, 'visibility', latest.current.visibleLayers.has(id) ? 'visible' : 'none'); });
-        }).catch(() => { if (map.current === m) setLayerErrors((e) => ({ ...e, [id]: 'This context layer could not load.' })); })
-          .finally(() => loading.current.delete(id));
+          if ((id === 'crime' || id === 'collisions') && latest.current.visibleLayers.has(id)) updateEventContext(m, id, (latest.current.eventFilters ?? DEFAULT_EVENT_FILTERS)[id]);
+          if(id==='air' && m.getLayer('context-air-tracts-0')) m.setPaintProperty('context-air-tracts-0','fill-color',airColour(latest.current.airScale));
+        }).catch(() => { if (current()) setLayerErrors((e) => ({ ...e, [id]: 'This context layer could not load.' })); })
+          .finally(() => { if (current()) loading.current.delete(id); });
       }
     }
   }, [ready, props.visibleLayers, layerAttempt, layerErrors]);
+
+  useEffect(() => {
+    const m = map.current; if (!m) return;
+    activePopup.current?.remove(); activePopup.current=null;
+    for (const kind of ['crime', 'collisions'] as const) if (props.visibleLayers.has(kind)) updateEventContext(m, kind, (props.eventFilters ?? DEFAULT_EVENT_FILTERS)[kind]);
+  }, [ready, props.eventFilters, props.visibleLayers]);
+
+  useEffect(()=>{
+    const m=map.current;
+    if(m?.getLayer('context-air-tracts-0'))m.setPaintProperty('context-air-tracts-0','fill-color',airColour(props.airScale));
+    activePopup.current?.remove(); activePopup.current=null;
+  },[props.airScale]);
 
   useEffect(() => {
     const m = map.current; if (!m) return;
@@ -329,7 +419,19 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
   useEffect(() => {
     const m = map.current; if (!m?.getStyle()) return;
     if (m.getLayer('real-buildings')) m.setLayoutProperty('real-buildings', 'visibility', is3D ? 'visible' : 'none');
+    // One tile zoom across this bounded, non-horizon view prevents rectangular
+    // heightless parent tiles. Normal-scale geometry; no fabricated z13 heights.
+    if (m.getSource('openmaptiles')) m.setSourceTileLodParams(is3D ? 1 : 3, is3D ? 8 : 3, 'openmaptiles');
+    m.setMaxPitch(is3D ? 50 : 60);
   }, [ready, is3D]);
+
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !props.transportAnimation || !props.visibleLayers.has('transit')) return;
+    let current = true; let cleanup: (() => void) | undefined;
+    void createTransportAnimation(m, () => current).then(stop => { if (current) cleanup = stop; else stop(); }).catch(() => { if (current) setLayerErrors(e => ({...e, transit: 'Example vehicles could not load. Retry the public transport layer.'})); });
+    return () => { current = false; cleanup?.(); };
+  }, [ready, props.transportAnimation, props.visibleLayers.has('transit')]);
 
   useEffect(() => {
     if (terrainWanted.current) void enableTerrain();
@@ -339,14 +441,14 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
     const m = map.current; if (!m || props.selectedCellId || !props.selectedId) return;
     const feature = props.neighbourhoods.features.find((f) => f.properties.id === props.selectedId);
     const bounds = feature && geometryBounds(feature.geometry);
-    if (bounds) m.fitBounds(bounds as LngLatBoundsLike, { padding: framePadding(m, 48), maxZoom: 15.3, duration: reducedMotion() ? 0 : 600 });
+    if (bounds) m.fitBounds(bounds as LngLatBoundsLike, { padding: framePadding(m, 48), absolutePadding: true, maxZoom: 15.3, duration: reducedMotion() ? 0 : 600 });
   }, [props.selectedId]);
 
   useEffect(() => {
     const m = map.current; if (!m || !props.selectedCellId) return;
     const feature = props.cells.features.find((f) => f.properties.h3 === props.selectedCellId);
     const bounds = feature && geometryBounds(feature.geometry);
-    if (bounds) m.fitBounds(bounds as LngLatBoundsLike, { padding: framePadding(m, 40), maxZoom: 16, duration: reducedMotion() ? 0 : 500 });
+    if (bounds) m.fitBounds(bounds as LngLatBoundsLike, { padding: framePadding(m, 40), absolutePadding: true, maxZoom: 16, duration: reducedMotion() ? 0 : 500 });
   }, [props.selectedCellId]);
 
   useEffect(() => {
@@ -391,9 +493,11 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
       <button className={terrain ? 'active' : ''} type="button" aria-label="Terrain" title="Show regional terrain at normal scale" aria-pressed={terrain} disabled={styleLoading} onClick={toggleTerrain}>{terrainBusy ? '…' : '△'}</button>
       <button className={tilted ? 'active' : ''} type="button" aria-label="Map tilt" title="Toggle tilted or overhead view" aria-pressed={tilted} onClick={() => changeTilt(!tilted)}>Tilt</button>
       <button type="button" aria-label="Reset north" title="Reset north" onClick={() => map.current?.easeTo({ bearing: 0, duration: reducedMotion() ? 0 : 400 })}>N ↑</button>
+      <button type="button" aria-label="Rotate map clockwise" title="Rotate clockwise by 30 degrees" onClick={() => { const m = map.current; if (m) m.easeTo({ bearing: m.getBearing() + 30, duration: reducedMotion() ? 0 : 400 }); }}>↻</button>
       <button type="button" aria-label="Fit locations" title="Fit all matching locations and destinations" onClick={fit}>⛶</button>
     </div>
-    {(is3D || terrain) && <div className="map-3d-note">{is3D && zoom < 15 ? 'Zoom in for 3D buildings. ' : ''}{is3D ? 'OSM heights may be inferred from storeys. ' : ''}{terrain ? 'Regional terrain at normal scale. ' : ''}Housing analysis remains SF to SFO.</div>}
+    {navigationHint && <div className="map-navigation-hint"><span>Right-drag up to zoom in around your starting point. Tilt and ↻ rotate the view.</span><button type="button" aria-label="Dismiss navigation hint" onClick={() => { setNavigationHint(false); try { sessionStorage.setItem('cg:navigation-hint', 'dismissed'); } catch { /* session storage optional */ } }}>×</button></div>}
+    {(is3D || terrain) && <div className="map-3d-note">{is3D && zoom < 14.5 ? 'Buildings fade in from zoom 14. ' : ''}{is3D ? 'Approximate OSM heights · tilt limited to 50° for coherent detail. ' : ''}{terrain ? 'Regional terrain at normal scale. ' : ''}Housing analysis remains SF to SFO.</div>}
     {baseError && <div className="map-service-warning" role="status">{baseError}<button type="button" onClick={() => { setBaseError(''); map.current?.setStyle(STYLE_URL); }}>Retry tiles</button></div>}
     {Object.entries(layerErrors).filter(([id]) => id === 'terrain' || props.visibleLayers.has(id)).map(([id, message]) => <div key={id} className="map-layer-error" role="alert">{message}<button type="button" onClick={() => { setLayerErrors((errors) => { const next = { ...errors }; delete next[id]; return next; }); setLayerAttempt((n) => n + 1); if (id === 'terrain') { terrainWanted.current = true; void enableTerrain(); } }}>Retry layer</button></div>)}
   </>;

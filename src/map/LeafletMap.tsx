@@ -5,6 +5,7 @@ import type { MatchState } from '../features/filters/ranking';
 import { reasonText } from '../features/neighbourhoods/reasons';
 import { CONTEXT_LAYERS } from './layers/contextLayers';
 import type { MapProps } from './mapTypes';
+import { buildLeafletEvents, DEFAULT_EVENT_FILTERS } from './layers/eventDetails';
 
 // Compatibility renderer only. OSM standard raster tiles require attribution and
 // ordinary browser caching. No prefetching or offline bulk downloads are performed.
@@ -24,6 +25,11 @@ function framePadding(map: L.Map, padding: number): L.FitBoundsOptions {
   const container = map.getContainer();
   const bounds = container.getBoundingClientRect();
   const layout = container.closest('.layout');
+  if (window.innerWidth >= 1100) {
+    const left=layout?.querySelector('.criteria-panel')?.getBoundingClientRect();
+    const right=layout?.querySelector('.matches-panel')?.getBoundingClientRect();
+    return {paddingTopLeft:[left?.width ? left.right-bounds.left+padding : padding,padding],paddingBottomRight:[right?.width ? bounds.right-right.left+padding : padding,padding]};
+  }
   const decision = layout?.querySelector('.decision-panel:not([hidden])')?.getBoundingClientRect();
   if (decision && window.innerWidth > 700 && decision.top < bounds.bottom && decision.bottom > bounds.top) {
     return { paddingTopLeft: [Math.min(Math.max(0, decision.right - bounds.left) + padding, bounds.width * 0.45), padding], paddingBottomRight: [padding, padding] };
@@ -259,6 +265,7 @@ export function MapView(props: MapProps) {
     const m = map.current;
     if (!m) return;
     for (const def of CONTEXT_LAYERS) {
+      if (def.id === 'crime' || def.id === 'collisions' || def.id==='air') continue;
       const want = props.visibleLayers.has(def.id);
       const layer = ctx.current.get(def.id);
       if (layer) {
@@ -275,6 +282,19 @@ export function MapView(props: MapProps) {
       }
     }
   }, [props.visibleLayers]);
+
+  useEffect(() => {
+    const m=map.current; if(!m)return;
+    let current=true;
+    for(const kind of ['crime','collisions','air'] as const) {
+      ctx.current.get(kind)?.remove(); ctx.current.delete(kind);
+      if(props.visibleLayers.has(kind)) {
+        const task=kind==='air'?CONTEXT_LAYERS.find(layer=>layer.id==='air')!.build(m,{airScale:props.airScale}):buildLeafletEvents(m,kind,(props.eventFilters??DEFAULT_EVENT_FILTERS)[kind]);
+        void task.then(layer=>{if(!current||map.current!==m)return;ctx.current.set(kind,layer);layer.addTo(m);}).catch(()=>{if(current)setLayerErrors(e=>({...e,[kind]:'Published context could not load.'}));});
+      }
+    }
+    return ()=>{current=false;for(const kind of ['crime','collisions','air']){ctx.current.get(kind)?.remove();ctx.current.delete(kind);}};
+  },[props.visibleLayers,props.eventFilters,props.airScale]);
 
   // Zoom to the selected neighbourhood (explicit navigation only).
   useEffect(() => {

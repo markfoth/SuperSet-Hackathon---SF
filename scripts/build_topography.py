@@ -6,6 +6,7 @@ The image grid is Web Mercator so Leaflet's image bounds remain geographically a
 from __future__ import annotations
 
 import geopandas as gpd
+import json
 import numpy as np
 from PIL import Image
 import rasterio
@@ -13,10 +14,10 @@ from rasterio.features import geometry_mask
 from rasterio.transform import from_bounds
 from rasterio.warp import reproject, Resampling, transform_bounds
 
-from _common import PROCESSED_DIR, RAW_DIR, STUDY_BBOX, rel, today, update_manifest, write_json
+from _common import PROCESSED_DIR, RAW_DIR, STUDY_BBOX, read_download_log, rel, today, update_manifest, write_json
 
-STOPS = [0, 50, 100, 200, 300, 450]
-COLOURS = ["#edf2fa", "#d6dff0", "#b9c6e2", "#939bc9", "#746fa9", "#514579"]
+STOPS = [0, 50, 100, 200, 300, 400]
+COLOURS = ["#f8f6fc", "#e7def2", "#cfc0e4", "#ad94cd", "#8865ad", "#613d8b"]
 
 
 def build() -> dict:
@@ -34,8 +35,13 @@ def build() -> dict:
         reproject(band, elevation, src_transform=source.transform, src_crs=source.crs,
                   src_nodata=np.nan, dst_transform=transform, dst_crs="EPSG:3857",
                   dst_nodata=np.nan, resampling=Resampling.bilinear)
-    land = gpd.read_file(PROCESSED_DIR / "neighbourhoods.geojson").to_crs(3857)
-    water = gpd.GeoSeries([gpd.read_file(RAW_DIR / name).to_crs(3857).geometry.union_all()
+    def read_geojson(path):
+        with open(path, encoding="utf-8") as handle:
+            data = json.load(handle)
+        crs = data.get("crs", {}).get("properties", {}).get("name", "EPSG:4326")
+        return gpd.GeoDataFrame.from_features(data["features"], crs=crs)
+    land = read_geojson(PROCESSED_DIR / "neighbourhoods.geojson").to_crs(3857)
+    water = gpd.GeoSeries([read_geojson(RAW_DIR / name).to_crs(3857).geometry.union_all()
                           for name in ["peninsula_water.geojson", "peninsula_lakes.geojson"]], crs=3857).union_all()
     land_mask = land.geometry.union_all().difference(water)
     inside = geometry_mask([land_mask], out_shape=elevation.shape, transform=transform, invert=True)
@@ -51,13 +57,14 @@ def build() -> dict:
                 "crs": "EPSG:3857", "display_pixel_m": 30, "source_pixel_m": 10,
                 "width": width, "height": height,
                 "observed_range_m": [round(float(elevation[valid].min()), 1), round(float(elevation[valid].max()), 1)],
+                "elevation_percentiles_m": {str(q): round(float(np.percentile(elevation[valid], q)), 1) for q in [10, 25, 50, 75, 90, 99]},
                 "colour_stops_m": STOPS, "colours": COLOURS,
                 "method": "USGS bare-earth elevation, bilinear resampling; colour interpolated by elevation above sea level in metres. Not street slope. Missing/water/outside coverage transparent."}
     write_json(metadata_path, metadata)
     update_manifest("topography", {"source": "USGS 3DEP bare-earth elevation; study land from SF and San Mateo County boundaries",
         "source_url": "https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer",
         "licence": "Elevation: US public domain (USGS); land mask inherits boundary sources",
-        "downloaded_at": today(), "measurement_period": "DEM composite of source lidar acquisitions",
+        "downloaded_at": read_download_log().get("elevation_3dep", {}).get("downloaded_at"), "processed_at": today(), "measurement_period": "DEM composite of source lidar acquisitions",
         "resolution": "Approximately 10 m source DEM, resampled to 30 m Web Mercator display pixels",
         "feature_count": None, "raw_path": rel(source_path) + "; peninsula_water.geojson; peninsula_lakes.geojson", "processed_path": [rel(metadata_path), rel(image_path)],
         "script": "scripts/build_topography.py via process_datasets.py --only topography", "refresh": "after DEM or study-area boundary changes",

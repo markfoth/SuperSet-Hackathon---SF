@@ -1,4 +1,17 @@
 .map { isolation: isolate; z-index: 0; }
+.map-navigation-hint { position:absolute; z-index:4; bottom:140px; left:calc(var(--left-inset, 0px) + 20px); width:min(240px, calc(100% - 60px)); display:flex; align-items:center; gap:8px; background:#fffef8ee; border:1px solid #d7ded7; border-radius:9px; padding:8px 10px; font-size:11px; color:#43564e; }
+.map-navigation-hint button { padding:2px 7px; border:0; background:transparent; font-size:20px; cursor:pointer; color:inherit; }
+.example-vehicle { width:22px; height:29px; color:#276c64; pointer-events:none; filter:drop-shadow(0 1px 2px #203e3b66); }
+.example-vehicle.rail { color:#735290; }
+.example-vehicle svg { display:block; width:100%; height:100%; }
+.transport-demo-control { border-top:1px solid #dde4de; margin-top:8px; padding-top:8px; }
+.transport-demo-control label { font-size:12px; }
+.transport-demo-control small { display:block; font-size:10px; line-height:1.5; }
+.layer .air-scale-control { display:block; margin-top:8px; font-size:11px; }
+.air-scale-control select { display:block; width:100%; min-width:0; margin-top:5px; font-size:11px; padding:6px; }
+.maplibregl-popup-content { max-height:min(420px, 60vh); overflow:auto; font-size:12px; line-height:1.5; border-radius:10px; padding:16px; }
+.maplibregl-popup-content a { color:#235f66; text-decoration:underline; display:block; margin:5px 0; }
+@media(min-width:1001px) { .app .map-wrap .map-3d-note { top:126px; left:auto; right:calc(var(--right-inset, 0px) + 16px); bottom:auto; transform:none; max-width:220px; text-align:left; } }
 .map-navigation { position: absolute; z-index: 5; right: 20px; bottom: 132px; display: grid; background: #fffefa; border: 1px solid #d7ded7; border-radius: 12px; box-shadow: 0 3px 15px #263b3014; overflow: hidden; }
 .map-navigation button { width: 44px; height: 44px; border: 0; border-bottom: 1px solid #edf0e9; border-radius: 0; background: transparent; color: #334d43; font: 600 14px/1 inherit; cursor: pointer; }
 .map-navigation button:last-child { border-bottom: 0; }

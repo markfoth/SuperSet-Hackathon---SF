@@ -14,7 +14,7 @@ test('MapLibre preserves matches through 3D and real bounded terrain toggles', a
   const count = await map.getAttribute('data-eligible-count');
   await page.getByRole('button', { name: '3D buildings', exact: true }).click();
   await expect(map).toHaveAttribute('data-3d', 'true');
-  await expect(map).toHaveAttribute('data-pitch', '52');
+  await expect(map).toHaveAttribute('data-pitch', '50');
   await page.getByRole('button', { name: 'Terrain', exact: true }).click();
   await expect(map).toHaveAttribute('data-terrain', 'true');
   await expect.poll(() => terrainResponses.length).toBeGreaterThan(0);

@@ -1,5 +1,7 @@
 # Regional 3D repair
 
+The 13 November desktop refinements retain this same continuous terrain descriptor, normal exaggeration and failure recovery. Building views now use a 50° maximum pitch and coherent tile detail; terrain-only navigation retains 60°. Right-button dragging is anchored zoom, with explicit tilt/rotation buttons. Current regression evidence is linked in [desktop refinements](DESKTOP_REFINEMENTS.md).
+
 The original local DEM reproduced the falling-away defect south of its clipped coverage. The replacement uses one continuous regional terrain source, keeps buildings and camera tilt independent, and leaves housing analysis limited to SF to SFO.
 
 ## Reproduction and cause

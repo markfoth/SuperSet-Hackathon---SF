@@ -1,5 +1,7 @@
 # Household decision workspace
 
+The 13 November desktop refinement restores simultaneous criteria on the left and results/details on the right at widths from 1100 CSS pixels. Each panel scrolls and collapses independently; focus mode hides both. Earlier single-panel desktop descriptions below are historical. See [desktop layout](DESKTOP_LAYOUT.md) and [current refinement evidence](DESKTOP_REFINEMENTS.md). Mobile was outside this refinement's verification scope.
+
 The journey is destinations, priorities, suitable areas, comparison, then an actual home. The map stays available and earlier choices remain editable. Existing household, sharing and home components are reused.
 
 ## Before and after

@@ -16,6 +16,7 @@ export const DATASET_SOURCES: Record<string, { label: string; url: string }[]> =
   groceries: [{ label: 'OpenStreetMap', url: 'https://www.openstreetmap.org/copyright' }],
   food: [{ label: 'OpenStreetMap', url: 'https://www.openstreetmap.org/copyright' }],
   nightlife: [{ label: 'OpenStreetMap', url: 'https://www.openstreetmap.org/copyright' }],
+  character: [{label:'SF cultural districts',url:'https://www.sf.gov/cultural-districts'},{label:'Peninsula place sources in each label',url:'https://www.brisbaneca.org/'}],
   air: [{ label: 'OEHHA CalEnviroScreen 5.0', url: 'https://oehha.ca.gov/calenviroscreen' }],
   collisions: [{ label: 'SF TransBASE', url: 'https://transbase.sfgov.org/' }],
 };

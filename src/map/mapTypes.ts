@@ -1,6 +1,7 @@
 import type { CommuteArea } from '../features/commute/provider';
 import type { AreaResult, CellResult } from '../features/filters/ranking';
 import type { AreaCellDisplayCollection, AreaGeometry, NeighbourhoodCollection, Workplace } from '../types';
+import type { EventKind, EventFilterState } from './layers/eventDetails';
 
 export interface MapHome { id: string; name: string; lat: number; lon: number }
 export interface MapProps {
@@ -30,4 +31,8 @@ export interface MapProps {
   onMoveHome?: (id: string, lat: number, lon: number) => void;
   pickingHome?: boolean;
   onHomePick?: (lat: number, lon: number) => void;
+  transportAnimation?: boolean;
+  eventFilters?: Record<EventKind, EventFilterState>;
+  onInspectContext?: () => void;
+  airScale?: 'local' | 'statewide';
 }

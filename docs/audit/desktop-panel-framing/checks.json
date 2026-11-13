@@ -1,0 +1,1217 @@
+[
+  {
+    "width": 1280,
+    "height": 800,
+    "state": "both",
+    "camera": {
+      "zoom": 10.75926907992492,
+      "centre": [
+        -122.43275499999999,
+        37.71185526452699
+      ]
+    },
+    "padding": {
+      "top": 92,
+      "bottom": 72,
+      "left": 355.1875,
+      "right": 393.59375
+    },
+    "visibleMap": {
+      "minX": 323.1875,
+      "maxX": 918.40625,
+      "width": 595.21875
+    },
+    "pins": [
+      {
+        "name": "SFO Airport, destination 1. Drag to move.",
+        "x": 753,
+        "visible": true
+      },
+      {
+        "name": "Financial District, destination 2. Drag to move.",
+        "x": 702,
+        "visible": true
+      }
+    ],
+    "controls": [
+      {
+        "name": "3D buildings",
+        "reachable": true
+      },
+      {
+        "name": "Terrain",
+        "reachable": true
+      },
+      {
+        "name": "Map tilt",
+        "reachable": true
+      },
+      {
+        "name": "Reset north",
+        "reachable": true
+      },
+      {
+        "name": "Rotate map clockwise",
+        "reachable": true
+      },
+      {
+        "name": "Fit locations",
+        "reachable": true
+      },
+      {
+        "name": "Find",
+        "reachable": true
+      },
+      {
+        "name": "Explore",
+        "reachable": true
+      },
+      {
+        "name": "Compare",
+        "reachable": true
+      },
+      {
+        "name": "Focus on map ⛶",
+        "reachable": true
+      },
+      {
+        "name": "▱ Map layers",
+        "reachable": true
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "height": 800,
+    "state": "left-collapsed",
+    "camera": {
+      "zoom": 10.75926907992492,
+      "centre": [
+        -122.43275499999999,
+        37.71185526452699
+      ]
+    },
+    "padding": {
+      "top": 92,
+      "bottom": 72,
+      "left": 32,
+      "right": 393.59375
+    },
+    "visibleMap": {
+      "minX": 0,
+      "maxX": 918.40625,
+      "width": 918.40625
+    },
+    "pins": [
+      {
+        "name": "SFO Airport, destination 1. Drag to move.",
+        "x": 592,
+        "visible": true
+      },
+      {
+        "name": "Financial District, destination 2. Drag to move.",
+        "x": 540,
+        "visible": true
+      }
+    ],
+    "controls": [
+      {
+        "name": "3D buildings",
+        "reachable": true
+      },
+      {
+        "name": "Terrain",
+        "reachable": true
+      },
+      {
+        "name": "Map tilt",
+        "reachable": true
+      },
+      {
+        "name": "Reset north",
+        "reachable": true
+      },
+      {
+        "name": "Rotate map clockwise",
+        "reachable": true
+      },
+      {
+        "name": "Fit locations",
+        "reachable": true
+      },
+      {
+        "name": "Find",
+        "reachable": true
+      },
+      {
+        "name": "Explore",
+        "reachable": true
+      },
+      {
+        "name": "Compare",
+        "reachable": true
+      },
+      {
+        "name": "Focus on map ⛶",
+        "reachable": true
+      },
+      {
+        "name": "▱ Map layers",
+        "reachable": true
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "height": 800,
+    "state": "both-collapsed",
+    "camera": {
+      "zoom": 10.75926907992492,
+      "centre": [
+        -122.43275499999999,
+        37.71185526452699
+      ]
+    },
+    "padding": {
+      "top": 92,
+      "bottom": 72,
+      "left": 32,
+      "right": 32
+    },
+    "visibleMap": {
+      "minX": 0,
+      "maxX": 1280,
+      "width": 1280
+    },
+    "pins": [
+      {
+        "name": "SFO Airport, destination 1. Drag to move.",
+        "x": 773,
+        "visible": true
+      },
+      {
+        "name": "Financial District, destination 2. Drag to move.",
+        "x": 721,
+        "visible": true
+      }
+    ],
+    "controls": [
+      {
+        "name": "3D buildings",
+        "reachable": true
+      },
+      {
+        "name": "Terrain",
+        "reachable": true
+      },
+      {
+        "name": "Map tilt",
+        "reachable": true
+      },
+      {
+        "name": "Reset north",
+        "reachable": true
+      },
+      {
+        "name": "Rotate map clockwise",
+        "reachable": true
+      },
+      {
+        "name": "Fit locations",
+        "reachable": true
+      },
+      {
+        "name": "Find",
+        "reachable": true
+      },
+      {
+        "name": "Explore",
+        "reachable": true
+      },
+      {
+        "name": "Compare",
+        "reachable": true
+      },
+      {
+        "name": "Focus on map ⛶",
+        "reachable": true
+      },
+      {
+        "name": "▱ Map layers",
+        "reachable": true
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "height": 800,
+    "state": "right-collapsed",
+    "camera": {
+      "zoom": 10.75926907992492,
+      "centre": [
+        -122.43275499999999,
+        37.71185526452699
+      ]
+    },
+    "padding": {
+      "top": 92,
+      "bottom": 72,
+      "left": 355.1875,
+      "right": 32
+    },
+    "visibleMap": {
+      "minX": 323.1875,
+      "maxX": 1280,
+      "width": 956.8125
+    },
+    "pins": [
+      {
+        "name": "SFO Airport, destination 1. Drag to move.",
+        "x": 934,
+        "visible": true
+      },
+      {
+        "name": "Financial District, destination 2. Drag to move.",
+        "x": 883,
+        "visible": true
+      }
+    ],
+    "controls": [
+      {
+        "name": "3D buildings",
+        "reachable": true
+      },
+      {
+        "name": "Terrain",
+        "reachable": true
+      },
+      {
+        "name": "Map tilt",
+        "reachable": true
+      },
+      {
+        "name": "Reset north",
+        "reachable": true
+      },
+      {
+        "name": "Rotate map clockwise",
+        "reachable": true
+      },
+      {
+        "name": "Fit locations",
+        "reachable": true
+      },
+      {
+        "name": "Find",
+        "reachable": true
+      },
+      {
+        "name": "Explore",
+        "reachable": true
+      },
+      {
+        "name": "Compare",
+        "reachable": true
+      },
+      {
+        "name": "Focus on map ⛶",
+        "reachable": true
+      },
+      {
+        "name": "▱ Map layers",
+        "reachable": true
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "height": 800,
+    "state": "both-restored",
+    "camera": {
+      "zoom": 10.75926907992492,
+      "centre": [
+        -122.43275499999999,
+        37.71185526452699
+      ]
+    },
+    "padding": {
+      "top": 92,
+      "bottom": 72,
+      "left": 355.1875,
+      "right": 393.59375
+    },
+    "visibleMap": {
+      "minX": 323.1875,
+      "maxX": 918.40625,
+      "width": 595.21875
+    },
+    "pins": [
+      {
+        "name": "SFO Airport, destination 1. Drag to move.",
+        "x": 753,
+        "visible": true
+      },
+      {
+        "name": "Financial District, destination 2. Drag to move.",
+        "x": 702,
+        "visible": true
+      }
+    ],
+    "controls": [
+      {
+        "name": "3D buildings",
+        "reachable": true
+      },
+      {
+        "name": "Terrain",
+        "reachable": true
+      },
+      {
+        "name": "Map tilt",
+        "reachable": true
+      },
+      {
+        "name": "Reset north",
+        "reachable": true
+      },
+      {
+        "name": "Rotate map clockwise",
+        "reachable": true
+      },
+      {
+        "name": "Fit locations",
+        "reachable": true
+      },
+      {
+        "name": "Find",
+        "reachable": true
+      },
+      {
+        "name": "Explore",
+        "reachable": true
+      },
+      {
+        "name": "Compare",
+        "reachable": true
+      },
+      {
+        "name": "Focus on map ⛶",
+        "reachable": true
+      },
+      {
+        "name": "▱ Map layers",
+        "reachable": true
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "state": "both",
+    "camera": {
+      "zoom": 10.994757158873051,
+      "centre": [
+        -122.43275499999999,
+        37.71185526452699
+      ]
+    },
+    "padding": {
+      "top": 92,
+      "bottom": 72,
+      "left": 393.59375,
+      "right": 436.796875
+    },
+    "visibleMap": {
+      "minX": 361.59375,
+      "maxX": 1035.203125,
+      "width": 673.609375
+    },
+    "pins": [
+      {
+        "name": "SFO Airport, destination 1. Drag to move.",
+        "x": 854,
+        "visible": true
+      },
+      {
+        "name": "Financial District, destination 2. Drag to move.",
+        "x": 794,
+        "visible": true
+      }
+    ],
+    "controls": [
+      {
+        "name": "3D buildings",
+        "reachable": true
+      },
+      {
+        "name": "Terrain",
+        "reachable": true
+      },
+      {
+        "name": "Map tilt",
+        "reachable": true
+      },
+      {
+        "name": "Reset north",
+        "reachable": true
+      },
+      {
+        "name": "Rotate map clockwise",
+        "reachable": true
+      },
+      {
+        "name": "Fit locations",
+        "reachable": true
+      },
+      {
+        "name": "Find",
+        "reachable": true
+      },
+      {
+        "name": "Explore",
+        "reachable": true
+      },
+      {
+        "name": "Compare",
+        "reachable": true
+      },
+      {
+        "name": "Focus on map ⛶",
+        "reachable": true
+      },
+      {
+        "name": "▱ Map layers",
+        "reachable": true
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "state": "left-collapsed",
+    "camera": {
+      "zoom": 10.994757158873051,
+      "centre": [
+        -122.43275499999999,
+        37.71185526452699
+      ]
+    },
+    "padding": {
+      "top": 92,
+      "bottom": 72,
+      "left": 32,
+      "right": 436.796875
+    },
+    "visibleMap": {
+      "minX": 0,
+      "maxX": 1035.203125,
+      "width": 1035.203125
+    },
+    "pins": [
+      {
+        "name": "SFO Airport, destination 1. Drag to move.",
+        "x": 674,
+        "visible": true
+      },
+      {
+        "name": "Financial District, destination 2. Drag to move.",
+        "x": 613,
+        "visible": true
+      }
+    ],
+    "controls": [
+      {
+        "name": "3D buildings",
+        "reachable": true
+      },
+      {
+        "name": "Terrain",
+        "reachable": true
+      },
+      {
+        "name": "Map tilt",
+        "reachable": true
+      },
+      {
+        "name": "Reset north",
+        "reachable": true
+      },
+      {
+        "name": "Rotate map clockwise",
+        "reachable": true
+      },
+      {
+        "name": "Fit locations",
+        "reachable": true
+      },
+      {
+        "name": "Find",
+        "reachable": true
+      },
+      {
+        "name": "Explore",
+        "reachable": true
+      },
+      {
+        "name": "Compare",
+        "reachable": true
+      },
+      {
+        "name": "Focus on map ⛶",
+        "reachable": true
+      },
+      {
+        "name": "▱ Map layers",
+        "reachable": true
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "state": "both-collapsed",
+    "camera": {
+      "zoom": 10.994757158873051,
+      "centre": [
+        -122.43275499999999,
+        37.71185526452699
+      ]
+    },
+    "padding": {
+      "top": 92,
+      "bottom": 72,
+      "left": 32,
+      "right": 32
+    },
+    "visibleMap": {
+      "minX": 0,
+      "maxX": 1440,
+      "width": 1440
+    },
+    "pins": [
+      {
+        "name": "SFO Airport, destination 1. Drag to move.",
+        "x": 876,
+        "visible": true
+      },
+      {
+        "name": "Financial District, destination 2. Drag to move.",
+        "x": 815,
+        "visible": true
+      }
+    ],
+    "controls": [
+      {
+        "name": "3D buildings",
+        "reachable": true
+      },
+      {
+        "name": "Terrain",
+        "reachable": true
+      },
+      {
+        "name": "Map tilt",
+        "reachable": true
+      },
+      {
+        "name": "Reset north",
+        "reachable": true
+      },
+      {
+        "name": "Rotate map clockwise",
+        "reachable": true
+      },
+      {
+        "name": "Fit locations",
+        "reachable": true
+      },
+      {
+        "name": "Find",
+        "reachable": true
+      },
+      {
+        "name": "Explore",
+        "reachable": true
+      },
+      {
+        "name": "Compare",
+        "reachable": true
+      },
+      {
+        "name": "Focus on map ⛶",
+        "reachable": true
+      },
+      {
+        "name": "▱ Map layers",
+        "reachable": true
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "state": "right-collapsed",
+    "camera": {
+      "zoom": 10.994757158873051,
+      "centre": [
+        -122.43275499999999,
+        37.71185526452699
+      ]
+    },
+    "padding": {
+      "top": 92,
+      "bottom": 72,
+      "left": 393.59375,
+      "right": 32
+    },
+    "visibleMap": {
+      "minX": 361.59375,
+      "maxX": 1440,
+      "width": 1078.40625
+    },
+    "pins": [
+      {
+        "name": "SFO Airport, destination 1. Drag to move.",
+        "x": 1057,
+        "visible": true
+      },
+      {
+        "name": "Financial District, destination 2. Drag to move.",
+        "x": 996,
+        "visible": true
+      }
+    ],
+    "controls": [
+      {
+        "name": "3D buildings",
+        "reachable": true
+      },
+      {
+        "name": "Terrain",
+        "reachable": true
+      },
+      {
+        "name": "Map tilt",
+        "reachable": true
+      },
+      {
+        "name": "Reset north",
+        "reachable": true
+      },
+      {
+        "name": "Rotate map clockwise",
+        "reachable": true
+      },
+      {
+        "name": "Fit locations",
+        "reachable": true
+      },
+      {
+        "name": "Find",
+        "reachable": true
+      },
+      {
+        "name": "Explore",
+        "reachable": true
+      },
+      {
+        "name": "Compare",
+        "reachable": true
+      },
+      {
+        "name": "Focus on map ⛶",
+        "reachable": true
+      },
+      {
+        "name": "▱ Map layers",
+        "reachable": true
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "state": "both-restored",
+    "camera": {
+      "zoom": 10.994757158873051,
+      "centre": [
+        -122.43275499999999,
+        37.71185526452699
+      ]
+    },
+    "padding": {
+      "top": 92,
+      "bottom": 72,
+      "left": 393.59375,
+      "right": 436.796875
+    },
+    "visibleMap": {
+      "minX": 361.59375,
+      "maxX": 1035.203125,
+      "width": 673.609375
+    },
+    "pins": [
+      {
+        "name": "SFO Airport, destination 1. Drag to move.",
+        "x": 854,
+        "visible": true
+      },
+      {
+        "name": "Financial District, destination 2. Drag to move.",
+        "x": 794,
+        "visible": true
+      }
+    ],
+    "controls": [
+      {
+        "name": "3D buildings",
+        "reachable": true
+      },
+      {
+        "name": "Terrain",
+        "reachable": true
+      },
+      {
+        "name": "Map tilt",
+        "reachable": true
+      },
+      {
+        "name": "Reset north",
+        "reachable": true
+      },
+      {
+        "name": "Rotate map clockwise",
+        "reachable": true
+      },
+      {
+        "name": "Fit locations",
+        "reachable": true
+      },
+      {
+        "name": "Find",
+        "reachable": true
+      },
+      {
+        "name": "Explore",
+        "reachable": true
+      },
+      {
+        "name": "Compare",
+        "reachable": true
+      },
+      {
+        "name": "Focus on map ⛶",
+        "reachable": true
+      },
+      {
+        "name": "▱ Map layers",
+        "reachable": true
+      }
+    ]
+  },
+  {
+    "width": 1920,
+    "height": 1080,
+    "state": "both",
+    "camera": {
+      "zoom": 11.340816916233312,
+      "centre": [
+        -122.43275499999999,
+        37.71185526452699
+      ]
+    },
+    "padding": {
+      "top": 92,
+      "bottom": 72,
+      "left": 398,
+      "right": 438
+    },
+    "visibleMap": {
+      "minX": 366,
+      "maxX": 1514,
+      "width": 1148
+    },
+    "pins": [
+      {
+        "name": "SFO Airport, destination 1. Drag to move.",
+        "x": 1138,
+        "visible": true
+      },
+      {
+        "name": "Financial District, destination 2. Drag to move.",
+        "x": 1061,
+        "visible": true
+      }
+    ],
+    "controls": [
+      {
+        "name": "3D buildings",
+        "reachable": true
+      },
+      {
+        "name": "Terrain",
+        "reachable": true
+      },
+      {
+        "name": "Map tilt",
+        "reachable": true
+      },
+      {
+        "name": "Reset north",
+        "reachable": true
+      },
+      {
+        "name": "Rotate map clockwise",
+        "reachable": true
+      },
+      {
+        "name": "Fit locations",
+        "reachable": true
+      },
+      {
+        "name": "Find",
+        "reachable": true
+      },
+      {
+        "name": "Explore",
+        "reachable": true
+      },
+      {
+        "name": "Compare",
+        "reachable": true
+      },
+      {
+        "name": "Focus on map ⛶",
+        "reachable": true
+      },
+      {
+        "name": "▱ Map layers",
+        "reachable": true
+      }
+    ]
+  },
+  {
+    "width": 1920,
+    "height": 1080,
+    "state": "left-collapsed",
+    "camera": {
+      "zoom": 11.340816916233312,
+      "centre": [
+        -122.43275499999999,
+        37.71185526452699
+      ]
+    },
+    "padding": {
+      "top": 92,
+      "bottom": 72,
+      "left": 32,
+      "right": 438
+    },
+    "visibleMap": {
+      "minX": 0,
+      "maxX": 1514,
+      "width": 1514
+    },
+    "pins": [
+      {
+        "name": "SFO Airport, destination 1. Drag to move.",
+        "x": 955,
+        "visible": true
+      },
+      {
+        "name": "Financial District, destination 2. Drag to move.",
+        "x": 878,
+        "visible": true
+      }
+    ],
+    "controls": [
+      {
+        "name": "3D buildings",
+        "reachable": true
+      },
+      {
+        "name": "Terrain",
+        "reachable": true
+      },
+      {
+        "name": "Map tilt",
+        "reachable": true
+      },
+      {
+        "name": "Reset north",
+        "reachable": true
+      },
+      {
+        "name": "Rotate map clockwise",
+        "reachable": true
+      },
+      {
+        "name": "Fit locations",
+        "reachable": true
+      },
+      {
+        "name": "Find",
+        "reachable": true
+      },
+      {
+        "name": "Explore",
+        "reachable": true
+      },
+      {
+        "name": "Compare",
+        "reachable": true
+      },
+      {
+        "name": "Focus on map ⛶",
+        "reachable": true
+      },
+      {
+        "name": "▱ Map layers",
+        "reachable": true
+      }
+    ]
+  },
+  {
+    "width": 1920,
+    "height": 1080,
+    "state": "both-collapsed",
+    "camera": {
+      "zoom": 11.340816916233312,
+      "centre": [
+        -122.43275499999999,
+        37.71185526452699
+      ]
+    },
+    "padding": {
+      "top": 92,
+      "bottom": 72,
+      "left": 32,
+      "right": 32
+    },
+    "visibleMap": {
+      "minX": 0,
+      "maxX": 1920,
+      "width": 1920
+    },
+    "pins": [
+      {
+        "name": "SFO Airport, destination 1. Drag to move.",
+        "x": 1158,
+        "visible": true
+      },
+      {
+        "name": "Financial District, destination 2. Drag to move.",
+        "x": 1081,
+        "visible": true
+      }
+    ],
+    "controls": [
+      {
+        "name": "3D buildings",
+        "reachable": true
+      },
+      {
+        "name": "Terrain",
+        "reachable": true
+      },
+      {
+        "name": "Map tilt",
+        "reachable": true
+      },
+      {
+        "name": "Reset north",
+        "reachable": true
+      },
+      {
+        "name": "Rotate map clockwise",
+        "reachable": true
+      },
+      {
+        "name": "Fit locations",
+        "reachable": true
+      },
+      {
+        "name": "Find",
+        "reachable": true
+      },
+      {
+        "name": "Explore",
+        "reachable": true
+      },
+      {
+        "name": "Compare",
+        "reachable": true
+      },
+      {
+        "name": "Focus on map ⛶",
+        "reachable": true
+      },
+      {
+        "name": "▱ Map layers",
+        "reachable": true
+      }
+    ]
+  },
+  {
+    "width": 1920,
+    "height": 1080,
+    "state": "right-collapsed",
+    "camera": {
+      "zoom": 11.340816916233312,
+      "centre": [
+        -122.43275499999999,
+        37.71185526452699
+      ]
+    },
+    "padding": {
+      "top": 92,
+      "bottom": 72,
+      "left": 398,
+      "right": 32
+    },
+    "visibleMap": {
+      "minX": 366,
+      "maxX": 1920,
+      "width": 1554
+    },
+    "pins": [
+      {
+        "name": "SFO Airport, destination 1. Drag to move.",
+        "x": 1341,
+        "visible": true
+      },
+      {
+        "name": "Financial District, destination 2. Drag to move.",
+        "x": 1264,
+        "visible": true
+      }
+    ],
+    "controls": [
+      {
+        "name": "3D buildings",
+        "reachable": true
+      },
+      {
+        "name": "Terrain",
+        "reachable": true
+      },
+      {
+        "name": "Map tilt",
+        "reachable": true
+      },
+      {
+        "name": "Reset north",
+        "reachable": true
+      },
+      {
+        "name": "Rotate map clockwise",
+        "reachable": true
+      },
+      {
+        "name": "Fit locations",
+        "reachable": true
+      },
+      {
+        "name": "Find",
+        "reachable": true
+      },
+      {
+        "name": "Explore",
+        "reachable": true
+      },
+      {
+        "name": "Compare",
+        "reachable": true
+      },
+      {
+        "name": "Focus on map ⛶",
+        "reachable": true
+      },
+      {
+        "name": "▱ Map layers",
+        "reachable": true
+      }
+    ]
+  },
+  {
+    "width": 1920,
+    "height": 1080,
+    "state": "both-restored",
+    "camera": {
+      "zoom": 11.340816916233312,
+      "centre": [
+        -122.43275499999999,
+        37.71185526452699
+      ]
+    },
+    "padding": {
+      "top": 92,
+      "bottom": 72,
+      "left": 398,
+      "right": 438
+    },
+    "visibleMap": {
+      "minX": 366,
+      "maxX": 1514,
+      "width": 1148
+    },
+    "pins": [
+      {
+        "name": "SFO Airport, destination 1. Drag to move.",
+        "x": 1138,
+        "visible": true
+      },
+      {
+        "name": "Financial District, destination 2. Drag to move.",
+        "x": 1061,
+        "visible": true
+      }
+    ],
+    "controls": [
+      {
+        "name": "3D buildings",
+        "reachable": true
+      },
+      {
+        "name": "Terrain",
+        "reachable": true
+      },
+      {
+        "name": "Map tilt",
+        "reachable": true
+      },
+      {
+        "name": "Reset north",
+        "reachable": true
+      },
+      {
+        "name": "Rotate map clockwise",
+        "reachable": true
+      },
+      {
+        "name": "Fit locations",
+        "reachable": true
+      },
+      {
+        "name": "Find",
+        "reachable": true
+      },
+      {
+        "name": "Explore",
+        "reachable": true
+      },
+      {
+        "name": "Compare",
+        "reachable": true
+      },
+      {
+        "name": "Focus on map ⛶",
+        "reachable": true
+      },
+      {
+        "name": "▱ Map layers",
+        "reachable": true
+      }
+    ]
+  }
+]

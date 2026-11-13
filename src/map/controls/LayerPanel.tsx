@@ -1,20 +1,31 @@
 import { CONTEXT_LAYERS } from '../layers/contextLayers';
 import { SectionInfo } from '../../components/SectionInfo';
 import { DATASET_SOURCES } from '../layers/datasetSources';
+import { EventFilters } from './EventFilters';
+import { DEFAULT_EVENT_FILTERS, type EventKind, type EventFilterState } from '../layers/eventDetails';
 
 interface Props {
   visible: Set<string>;
   onToggle: (id: string) => void;
+  transportAnimation?: boolean;
+  onTransportAnimationChange?: (enabled: boolean) => void;
+  eventFilters?: Record<EventKind, EventFilterState>;
+  onEventFiltersChange?: (kind: EventKind, value: EventFilterState) => void;
+  airScale?: 'local' | 'statewide';
+  onAirScaleChange?: (scale:'local'|'statewide') => void;
 }
 
-export function LayerPanel({ visible, onToggle }: Props) {
+export function LayerPanel({ visible, onToggle, transportAnimation, onTransportAnimationChange, eventFilters = DEFAULT_EVENT_FILTERS, onEventFiltersChange, airScale='local', onAirScaleChange }: Props) {
   const primary = new Set(['topography', 'transit', 'parks', 'crime', 'nightlife']);
   const renderLayer = (l: typeof CONTEXT_LAYERS[number]) => (
     <div key={l.id} className={`layer${visible.has(l.id) ? ' active' : ''}`}>
       <label><input type="checkbox" checked={visible.has(l.id)} onChange={() => onToggle(l.id)} /> {l.label}</label>
       {visible.has(l.id) && <div className="legend">
         {l.warning && <p className="hint layer-warning">{l.warning}</p>}
-        {l.legend.map((i) => <div className="legend-item" key={i.label}><span className={`swatch${i.dashed ? ' dashed' : ''}`} style={{ background: i.dashed ? 'transparent' : i.color, borderColor: i.color }} />{i.label}</div>)}
+        {(l.id==='air' && airScale==='statewide' ? l.legend.map((item,index)=>index<5?{...item,label:`${[0,25,50,75,100][index]}th California percentile`}:item) : l.legend).map((i) => <div className="legend-item" key={i.label}><span className={`swatch${i.dashed ? ' dashed' : ''}`} style={{ background: i.dashed ? 'transparent' : i.color, borderColor: i.color }} />{i.label}</div>)}
+        {l.id==='air' && <label className="air-scale-control">Air colour scale<select aria-label="Air colour scale" value={airScale} onChange={e=>onAirScaleChange?.(e.target.value as 'local'|'statewide')}><option value="local">Local contrast · fixed 5–35 range</option><option value="statewide">California · full 0–100 range</option></select></label>}
+        {l.id === 'transit' && <div className="transport-demo-control"><label><input type="checkbox" checked={Boolean(transportAnimation)} onChange={e => onTransportAnimationChange?.(e.target.checked)} /> Animate example vehicles</label><p className="hint">Illustrative animation, not live vehicle positions.</p><small>Source route geometry can include rail tunnels.</small>{transportAnimation && <button type="button" onClick={() => onTransportAnimationChange?.(false)}>Pause animation</button>}{!transportAnimation && <small>Paused by default, including for reduced motion. Play only when you choose.</small>}</div>}
+        {(l.id === 'crime' || l.id === 'collisions') && <EventFilters kind={l.id} value={eventFilters[l.id]} onChange={value => onEventFiltersChange?.(l.id as EventKind, value)} />}
       </div>}
     </div>
   );

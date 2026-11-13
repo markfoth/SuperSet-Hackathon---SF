@@ -1,5 +1,7 @@
 # Regional decision revision verification
 
+The desktop refinement on `feature/desktop-map-refinements` has a separate [current verification and limitations report](DESKTOP_REFINEMENTS.md). It records 50 unique desktop browser checks, the final production performance/asset measurements, before/after screenshots and the short recording. The historical regional decision evidence below is retained unchanged.
+
 Review started 12 November 2026 Pacific and continued on 13 November. Branch: `feature/regional-decision-redesign`, based on `efbfad1`. Production remains the older main release; nothing was merged or deployed to production. Previous-upgrade evidence is preserved separately in [historical verification](VERIFICATION_PREVIOUS_UPGRADE.md).
 
 ## Local commands and outcomes

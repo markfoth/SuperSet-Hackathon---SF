@@ -1,5 +1,7 @@
 # Map rendering, terrain and source decisions
 
+Desktop refinements on 13 November 2026 supersede the zoom-15 building/POI thresholds below. Buildings now fade in at zoom 14 through 14.5 with a consistent single tile-detail level and a 50° building-view pitch constraint; terrain remains independent. See [desktop refinement evidence](DESKTOP_REFINEMENTS.md), [place context](PLACE_CONTEXT.md) and [event precision](EVENT_DETAIL_PRECISION.md).
+
 Verified on 12 November 2026. The primary renderer is MapLibre GL JS, using the
 OpenFreeMap Positron style. Find, Explore and Compare use the same matching,
 destination, home and selection state. Renderer data is derived from the existing

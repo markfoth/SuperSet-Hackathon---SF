@@ -36,6 +36,8 @@ import pandas as pd
 import shapely
 from shapely.geometry import LineString, MultiPolygon, Point, Polygon, shape
 from shapely.ops import polygonize, unary_union
+from poi_metadata import poi_metadata
+from event_semantics import (CRIME_GROUPS, DRUG, NOT_CRIME, PROPERTY, VEHICLE_BREAKIN_SUB, VIOLENT, crime_groups, crash_flags)
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _common import (  # noqa: E402
@@ -200,32 +202,6 @@ def step_neighbourhoods() -> dict:
 
 
 # --- P0-B police incidents -------------------------------------------------------------
-
-VIOLENT = {"Assault", "Robbery", "Homicide", "Rape", "Sex Offense", "Human Trafficking (A), Commercial Sex Acts",
-           "Human Trafficking (B), Involuntary Servitude", "Human Trafficking, Commercial Sex Acts"}
-PROPERTY = {"Larceny Theft", "Burglary", "Motor Vehicle Theft", "Motor Vehicle Theft?", "Malicious Mischief",
-            "Vandalism", "Arson", "Stolen Property"}
-VEHICLE_BREAKIN_SUB = {"Larceny - From Vehicle", "Theft From Vehicle", "Larceny - Auto Parts"}
-DRUG = {"Drug Offense", "Drug Violation"}
-# Administrative, non-criminal or enforcement-driven records: not counted as reported crime.
-NOT_CRIME = {"Non-Criminal", "Lost Property", "Missing Person", "Recovered Vehicle", "Suspicious Occ", "Suspicious",
-             "Miscellaneous Investigation", "Case Closure", "Courtesy Report", "Traffic Collision",
-             "Vehicle Impounded", "Vehicle Misplaced", "Fire Report", "Suicide", "Warrant",
-             "Traffic Violation Arrest", "Other", None, ""}
-CRIME_GROUPS = ("violent", "property", "vehicle_breakin", "drug", "other")
-
-
-def crime_groups(category: str | None, sub: str | None) -> list[str]:
-    if category in NOT_CRIME:
-        return []
-    if category in VIOLENT:
-        return ["violent"]
-    if category in PROPERTY:
-        return ["property", "vehicle_breakin"] if sub in VEHICLE_BREAKIN_SUB else ["property"]
-    if category in DRUG:
-        return ["drug"]
-    return ["other"]
-
 
 def step_crime() -> dict:
     rows = json.loads(raw("police_incidents_12m.json").read_text(encoding="utf-8"))
@@ -834,7 +810,7 @@ def step_groceries() -> dict:
         if lat is None or not t.get("name"):
             continue
         rows.append({"name": t["name"], "brand": t.get("brand"), "shop": t.get("shop"),
-                     "osm_id": f"{e['type']}/{e['id']}", "geometry": Point(lon, lat)})
+                     **poi_metadata(e, dl("osm_groceries").get("downloaded_at")), "geometry": Point(lon, lat)})
     gdf = gpd.GeoDataFrame(rows, crs=4326)
     path, n = write_geojson(gdf, "groceries.geojson")
     pts = sample_points()
@@ -858,13 +834,19 @@ def step_groceries() -> dict:
 # --- P1 collisions ---------------------------------------------------------------------------
 
 def step_collisions() -> dict:
-    rows = json.loads(raw("injury_crashes_3y.json").read_text(encoding="utf-8"))
+    # The detail refresh adds the true report key; prefer it to table row ids.
+    detail_input = RAW_DIR / "regional" / "injury_crashes_detail.json"
+    input_path = detail_input if detail_input.exists() else raw("injury_crashes_3y.json")
+    rows = json.loads(input_path.read_text(encoding="utf-8"))
     df = pd.DataFrame(rows)
+    df = df.drop_duplicates(subset=["case_id_pkey"] if "case_id_pkey" in df else ["unique_id"])
     df["lat"], df["lon"] = pd.to_numeric(df["tb_latitude"], errors="coerce"), pd.to_numeric(df["tb_longitude"], errors="coerce")
-    grp = df["dph_col_grp_description"].fillna("")
-    df["kind"] = np.select([grp.str.contains("Ped", case=False), grp.str.contains("Bicycle|Bike", case=False, regex=True)],
-                           ["pedestrian", "cyclist"], "vehicle")
-    df["ksi"] = df["collision_severity"].fillna("").str.contains("Fatal|Severe", case=False, regex=True)
+    # DPH explicitly groups by parties involved. The two flags can both be true.
+    flags = df.apply(lambda row: crash_flags(row.to_dict()), axis=1)
+    df["pedestrian"] = flags.map(lambda value: bool(value & 1))
+    df["cyclist"] = flags.map(lambda value: bool(value & 2))
+    df["vehicle_only"] = flags.map(lambda value: bool(value & 4))
+    df["ksi"] = flags.map(lambda value: bool(value & 8))
     w, s, e, n = SF_BBOX
     outside = int((df["lat"].notna() & ~(df["lat"].between(s, n) & df["lon"].between(w, e))).sum())
     df = df[df["lat"].between(s, n) & df["lon"].between(w, e)]  # drops missing and mis-geocoded points
@@ -880,14 +862,14 @@ def step_collisions() -> dict:
             continue
         g = j[j["id"] == nid]
         a = float(nh.loc[nh["id"] == nid, "area_km2"].iloc[0])
-        summary[nid] = {"injury_crashes": int(len(g)), "pedestrian": int((g["kind"] == "pedestrian").sum()),
-                        "cyclist": int((g["kind"] == "cyclist").sum()), "killed_or_severe": int(g["ksi"].sum()),
+        summary[nid] = {"injury_crashes": int(len(g)), "pedestrian": int(g["pedestrian"].sum()),
+                        "cyclist": int(g["cyclist"].sum()), "killed_or_severe": int(g["ksi"].sum()),
                         "per_km2_per_year": round(len(g) / a / 3, 1)}
     df["cell"] = [h3.latlng_to_cell(a, b, GRID_RES) for a, b in zip(df["lat"], df["lon"])]
     cells = []
     for cell, g in df.groupby("cell"):
-        cells.append({"h3": cell, "total": int(len(g)), "pedestrian": int((g["kind"] == "pedestrian").sum()),
-                      "cyclist": int((g["kind"] == "cyclist").sum()), "killed_or_severe": int(g["ksi"].sum()),
+        cells.append({"h3": cell, "total": int(len(g)), "pedestrian": int(g["pedestrian"].sum()),
+                      "cyclist": int(g["cyclist"].sum()), "vehicle_only": int(g["vehicle_only"].sum()), "killed_or_severe": int(g["ksi"].sum()),
                       "geometry": hex_polygon(cell)})
     note = dl("injury_crashes").get("note", "")
     path, n = write_geojson(gpd.GeoDataFrame(cells, crs=4326), "collisions_grid.geojson",
@@ -898,7 +880,7 @@ def step_collisions() -> dict:
         "source_url": "https://data.sf.gov/d/ubvf-ztfx", "licence": "ODC Public Domain Dedication and License (PDDL)",
         "downloaded_at": d.get("downloaded_at"), "measurement_period": note.replace("window ", "") + " (3 years)",
         "resolution": "Crash points geocoded to intersection/segment; published as H3 res-8 cells and neighbourhood totals",
-        "feature_count": n, "raw_path": "data/sf/raw/injury_crashes_3y.json", "processed_path": [rel(path)],
+        "feature_count": n, "raw_path": rel(input_path), "processed_path": [rel(path)],
         "script": SCRIPT, "refresh": "quarterly",
         "limitations": "Injury crashes only (no property-damage-only). Recent months are incomplete due to reporting lag. "
                        "Counts reflect traffic volume as much as danger.",
@@ -1123,14 +1105,15 @@ def step_pois() -> dict:
         kind = "coffee_shop" if t.get("shop") == "coffee" else t.get("amenity")
         rows.append({"name": t["name"], "kind": kind,
                      "cuisine": (t.get("cuisine") or "").split(";")[0].replace("_", " ") or None,
-                     "osm_id": f"{e['type']}/{e['id']}", "geometry": Point(lon, lat)})
+                     **poi_metadata(e, dl("osm_food_drink").get("downloaded_at")), "geometry": Point(lon, lat)})
     gdf = gpd.GeoDataFrame(rows, crs=4326).drop_duplicates("osm_id")
     nh = load_nhoods()
     joined = gpd.sjoin(gdf, nh[["id", "geometry"]], predicate="within", how="left")
     paths, counts = [], {}
     for name, kinds in POI_FILES.items():
         sub = gdf[gdf["kind"].isin(kinds)]
-        cols = ["name", "kind"] + (["cuisine"] if name == "restaurants" else []) + ["geometry"]
+        cols = ["name", "kind", "osm_id", "source_url", "website", "official_website", "website_verified_on", "address", "phone", "opening_hours",
+                "wheelchair", "source_checked", "snapshot"] + (["cuisine"] if name == "restaurants" else []) + ["geometry"]
         path, n = write_geojson(gpd.GeoDataFrame(sub[cols], crs=4326), f"{name}.geojson")
         paths.append(rel(path))
         counts[name] = n

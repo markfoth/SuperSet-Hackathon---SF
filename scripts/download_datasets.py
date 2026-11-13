@@ -347,7 +347,7 @@ def sources() -> list[Source]:
         Source("injury_crashes", "injury_crashes_3y.json",
                fetch_socrata_paged(
                    "ubvf-ztfx",
-                   select="unique_id,collision_datetime,collision_severity,dph_col_grp_description,"
+                   select="unique_id,case_id_pkey,collision_datetime,collision_severity,dph_col_grp_description,"
                           "number_killed,number_injured,tb_latitude,tb_longitude,analysis_neighborhood",
                    where=f"collision_datetime >= '{crash_start}T00:00:00' AND collision_datetime < '{crime_end}T00:00:00'",
                    order="unique_id"),

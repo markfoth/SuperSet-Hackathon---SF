@@ -30,7 +30,7 @@ interface Props {
 }
 
 export function ResultsList(p: Props) {
-  if (!p.hasWorkplaces) return <div className="results notice">Add a destination to discover matching locations.</div>;
+  if (!p.hasWorkplaces) return <div className="results empty-results"><span className="empty-results-symbol" aria-hidden="true">⌖</span><h2>Your places, in perspective.</h2><p>Add a destination to see neighbourhoods that fit every commute.</p><p className="hint">Explore the map and its context layers while you decide what matters.</p><div className="empty-results-steps"><span><b>1</b> Add your destinations</span><span><b>2</b> Choose your priorities</span><span><b>3</b> Compare places together</span></div></div>;
   if (p.pending) return <div className="results" role="status">Calculating every workplace’s commute before showing matches…</div>;
   if (p.blocked) {
     return (
@@ -44,6 +44,7 @@ export function ResultsList(p: Props) {
   }
   return (
     <div className="results">
+      <div className="results-toolbar">
       <div className="results-head">
         <h2>{p.ranked.length} neighbourhood{p.ranked.length === 1 ? '' : 's'} to explore</h2>
         <button className="btn link" onClick={p.onToggleExcluded}>
@@ -58,6 +59,7 @@ export function ResultsList(p: Props) {
         </select>
       </label>
       <p className="hint">{p.ranked.some(r => r.active > 0) ? 'Earlier priorities lead the order.' : 'No lifestyle priorities yet. This order reflects matching land, then name.'} Rent is ZIP-level context.</p>
+      </div>
       {p.ranked.length === 0 && (
         <div className="notice">No confirmed matches yet. Use Explore a compromise in Your search to preview a longer commute. If you have active Must-haves, those can be reviewed too. Unknown measurements remain separate from failed requirements.</div>
       )}

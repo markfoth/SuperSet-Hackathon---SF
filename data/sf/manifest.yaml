@@ -185,8 +185,14 @@ food_drink_pois:
   script: scripts/process_datasets.py
   refresh: 6 months
   limitations: 'SF and northern Peninsula through SFO. Unnamed places dropped. Volunteer-mapped: openings/closures
-    lag. cafes 893, restaurants 2125, bars 532. Discovery context only — never a ranking input.'
+    lag. cafes 893, restaurants 2125, bars 532. Discovery context only — never a ranking input. Source-supplied
+    HTTP(S) website, contact, address, OSM identifiers and snapshot date are retained. Manually checked
+    venue/address links are identified separately; other links are not labelled official. Refresh metadata:
+    scripts/enrich_place_context.py.'
   status: processed
+  contact_metadata_sources:
+  - data/sf/content/poi_verified_websites.json
+  - scripts/poi_metadata.py
 groceries:
   source: OpenStreetMap contributors via Overpass API (shop=supermarket|greengrocer)
   source_url: https://overpass-api.de/api/interpreter
@@ -201,8 +207,13 @@ groceries:
   script: scripts/process_datasets.py
   refresh: 6 months
   limitations: 'Volunteer-mapped: completeness varies; unnamed shops dropped. Access = straight-line 800
-    m to a shop=supermarket.'
+    m to a shop=supermarket. Source-supplied HTTP(S) website, contact, address, OSM identifiers and snapshot
+    date are retained. Manually checked venue/address links are identified separately; other links are
+    not labelled official. Refresh metadata: scripts/enrich_place_context.py.'
   status: processed
+  contact_metadata_sources:
+  - data/sf/content/poi_verified_websites.json
+  - scripts/poi_metadata.py
 gtfs_bart:
   source: BART GTFS (bart.gov developer data)
   source_url: https://www.bart.gov/sites/default/files/2026-08/google_transit_20260810-20270108_v02.zip
@@ -296,19 +307,47 @@ injury_collisions:
   source: DataSF — Traffic Crashes Resulting in Injury (SFPD/SFDPH TransBASE)
   source_url: https://data.sf.gov/d/ubvf-ztfx
   licence: ODC Public Domain Dedication and License (PDDL)
-  downloaded_at: '2026-10-21'
+  downloaded_at: '2026-11-13T18:34:20.860789+00:00'
   measurement_period: 2023-10-01 to 2026-10-01 (exclusive) (3 years)
   resolution: Crash points geocoded to intersection/segment; published as H3 res-8 cells and neighbourhood
     totals
   feature_count: 169
-  raw_path: data/sf/raw/injury_crashes_3y.json
+  raw_path: data/sf/raw/regional/injury_crashes_detail.json
   processed_path:
   - data/sf/processed/collisions_grid.geojson
-  script: scripts/process_datasets.py
+  script: scripts/process_datasets.py; scripts/build_event_details.py
   refresh: quarterly
-  limitations: Injury crashes only (no property-damage-only). Recent months are incomplete due to reporting
-    lag. Counts reflect traffic volume as much as danger.
+  limitations: SF published intersection/centreline locations only; highways excluded. Injury crashes
+    only, not every bicycle fall or unreported crash. True crash IDs deduplicate reports; independent
+    pedestrian/cyclist flags can overlap. Unknown groups are not vehicle-only. Number injured excludes
+    fatalities. Recent reporting is incomplete.
   status: processed
+injury_crash_details:
+  source: TransBASE.sfgov.org / SFDPH and SFPD injury crashes
+  source_url: https://data.sf.gov/d/ubvf-ztfx
+  licence: ODC Public Domain Dedication and License (PDDL)
+  downloaded_at: '2026-11-13T18:34:20.860789+00:00'
+  measurement_period: 2023-10-01 to 2026-10-01 (exclusive)
+  resolution: Published TransBASE intersection or street-centreline location; complex junctions share
+    a point
+  feature_count: 8888
+  raw_path: data/sf/raw/regional/injury_crashes_detail.json
+  processed_path:
+  - data/sf/processed/crash_details.json
+  script: scripts/build_event_details.py
+  refresh: Monthly incidents; quarterly crashes. Bounded windows only.
+  limitations: Published TransBASE intersection or street-centreline location; complex junctions share
+    a point. SF only. Unreported events are absent. Counts reflect reporting and exposure. Monthly filters
+    operate on a fixed recorded period; missing locations are omitted from both map views. Deduplicated
+    by case_id_pkey, no multiplying party/victim join. Pedestrian and cyclist flags overlap. Unknown groups
+    are not motor-vehicle-only. number_injured excludes killed people. Highways and non-reported falls
+    are not comprehensively covered.
+  status: processed
+  asset_bytes: 552673
+  deduplication:
+    unique_events: 8941
+    duplicate_rows_removed: 1
+    missing_or_outside_coordinates: 53
 muni_service:
   source: SFMTA official GTFS via DataSF
   source_url: https://data.sf.gov/api/views/dni7-qpv3/files/ba275feb-bf3d-46ed-b527-dd42555fcd8d?download=true
@@ -325,6 +364,25 @@ muni_service:
   limitations: Muni only; not real-time or reliability. Other agencies remain in the existing dated context.
     Apply Pacific service date, calendar exceptions and prior-day overnight service. Old commute fixtures
     are not rebuilt by this context dataset.
+  status: processed
+neighbourhood_character:
+  source: Original editorial aspect summaries with separately reviewed source evidence
+  source_url: See data/sf/content/neighbourhood_character.json source registry
+  licence: Original Common Ground summaries; source articles remain with their respective publishers.
+    No copied map content.
+  downloaded_at: '2026-11-13'
+  measurement_period: Source publication dates vary; reviewed 2026-11-13
+  resolution: Editorial area/corridor label anchors, not measured boundaries or uniform street conditions
+  feature_count: 19
+  raw_path: data/sf/content/neighbourhood_character.json
+  processed_path:
+  - data/sf/processed/neighbourhood_character.geojson
+  script: scripts/build_neighbourhood_character.py
+  refresh: Review sources and content JSON manually, then rebuild; six-month review suggested
+  limitations: Selective coverage only. Two independent source groups per label; some historical journalism
+    corroborates enduring place features only. Promotional sources are identified. No sentiment score,
+    safety inference, resident labels or ranking influence. Anchors do not assert boundaries; unsupported
+    areas remain in research_queue.
   status: processed
 neighbourhood_content:
   source: Common Ground editorial drafts (data/sf/content/neighbourhoods.yaml) + Wikimedia Commons photos
@@ -399,11 +457,17 @@ nightlife:
   - data/sf/processed/nightlife.png
   script: scripts/build_nightlife.py via process_datasets.py --only nightlife
   refresh: after refreshing osm_nightlife
-  limitations: Mapped venue concentration, not opening hours, noise, reviews, attendance or a completeness
+  limitations: 'Mapped venue concentration, not opening hours, noise, reviews, attendance or a completeness
     guarantee. Low density may mean missing mapping. Display context only; never used to rank homes. Equal-weight
     Gaussian density, 300 m ground-distance bandwidth, cut at 900 m. Same named OSM places within 25 m
-    deduplicated. Fixed scale at all zooms. Water/outside land and density below 0.25 transparent.
+    deduplicated. Fixed scale at all zooms. Water/outside land and density below 0.25 transparent. Source-supplied
+    HTTP(S) website, contact, address, OSM identifiers and snapshot date are retained. Manually checked
+    venue/address links are identified separately; other links are not labelled official. Refresh metadata:
+    scripts/enrich_place_context.py.'
   status: processed
+  contact_metadata_sources:
+  - data/sf/content/poi_verified_websites.json
+  - scripts/poi_metadata.py
 parks:
   source: SF Rec & Park + San Mateo County GIS parks; supplemented by OpenStreetMap
   source_url: https://data.sf.gov/d/gtr9-ntp6; https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/37;
@@ -563,16 +627,44 @@ police_incidents:
   processed_path:
   - data/sf/processed/crime_by_neighbourhood.json
   - data/sf/processed/crime_grid.geojson
-  script: scripts/process_datasets.py
+  script: scripts/process_datasets.py; scripts/build_event_details.py
   refresh: monthly
-  limitations: 'Reported incidents only — not all crime is reported, and reporting rates differ by place
+  limitations: 'Reported incidents only ; not all crime is reported, and reporting rates differ by place
     and type. Per-km² rates are not per-resident: commercial and visitor areas (Downtown, Tenderloin,
     Financial District) have high daytime populations that inflate them. Drug offences largely reflect
-    enforcement activity rather than resident risk. SFPD anonymises locations to the nearest intersection
-    or block; points are not addresses. This describes reported incidents; it does not make any area safe
-    or unsafe. 1708 incidents could not be placed in a neighbourhood.'
+    enforcement activity rather than resident risk. This describes reported incidents; it does not make
+    any area safe or unsafe. SFPD anonymises published locations to intersections; they are approximate
+    and are not offence addresses. Only counted initial criminal reports; records without an offence category
+    are excluded. 1705 incidents could not be placed in a neighbourhood.'
   status: processed
-  incidents_counted: 49515
+  incidents_counted: 49311
+  missing_category_only_incidents_excluded: 204
+police_intersection_details:
+  source: SFPD published intersection incidents
+  source_url: https://data.sf.gov/d/wg3w-h783
+  licence: ODC Public Domain Dedication and License (PDDL)
+  downloaded_at: '2026-10-21'
+  measurement_period: 2025-10-01 to 2026-10-01 (exclusive)
+  resolution: Published SFPD location anonymised to an intersection; approximate, never an offence address
+  feature_count: 47808
+  raw_path: data/sf/raw/police_incidents_12m.json
+  processed_path:
+  - data/sf/processed/incident_details.json
+  script: scripts/build_event_details.py
+  refresh: Monthly incidents; quarterly crashes. Bounded windows only.
+  limitations: Published SFPD location anonymised to an intersection; approximate, never an offence address.
+    SF only. Unreported events are absent. Counts reflect reporting and exposure. Monthly filters operate
+    on a fixed recorded period; missing locations are omitted from both map views. Only counted initial
+    II/VI criminal reports; records without an offence category are excluded. Deduplicated by incident_id,
+    offence categories unioned. Category totals may overlap. Conflicting coordinates use the first row_id
+    with a valid published coordinate.
+  status: processed
+  asset_bytes: 1381497
+  deduplication:
+    unique_events: 49311
+    conflicting_published_locations: 0
+    missing_or_outside_coordinates: 1503
+    missing_category_only_incidents_excluded: 204
 regional_terrain:
   source: Mapterhorn, USGS 3DEP and global context contributors
   source_url: https://tiles.mapterhorn.com/tilejson.json
@@ -735,7 +827,7 @@ topography:
   source: USGS 3DEP bare-earth elevation; study land from SF and San Mateo County boundaries
   source_url: https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer
   licence: 'Elevation: US public domain (USGS); land mask inherits boundary sources'
-  downloaded_at: '2026-10-22'
+  downloaded_at: '2026-10-21'
   measurement_period: DEM composite of source lidar acquisitions
   resolution: Approximately 10 m source DEM, resampled to 30 m Web Mercator display pixels
   feature_count: null
@@ -749,6 +841,7 @@ topography:
     elevation above sea level, not slope. Shoreline and vertical accuracy inherit the source data; no
     coverage outside the study land.
   status: processed
+  processed_at: '2026-11-13'
 transit:
   source: Combined BART + Muni + Caltrain + SamTrans static GTFS
   source_url: see gtfs_* entries

@@ -1,0 +1,13 @@
+import {chromium} from '@playwright/test';
+const browser=await chromium.launch({channel:'chrome',headless:true});
+const page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'});
+await page.goto(process.env.CG_BASE_URL||'http://localhost:5196/');
+await page.locator('.map[data-vector-loaded="true"]').waitFor();await page.getByRole('button',{name:/Focus on map/}).click();await page.getByRole('button',{name:'Dismiss navigation hint'}).click();
+await page.locator('.layers-toggle').click();await page.getByText('More context layers',{exact:true}).click();await page.getByLabel('Air pollution (PM2.5)',{exact:true}).check();await page.locator('.map[data-context-loaded*="air"]').waitFor();
+await page.evaluate(()=>document.querySelector('.map').__commonGroundMap.jumpTo({center:[-122.435,37.755],zoom:11.8,pitch:0,bearing:0,padding:{top:0,bottom:0,left:0,right:0}}));
+await page.getByLabel('Air colour scale',{exact:true}).scrollIntoViewIfNeeded();await page.waitForTimeout(800);await page.screenshot({path:'docs/audit/desktop-refinement/air-local.png'});
+await page.getByLabel('Air colour scale',{exact:true}).selectOption('statewide');await page.screenshot({path:'docs/audit/desktop-refinement/air-statewide.png'});
+await page.getByLabel('Air pollution (PM2.5)',{exact:true}).uncheck();await page.getByLabel('Topographic map',{exact:true}).check();await page.locator('.map[data-context-loaded*="topography"]').waitFor();await page.locator('.layers-toggle').click();
+await page.getByRole('button',{name:'Terrain',exact:true}).click();await page.locator('.map[data-terrain-loaded="true"]').waitFor();
+await page.evaluate(()=>document.querySelector('.map').__commonGroundMap.jumpTo({center:[-122.448,37.751],zoom:13.4,pitch:45,bearing:20,padding:{top:0,bottom:0,left:0,right:0}}));await page.waitForTimeout(1000);await page.screenshot({path:'docs/audit/desktop-refinement/hill-colouring.png'});
+await browser.close();

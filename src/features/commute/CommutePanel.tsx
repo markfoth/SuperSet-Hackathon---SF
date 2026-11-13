@@ -55,14 +55,7 @@ export function CommutePanel({ workplaces, results, onChange, onRemove, onAdd, a
           {editingPlace === w.id && <div className="change-place-search"><PlaceSearch onSelect={(place) => {
             onChange(w.id, { lat: place.lat, lon: place.lon, placeName: place.name }); setEditingPlace(null);
           }} /><p className="hint">Selecting a result changes this pin. Editing a label leaves its location unchanged.</p></div>}
-          <details className="person-details"><summary>Person and colour</summary><div className="household-person-row">
-            <label>Person<input value={w.personName ?? `Person ${i + 1}`} maxLength={40} aria-label="Person name"
-              onChange={(e) => onChange(w.id, { personName: e.target.value, personId: e.target.value.trim().toLowerCase() || w.id })} /></label>
-            <label>Colour<select aria-label="Person colour" value={w.colour || COLOURS[i % COLOURS.length]} onChange={(e) => onChange(w.id, { colour: e.target.value })}>
-              <option value={COLOURS[0]}>Terracotta</option><option value={COLOURS[1]}>Violet</option><option value={COLOURS[2]}>Teal</option><option value={COLOURS[3]}>Rose</option>
-            </select></label>
-          </div>
-          </details><div className="workplace-controls">
+          <div className="workplace-controls">
             <label>Travel by<select value={w.mode} onChange={(e) => onChange(w.id, { mode: e.target.value as TravelMode })} aria-label="Travel mode">
               {TRAVEL_MODES.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
             </select></label>
@@ -70,7 +63,14 @@ export function CommutePanel({ workplaces, results, onChange, onRemove, onAdd, a
               {[...new Set([...COMMUTE_MINUTES,w.maxMinutes])].sort((a,b)=>a-b).map((m) => <option key={m} value={m}>Max {m} min</option>)}
             </select></label>
           </div>
-          <details className="journey-settings"><summary>Office days & arrival time</summary><div className="workplace-controls">
+          <details className="journey-settings"><summary>Person, days &amp; arrival time</summary>
+          <div className="household-person-row">
+            <label>Person<input value={w.personName ?? `Person ${i + 1}`} maxLength={40} aria-label="Person name"
+              onChange={(e) => onChange(w.id, { personName: e.target.value, personId: e.target.value.trim().toLowerCase() || w.id })} /></label>
+            <label>Colour<select aria-label="Person colour" value={w.colour || COLOURS[i % COLOURS.length]} onChange={(e) => onChange(w.id, { colour: e.target.value })}>
+              <option value={COLOURS[0]}>Terracotta</option><option value={COLOURS[1]}>Violet</option><option value={COLOURS[2]}>Teal</option><option value={COLOURS[3]}>Rose</option>
+            </select></label>
+          </div><div className="workplace-controls">
             <label>Days per week<select aria-label="Office days per week" value={w.officeDays ?? 3} onChange={(e) => onChange(w.id, { officeDays: Number(e.target.value) })}>
               {[0, 1, 2, 3, 4, 5, 6, 7].map((days) => <option key={days} value={days}>{days} {days === 1 ? 'day' : 'days'}</option>)}
             </select></label>

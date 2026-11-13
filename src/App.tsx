@@ -19,6 +19,7 @@ import { loadData } from './lib/data';
 import { readStored, writeStored } from './lib/storage';
 import { LayerPanel } from './map/controls/LayerPanel';
 import { MapView } from './map/MapView';
+import { DEFAULT_EVENT_FILTERS } from './map/layers/eventDetails';
 import type { AreaCellCollection, AreaCellDisplayCollection, NeighbourhoodCollection, NeighbourhoodContent, NeighbourhoodMetrics, PreferenceLevel, Workplace, ZipRent } from './types';
 
 interface AppData {
@@ -50,6 +51,9 @@ export default function App() {
   const [storageError, setStorageError] = useState<string | null>(initial.error);
   const [autosave, setAutosave] = useState(!initial.error);
   const [layers, setLayers] = useState<Set<string>>(() => new Set(readStored<string[]>('cg:layers', []).map(id => id === 'hills' ? 'topography' : id)));
+  const [transportAnimation, setTransportAnimation] = useState(false);
+  const [airScale, setAirScale] = useState<'local' | 'statewide'>('local');
+  const [eventFilters, setEventFilters] = useState(DEFAULT_EVENT_FILTERS);
   const [commuteCache, setCommuteCache] = useState<Record<string, CommuteResult | undefined>>({}), [retry, setRetry] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null), [selectedCellId, setSelectedCellId] = useState<string | null>(null);
   const [selectedHomeId, setSelectedHomeId] = useState<string | null>(null), [focusedWorkplaceId, setFocusedWorkplaceId] = useState<string | null>(null);
@@ -60,6 +64,7 @@ export default function App() {
   const [scenariosOpen, setScenariosOpen] = useState(false), [homesOpen, setHomesOpen] = useState(false);
   const [panel, setPanel] = useState<'search' | 'results'>('search');
   const [focusedMap, setFocusedMap] = useState(false), [layersOpen, setLayersOpen] = useState(false), [preferencesOpen, setPreferencesOpen] = useState(false);
+  const [leftCollapsed, setLeftCollapsed] = useState(false), [rightCollapsed, setRightCollapsed] = useState(false);
   const resultsPanel=useRef<HTMLElement>(null), listScroll=useRef(0);
   const previousSelection=useRef<string|null>(null);
   const [hoveredId,setHoveredId]=useState<string|null>(null);
@@ -153,14 +158,14 @@ export default function App() {
     else { setShortlist(s => [...s, id]); setBookmarks(bs => [...bs.filter(b => b.kind !== 'neighbourhood' || b.neighbourhoodId !== id), createBookmark({ id: crypto.randomUUID(), kind: 'neighbourhood', name: byId[id]?.name || id, neighbourhoodId: id }, snapshot)]); }
   };
   const selected = selectedId ? byId[selectedId] : null, selectedCell = selectedCellId ? cellById[selectedCellId] : undefined;
-  const selectCell = (id: string) => { if(!selectedId)listScroll.current=resultsPanel.current?.scrollTop||0; const r = cellById[id]; if (r) { setSelectedCellId(id); setSelectedId(r.nhoodId); setPanel('results'); setFocusedMap(false); } };
-  const selectNeighbourhood = (id: string) => { if(!selectedId)listScroll.current=resultsPanel.current?.scrollTop||0; if (analysisReady) { setSelectedId(id); setSelectedCellId(null); } setPanel('results'); setFocusedMap(false); };
+  const selectCell = (id: string) => { if(!selectedId)listScroll.current=resultsPanel.current?.scrollTop||0; const r = cellById[id]; if (r) { setSelectedCellId(id); setSelectedId(r.nhoodId); setPanel('results'); setRightCollapsed(false); setFocusedMap(false); } };
+  const selectNeighbourhood = (id: string) => { if(!selectedId)listScroll.current=resultsPanel.current?.scrollTop||0; if (analysisReady) { setSelectedId(id); setSelectedCellId(null); } setPanel('results'); setRightCollapsed(false); setFocusedMap(false); };
   const matchingActive = workplaces.length > 0, eligibleCells = cellResults.filter(r => r.eligible).length;
   const preferenceCount = Object.values(prefs).filter(p => p !== 'off').length;
   const addDestination = (name: string, lat: number, lon: number) => {
     setUndoSettings(null); setAutosave(true);
     setWorkplaces(ws => [...ws, { id: crypto.randomUUID(), name, placeName: name, personName: `Person ${ws.length + 1}`, lat, lon, mode: 'transit', maxMinutes: 45, officeDays: 3 }]);
-    setAdding(false); setFocusedMap(false); setPanel('search');
+    setAdding(false); setFocusedMap(false); setLeftCollapsed(false); setPanel('search');
   };
   const loadSnapshot = (s: ScenarioSnapshot) => { setUndoSettings(null); setAutosave(true); setWorkplaces(s.workplaces); setPrefs(s.prefs); setPriorityOrder(s.priorityOrder); setShortlist(s.shortlist); setHomes(s.homes); setBookmarks(s.bookmarks); setSelectedId(null); setSelectedCellId(null); setSelectedHomeId(null); setCommuteCache({}); setRetry(n => n + 1); setPanel('search'); setFocusedMap(false); };
   const savedCell = selectedCell ? bookmarks.find(b => b.cellId === selectedCell.id) : null;
@@ -169,9 +174,9 @@ export default function App() {
     if (savedCell) { setBookmarks(bs => bs.filter(b => b.id !== savedCell.id)); return; }
     setBookmarks(bs => [...bs, createBookmark({ id: crypto.randomUUID(), kind: 'cell', name: `Matching location in ${selectedCell.name}`, neighbourhoodId: selectedCell.nhoodId, cellId: selectedCell.id, lat: selectedCell.cell.check_lat, lon: selectedCell.cell.check_lon }, snapshot)]);
   };
-  return <div className={`app ${focusedMap ? 'map-focused' : ''} ${matchingActive ? 'has-search' : 'is-opening'} sheet-${sheet}`}>
+  return <div className={`app ${focusedMap ? 'map-focused' : ''} ${leftCollapsed ? 'left-collapsed' : ''} ${rightCollapsed ? 'right-collapsed' : ''} ${matchingActive ? 'has-search' : 'is-opening'} sheet-${sheet}`}>
     <header className="topbar">
-      <button className="brand" onClick={() => { setPanel('search'); setFocusedMap(false); }} aria-label="Common Ground home"><svg className="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 25V11L16 4l12 7v14H4Z" fill="none" stroke="currentColor" strokeWidth="2"/><path d="M16 4v21M4 18h24" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg><span>Common Ground<small>Find a place that works for everyone.</small></span></button>
+      <button className="brand" onClick={() => { setPanel('search'); setLeftCollapsed(false); setFocusedMap(false); }} aria-label="Common Ground home"><svg className="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 25V11L16 4l12 7v14H4Z" fill="none" stroke="currentColor" strokeWidth="2"/><path d="M16 4v21M4 18h24" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg><span>Common Ground<small>Find a place that works for everyone.</small></span></button>
       <nav className="topbar-right" aria-label="Your household">
         <button className="btn link homes-nav" onClick={() => setHomesOpen(true)}>Homes{homes.length ? ` (${homes.length})` : ''}</button>
         <button className="btn link shortlist-count" onClick={() => { setMapMode('compare'); setCompareSaved(true); }}>Shortlist <span className="count">{shortlist.length + bookmarks.filter(b => b.kind === 'cell').length + homes.length}</span></button>
@@ -182,10 +187,10 @@ export default function App() {
     <main className="layout">
       <section className="map-wrap" aria-label="San Francisco and northern Peninsula map">
         <MapView neighbourhoods={data.neighbourhoods} results={byId} selectedId={selectedId} cells={data.displayCells} cellResults={cellById} selectedCellId={selectedCellId} onSelectCell={selectCell} matchingActive={matchingActive} overlap={overlap} onSelect={selectNeighbourhood}
-          areas={areas} workplaces={workplaces} addingWorkplace={adding} onMoveWorkplace={(id, lat, lon) => updateWorkplace(id, { lat, lon, placeName: 'Pinned location' })} onMapPick={(lat, lon) => addDestination('Pinned location', lat, lon)} visibleLayers={layers} hoveredNeighbourhoodId={hoveredId} onHoverNeighbourhood={setHoveredId} mapMode={mapMode} focusWorkplaceId={focusedWorkplaceId}
+          areas={areas} workplaces={workplaces} addingWorkplace={adding} onMoveWorkplace={(id, lat, lon) => updateWorkplace(id, { lat, lon, placeName: 'Pinned location' })} onMapPick={(lat, lon) => addDestination('Pinned location', lat, lon)} visibleLayers={layers} onInspectContext={() => setLayersOpen(false)} transportAnimation={transportAnimation} airScale={airScale} eventFilters={eventFilters} hoveredNeighbourhoodId={hoveredId} onHoverNeighbourhood={setHoveredId} mapMode={mapMode} focusWorkplaceId={focusedWorkplaceId}
           homes={homes} selectedHomeId={selectedHomeId} onSelectHome={id => { setSelectedHomeId(id); setHomesOpen(true); }} pickingHome={pickingHome} onHomePick={(lat, lon) => { const home = createHome(lat, lon); setHomes(hs => [...hs, home]); setSelectedHomeId(home.id); setPickingHome(false); setFocusedMap(false); setHomesOpen(true); }} onMoveHome={(id, lat, lon) => setHomes(hs => hs.map(h => h.id === id ? { ...h, lat, lon } : h))} />
         <div className="map-topline"><div className="map-modes" role="group" aria-label="Map mode">{(['find', 'explore', 'compare'] as const).map(mode => <button key={mode} aria-pressed={mapMode === mode} onClick={() => { setMapMode(mode); if (mode === 'compare') setCompareSaved(true); }}>{mode === 'find' ? 'Find' : mode === 'explore' ? 'Explore' : 'Compare'}</button>)}</div><button className="btn map-focus" onClick={() => setFocusedMap(v => !v)}>{focusedMap ? '← Back to search' : 'Focus on map'} <span aria-hidden="true">⛶</span></button></div>
-        <div className="context-control"><button className="btn layers-toggle" aria-expanded={layersOpen} onClick={() => setLayersOpen(v => !v)}><span aria-hidden="true">▱</span> Map layers{layers.size ? ` · ${layers.size}` : ''}</button>{layersOpen && <div className="floating-layers"><LayerPanel visible={layers} onToggle={id => setLayers(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; })} /><button className="btn link" onClick={() => setLayersOpen(false)}>Done</button></div>}</div>
+        <div className="context-control"><button className="btn layers-toggle" aria-expanded={layersOpen} onClick={() => setLayersOpen(v => !v)}><span aria-hidden="true">▱</span> Map layers{layers.size ? ` · ${layers.size}` : ''}</button>{layersOpen && <div className="floating-layers"><LayerPanel visible={layers} airScale={airScale} onAirScaleChange={setAirScale} transportAnimation={transportAnimation} onTransportAnimationChange={setTransportAnimation} eventFilters={eventFilters} onEventFiltersChange={(kind, value) => setEventFilters(current => ({ ...current, [kind]: value }))} onToggle={id => setLayers(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; })} /><button className="btn link" onClick={() => setLayersOpen(false)}>Done</button></div>}</div>
         {(adding || pickingHome) && <div className="pick-instruction" role="status">{pickingHome ? 'Choose the home’s position on the map.' : 'Choose a destination on the map. Drag its pin to refine it.'}<button className="btn" onClick={() => { setAdding(false); setPickingHome(false); setFocusedMap(false); }}>Cancel</button></div>}
         {pending && matchingActive && <div className="map-badge" role="status">{analysisReady ? 'Checking every commute…' : 'Loading local measurements…'}</div>}
         {!pending && blocked && <div className="map-badge error" role="status">Commute unavailable · matching paused</div>}
@@ -194,18 +199,25 @@ export default function App() {
       </section>
       <div className="decision-panel" hidden={focusedMap}>
         <div className="sheet-controls" role="group" aria-label="Panel size">{(['compact','half','full'] as const).map(size=><button key={size} aria-pressed={sheet===size} onClick={()=>setSheet(size)}>{size==='compact'?'More map':size==='half'?'Split view':'More list'}</button>)}</div>
-        {matchingActive && <div className="persistent-summary"><button className="btn link" onClick={()=>setPanel('search')}>{workplaces.length} destinations</button><span>{preferenceCount} priorities</span><button className="btn link" onClick={()=>setCompareSaved(true)}>Compare saved</button></div>}
-
         {matchingActive && <nav className="panel-tabs" aria-label="Search and results"><button className={panel === 'search' ? 'on' : ''} onClick={() => setPanel('search')}>Your search</button><button className={panel === 'results' ? 'on' : ''} onClick={() => setPanel('results')}>Matches <span>{pending ? '…' : rankedList.length}</span></button></nav>}
-        <aside className="sidebar" hidden={panel !== 'search'} aria-label="Your search">
+        <section className="criteria-panel desktop-panel" aria-label="Search settings panel">
+        <div className="desktop-panel-heading"><button className="panel-title" onClick={() => setPanel('search')}>Your search</button><button className="icon-btn" aria-label="Collapse your search" aria-controls="criteria-content" onClick={() => setLeftCollapsed(true)}>‹</button></div>
+        {matchingActive && <div className="persistent-summary"><span>{workplaces.length} destinations · {preferenceCount} priorities</span><button className="btn link" onClick={()=>setCompareSaved(true)}>Compare saved</button></div>}
+        <aside id="criteria-content" className="sidebar" hidden={panel !== 'search'} aria-label="Your search">
           {!matchingActive && <div className="opening-intro"><span className="eyebrow">A PLACE FOR YOUR LIVES TO MEET.</span><p>San Francisco and the northern Peninsula.</p></div>}
           <CommutePanel workplaces={workplaces} results={commute} onChange={updateWorkplace} adding={adding} onRemove={id => { setAutosave(true); setUndoSettings(null); setWorkplaces(ws => ws.filter(w => w.id !== id)); }} onAdd={() => { setAdding(v => !v); setPickingHome(false); if (window.innerWidth <= 700) setFocusedMap(true); }} onAddPlace={place => addDestination(place.name, place.lat, place.lon)} onFocus={id => { setFocusedWorkplaceId(null); requestAnimationFrame(() => setFocusedWorkplaceId(id)); }} onRetry={() => { setCommuteCache({}); setRetry(n => n + 1); setAnalysisRetry(n => n + 1); }} onReset={() => { setUndoSettings(null); setAutosave(true); setWorkplaces(DEFAULT_WORKPLACES.map((w, i) => ({ ...w, personName: ['Alex', 'Sam'][i], officeDays: 3, placeName: w.name }))); setAdding(false); setFocusedMap(false); }} />
           {matchingActive && <><div className="preferences-reveal panel-section"><button className="preferences-toggle" aria-expanded={preferencesOpen} onClick={() => setPreferencesOpen(v => !v)}><span><b>Make it feel like home</b><small>{preferenceCount ? `${preferenceCount} priorities active` : 'Parks, flatter streets, everyday essentials'}</small></span><span aria-hidden="true">{preferencesOpen ? '−' : '+'}</span></button></div>{preferencesOpen && <PreferencePanel input={input} onChange={(id, level) => { setUndoSettings(null); setAutosave(true); setPrefs(p => ({ ...p, [id]: level })); }} onOrderChange={order => { setUndoSettings(null); setAutosave(true); setPriorityOrder(order); }} />}<TradeoffPanel key={String(pending) + blocked + areas.map(a => a.fetchedAt || a.label).join(';') + JSON.stringify(workplaces) + JSON.stringify(prefs) + priorityOrder.join(',')} input={input} workplaces={workplaces} commute={commute} onUndo={undoSettings ? () => { setPrefs(undoSettings.prefs); setPriorityOrder(undoSettings.priorityOrder); setWorkplaces(undoSettings.workplaces); setUndoSettings(null); } : undefined} onApply={(p, order, ws) => { setUndoSettings({prefs,priorityOrder,workplaces}); setPrefs(p); setPriorityOrder(order); if (ws) setWorkplaces(ws); }} /><div className="search-summary panel-section"><p>{blocked ? 'A required commute needs attention.' : pending ? 'Checking all destinations together.' : <><b>{rankedList.length} neighbourhoods</b> have matching locations.</>}</p><button className="btn primary wide" onClick={() => setPanel('results')}>{blocked ? 'Review matching status' : 'Explore your matches'} <span aria-hidden="true">→</span></button><p className="hint">{preferenceCount ? 'Your priorities guide the order. Must-haves stay required.' : 'Commute feasibility first. Add preferences to personalise the order.'}</p></div></>}
           <div className="search-footer">A home decision, made together.<button className="btn link" onClick={() => setAbout(true)}>Sources & confidence ↗</button></div>
         </aside>
-        <aside ref={resultsPanel} className="resultsbar" hidden={panel !== 'results'} aria-label="Matching neighbourhoods">
+        </section>
+        <section className="matches-panel desktop-panel" aria-label="Results and selected place panel">
+        <div className="desktop-panel-heading"><button className="panel-title" onClick={() => setPanel('results')}>Matches {matchingActive && <span className="count">{pending ? '…' : rankedList.length}</span>}</button><button className="icon-btn" aria-label="Collapse matches" aria-controls="matching-content" onClick={() => setRightCollapsed(true)}>›</button></div>
+        <aside id="matching-content" ref={resultsPanel} className="resultsbar" hidden={panel !== 'results'} aria-label="Matching neighbourhoods">
           {selected ? <>{selectedCell && <div className="bookmark-action"><button className="btn" aria-pressed={!!savedCell} onClick={saveSelectedCell}>{savedCell ? '✓ Location bookmarked' : '+ Bookmark this location'}</button></div>}<NeighbourhoodDetail result={selected} metrics={data.metrics[selected.id]} content={data.content[selected.id]} rents={data.rents} cellResult={selectedCell} cellResults={cellResults.filter(r => r.nhoodId === selected.id)} onSelectCell={selectCell} workplaces={workplaces} saved={shortlist.includes(selected.id)} onToggleShortlist={() => toggleShortlist(selected.id)} onClose={() => { setSelectedId(null); setSelectedCellId(null); }} /></> : <ResultsList hoveredId={hoveredId} onHover={setHoveredId} ranked={rankedList} excluded={excluded} content={data.content} metrics={data.metrics} workplaces={workplaces} cellResults={cellById} showExcluded={showExcluded} onToggleExcluded={() => setShowExcluded(v => !v)} onSelect={selectNeighbourhood} shortlist={shortlist} onToggleShortlist={toggleShortlist} blocked={blocked} pending={pending} hasWorkplaces={matchingActive} nearMisses={misses} onSelectCell={selectCell} sort={resultsSort} onSortChange={setResultsSort} />}
         </aside>
+        </section>
+        {leftCollapsed && <button className="btn restore-panel restore-search" aria-label="Show your search" onClick={() => { setLeftCollapsed(false); setPanel('search'); }}><span aria-hidden="true">›</span> Your search</button>}
+        {rightCollapsed && <button className="btn restore-panel restore-matches" aria-label="Show matches" onClick={() => { setRightCollapsed(false); setPanel('results'); }}>Matches <span aria-hidden="true">‹</span></button>}
       </div>
     </main>
     {(shared.file || shared.error) && <div className="shared-banner" role="status">{shared.error ?? `Shared scenario: ${shared.file!.scenario.name}. Opens a copy on this device.`}{shared.file && <button className="btn primary" onClick={() => { loadSnapshot(shared.file!.scenario.snapshot); setShared({ file: null, error: null }); history.replaceState(null, '', location.pathname + location.search); }}>Use shared scenario</button>}<button className="icon-btn" aria-label="Dismiss shared scenario" onClick={() => setShared({ file: null, error: null })}>×</button></div>}

@@ -13,6 +13,7 @@ from shapely.geometry import Point
 
 from _common import METRIC_CRS, PROCESSED_DIR, RAW_DIR, STUDY_BBOX, read_download_log, rel, today, update_manifest, write_json
 from process_datasets import write_geojson
+from poi_metadata import poi_metadata
 
 SIGMA_M = 300
 STOPS = [0, 2, 5, 10, 20, 40]
@@ -42,7 +43,7 @@ def build() -> dict:
         if kind not in {"bar", "pub", "nightclub"} or osm_id in seen or "lat" not in location:
             continue
         seen.add(osm_id)
-        rows.append({"osm_id": osm_id, "name": tags.get("name"), "kind": kind,
+        rows.append({**poi_metadata(element, read_download_log().get("osm_nightlife", {}).get("downloaded_at")), "name": tags.get("name"), "kind": kind,
                      "geometry": Point(location["lon"], location["lat"])})
     venues = gpd.GeoDataFrame(rows, crs=4326)
     land = gpd.read_file(PROCESSED_DIR / "neighbourhoods.geojson").to_crs(3857).geometry.union_all()

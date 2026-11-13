@@ -1,0 +1,82 @@
+{
+  "assets": [
+    {
+      "name": "index-BzB0M2UZ.css",
+      "bytes": 128454,
+      "gzipBytes": 22606
+    },
+    {
+      "name": "index-CcjfzTHm.js",
+      "bytes": 1549978,
+      "gzipBytes": 439068
+    },
+    {
+      "name": "leaflet-src-CpierIKu.js",
+      "bytes": 148623,
+      "gzipBytes": 43019
+    },
+    {
+      "name": "LeafletMap-Cbq_A4N7.js",
+      "bytes": 11043,
+      "gzipBytes": 4105
+    },
+    {
+      "name": "LeafletMap-vh-t_kPv.css",
+      "bytes": 15095,
+      "gzipBytes": 6371
+    },
+    {
+      "name": "maplibre-gl-worker-Boc9pDRP.mjs",
+      "bytes": 519547,
+      "gzipBytes": 148193
+    },
+    {
+      "name": "rolldown-runtime-WkwZ5CU-.js",
+      "bytes": 599,
+      "gzipBytes": 368
+    }
+  ],
+  "optionalData": [
+    {
+      "name": "incident_details.json",
+      "bytes": 1381497,
+      "gzipBytes": 212528
+    },
+    {
+      "name": "crash_details.json",
+      "bytes": 552673,
+      "gzipBytes": 137948
+    },
+    {
+      "name": "neighbourhood_character.geojson",
+      "bytes": 35407,
+      "gzipBytes": 6055
+    },
+    {
+      "name": "topography.png",
+      "bytes": 306154,
+      "gzipBytes": 304462
+    },
+    {
+      "name": "cafes.geojson",
+      "bytes": 434235,
+      "gzipBytes": 52582
+    },
+    {
+      "name": "restaurants.geojson",
+      "bytes": 1083982,
+      "gzipBytes": 131115
+    },
+    {
+      "name": "nightlife_venues.geojson",
+      "bytes": 275124,
+      "gzipBytes": 33362
+    },
+    {
+      "name": "groceries.geojson",
+      "bytes": 101472,
+      "gzipBytes": 11594
+    }
+  ],
+  "staticDataBytes": 23175787
+}

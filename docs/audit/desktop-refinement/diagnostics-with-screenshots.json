@@ -1,0 +1,1524 @@
+{
+  "baseURL": "http://localhost:5196/",
+  "machine": {
+    "platform": "win32",
+    "release": "10.0.26300",
+    "cpu": "Snapdragon(R) X Plus - X1P42100 - Qualcomm(R) Oryon(TM) CPU",
+    "logicalProcessors": 8,
+    "totalMemory": 33892843520,
+    "browser": "157.0.8103.51",
+    "gpu": {
+      "vendor": "Google Inc. (Qualcomm)",
+      "renderer": "ANGLE (Qualcomm, Qualcomm(R) Adreno(TM) X1-45 GPU (0x37314430) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+    }
+  },
+  "anchors": [
+    {
+      "terrain": false,
+      "requested": {
+        "zoom": 13.8,
+        "pitch": 0,
+        "bearing": 0
+      },
+      "before": {
+        "anchor": [
+          -122.44823952353764,
+          37.753427585909705
+        ],
+        "zoom": 13.8,
+        "pitch": 0,
+        "bearing": 0
+      },
+      "samples": [
+        {
+          "errorPx": 1.2000370363693875e-08,
+          "zoom": 13.96,
+          "pitch": 0,
+          "bearing": 0
+        },
+        {
+          "errorPx": 1.3122507211442578e-08,
+          "zoom": 14.280000000000001,
+          "pitch": 0,
+          "bearing": 0
+        },
+        {
+          "errorPx": 2.4619249274550004e-08,
+          "zoom": 14.600000000000001,
+          "pitch": 0,
+          "bearing": 0
+        },
+        {
+          "errorPx": 1.2358952943769066e-08,
+          "zoom": 13.56,
+          "pitch": 0,
+          "bearing": 0
+        }
+      ]
+    },
+    {
+      "terrain": false,
+      "requested": {
+        "zoom": 15,
+        "pitch": 35,
+        "bearing": 85
+      },
+      "before": {
+        "anchor": [
+          -122.4458155679308,
+          37.75728642608617
+        ],
+        "zoom": 15,
+        "pitch": 35,
+        "bearing": 85.00000000000001
+      },
+      "samples": [
+        {
+          "errorPx": 2.7427196200531835e-08,
+          "zoom": 15.16,
+          "pitch": 35,
+          "bearing": 85.00000000000001
+        },
+        {
+          "errorPx": 5.75068950983432e-08,
+          "zoom": 15.48,
+          "pitch": 35,
+          "bearing": 85.00000000000001
+        },
+        {
+          "errorPx": 1.978089565048161e-08,
+          "zoom": 15.8,
+          "pitch": 35,
+          "bearing": 85.00000000000001
+        },
+        {
+          "errorPx": 1.2401371100992649e-08,
+          "zoom": 14.76,
+          "pitch": 35,
+          "bearing": 85.00000000000001
+        }
+      ]
+    },
+    {
+      "terrain": false,
+      "requested": {
+        "zoom": 16,
+        "pitch": 60,
+        "bearing": -35
+      },
+      "before": {
+        "anchor": [
+          -122.44394827350652,
+          37.75477694456214
+        ],
+        "zoom": 16,
+        "pitch": 60,
+        "bearing": -35
+      },
+      "samples": [
+        {
+          "errorPx": 3.466518709305767e-08,
+          "zoom": 16.16,
+          "pitch": 60,
+          "bearing": -35
+        },
+        {
+          "errorPx": 1.0605821408777688e-07,
+          "zoom": 16.48,
+          "pitch": 60,
+          "bearing": -35
+        },
+        {
+          "errorPx": 8.275968686505351e-08,
+          "zoom": 16.8,
+          "pitch": 60,
+          "bearing": -35
+        },
+        {
+          "errorPx": 2.481535277831288e-08,
+          "zoom": 15.76,
+          "pitch": 60,
+          "bearing": -35
+        }
+      ]
+    },
+    {
+      "terrain": false,
+      "requested": {
+        "zoom": 17,
+        "pitch": 50,
+        "bearing": 160
+      },
+      "before": {
+        "anchor": [
+          -122.4437694686929,
+          37.75650216581664
+        ],
+        "zoom": 17,
+        "pitch": 50,
+        "bearing": 160
+      },
+      "samples": [
+        {
+          "errorPx": 9.879842175032168e-08,
+          "zoom": 17.16,
+          "pitch": 50,
+          "bearing": 160
+        },
+        {
+          "errorPx": 1.779842325559502e-07,
+          "zoom": 17.48,
+          "pitch": 50,
+          "bearing": 160
+        },
+        {
+          "errorPx": 1.9789408734352799e-07,
+          "zoom": 17.8,
+          "pitch": 50,
+          "bearing": 160
+        },
+        {
+          "errorPx": 7.068151101115414e-08,
+          "zoom": 16.76,
+          "pitch": 50,
+          "bearing": 160
+        }
+      ]
+    },
+    {
+      "terrain": true,
+      "requested": {
+        "zoom": 13.8,
+        "pitch": 0,
+        "bearing": 0
+      },
+      "before": {
+        "anchor": [
+          -122.44817655826023,
+          37.75346579198143
+        ],
+        "zoom": 13.8,
+        "pitch": 0,
+        "bearing": 0
+      },
+      "samples": [
+        {
+          "errorPx": 0.0534679494360696,
+          "zoom": 13.96,
+          "pitch": 0,
+          "bearing": 0
+        },
+        {
+          "errorPx": 0.09642034209368387,
+          "zoom": 14.280000000000001,
+          "pitch": 0,
+          "bearing": 0
+        },
+        {
+          "errorPx": 0.10553461229351686,
+          "zoom": 14.600000000000001,
+          "pitch": 0,
+          "bearing": 0
+        },
+        {
+          "errorPx": 0.2463091527712868,
+          "zoom": 13.56,
+          "pitch": 0,
+          "bearing": 0
+        }
+      ]
+    },
+    {
+      "terrain": true,
+      "requested": {
+        "zoom": 15,
+        "pitch": 35,
+        "bearing": 85
+      },
+      "before": {
+        "anchor": [
+          -122.44558295634232,
+          37.75732700415773
+        ],
+        "zoom": 15,
+        "pitch": 35,
+        "bearing": 85.00000000000001
+      },
+      "samples": [
+        {
+          "errorPx": 0.09941711383468647,
+          "zoom": 15.16,
+          "pitch": 35,
+          "bearing": 85.00000000000001
+        },
+        {
+          "errorPx": 0.04064207697929423,
+          "zoom": 15.48,
+          "pitch": 35,
+          "bearing": 85.00000000000001
+        },
+        {
+          "errorPx": 0.1890983709358376,
+          "zoom": 15.8,
+          "pitch": 35,
+          "bearing": 85.00000000000001
+        },
+        {
+          "errorPx": 0.10938263624972688,
+          "zoom": 14.76,
+          "pitch": 35,
+          "bearing": 85.00000000000001
+        }
+      ]
+    },
+    {
+      "terrain": true,
+      "requested": {
+        "zoom": 16,
+        "pitch": 60,
+        "bearing": -35
+      },
+      "before": {
+        "anchor": [
+          -122.44395874291352,
+          37.754786909424
+        ],
+        "zoom": 16,
+        "pitch": 60,
+        "bearing": -35
+      },
+      "samples": [
+        {
+          "errorPx": 0.08123185830636519,
+          "zoom": 16.16,
+          "pitch": 60,
+          "bearing": -35
+        },
+        {
+          "errorPx": 0.12575364312231563,
+          "zoom": 16.48,
+          "pitch": 60,
+          "bearing": -35
+        },
+        {
+          "errorPx": 0.03455335445867547,
+          "zoom": 16.8,
+          "pitch": 60,
+          "bearing": -35
+        },
+        {
+          "errorPx": 0.223666580114887,
+          "zoom": 15.76,
+          "pitch": 60,
+          "bearing": -35
+        }
+      ]
+    },
+    {
+      "terrain": true,
+      "requested": {
+        "zoom": 17,
+        "pitch": 50,
+        "bearing": 160
+      },
+      "before": {
+        "anchor": [
+          -122.44363843927871,
+          37.75628404136958
+        ],
+        "zoom": 17,
+        "pitch": 50,
+        "bearing": 160
+      },
+      "samples": [
+        {
+          "errorPx": 0.21876948049747721,
+          "zoom": 17.16,
+          "pitch": 50,
+          "bearing": 160
+        },
+        {
+          "errorPx": 0.011935030251794711,
+          "zoom": 17.48,
+          "pitch": 50,
+          "bearing": 160
+        },
+        {
+          "errorPx": 0.10515098805622371,
+          "zoom": 17.8,
+          "pitch": 50,
+          "bearing": 160
+        },
+        {
+          "errorPx": 0.08063049835438829,
+          "zoom": 16.76,
+          "pitch": 50,
+          "bearing": 160
+        }
+      ]
+    }
+  ],
+  "outsideRelease": {
+    "state": "false",
+    "zoomBefore": 19,
+    "zoomAfter": 19
+  },
+  "transport": {
+    "positions": [
+      {
+        "label": "Illustrative bus: 22. Not live.",
+        "position": "translate(-50%, -50%) translate(639px, 250px) rotateX(30deg) rotateZ(170.874deg)"
+      },
+      {
+        "label": "Illustrative rail: N. Not live.",
+        "position": "translate(-50%, -50%) translate(1274px, 464px) rotateX(30deg) rotateZ(4.10965deg)"
+      }
+    ],
+    "moved": [
+      "translate(-50%, -50%) translate(628px, 254px) rotateX(30deg) rotateZ(-99.1499deg)",
+      "translate(-50%, -50%) translate(1271px, 443px) rotateX(30deg) rotateZ(4.10965deg)"
+    ]
+  },
+  "buildingStates": [
+    {
+      "zoom": 13,
+      "pitch": 50,
+      "features": 0,
+      "sourceFeatures": 19
+    },
+    {
+      "zoom": 14,
+      "pitch": 50,
+      "features": 825,
+      "sourceFeatures": 1155
+    },
+    {
+      "zoom": 14.5,
+      "pitch": 50,
+      "features": 1217,
+      "sourceFeatures": 1667
+    },
+    {
+      "zoom": 15,
+      "pitch": 50,
+      "features": 725,
+      "sourceFeatures": 1358
+    },
+    {
+      "zoom": 17,
+      "pitch": 50,
+      "features": 76,
+      "sourceFeatures": 231
+    }
+  ],
+  "frames": {
+    "count": 120,
+    "meanMs": 16.683333333333334,
+    "p95Ms": 18.5,
+    "maxMs": 23.200000002980232
+  },
+  "initialTransfer": {
+    "bytes": 854239,
+    "requests": 18,
+    "contextDataRequested": []
+  },
+  "longTasks": [
+    {
+      "start": 181.09999999403954,
+      "duration": 76
+    },
+    {
+      "start": 414.29999999701977,
+      "duration": 51
+    },
+    {
+      "start": 674.3999999910593,
+      "duration": 86
+    },
+    {
+      "start": 7030.899999991059,
+      "duration": 411
+    },
+    {
+      "start": 7764.20000000298,
+      "duration": 106
+    },
+    {
+      "start": 14580.89999999106,
+      "duration": 185
+    },
+    {
+      "start": 15189.5,
+      "duration": 57
+    },
+    {
+      "start": 15258.39999999106,
+      "duration": 2531
+    },
+    {
+      "start": 25426.09999999404,
+      "duration": 2693
+    },
+    {
+      "start": 28397.89999999106,
+      "duration": 50
+    },
+    {
+      "start": 33811.29999999702,
+      "duration": 1810
+    },
+    {
+      "start": 37230.89999999106,
+      "duration": 269
+    },
+    {
+      "start": 40012.29999999702,
+      "duration": 3675
+    },
+    {
+      "start": 46247.5,
+      "duration": 154
+    },
+    {
+      "start": 50789.59999999404,
+      "duration": 4837
+    },
+    {
+      "start": 56314.29999999702,
+      "duration": 98
+    },
+    {
+      "start": 64086.79999999702,
+      "duration": 4957
+    },
+    {
+      "start": 69043.89999999106,
+      "duration": 53
+    },
+    {
+      "start": 77700.20000000298,
+      "duration": 4877
+    },
+    {
+      "start": 82947.59999999404,
+      "duration": 100
+    }
+  ],
+  "transfer": {
+    "totalBytes": 5421646,
+    "vectorRequests": 0,
+    "vectorBytes": 0,
+    "terrainBytes": 770472,
+    "entries": [
+      {
+        "url": "http://localhost:5196/",
+        "bytes": 1012
+      },
+      {
+        "url": "http://localhost:5196/assets/index-BzB0M2UZ.css",
+        "bytes": 22980
+      },
+      {
+        "url": "http://localhost:5196/assets/rolldown-runtime-WkwZ5CU-.js",
+        "bytes": 920
+      },
+      {
+        "url": "http://localhost:5196/assets/index-CcjfzTHm.js",
+        "bytes": 439779
+      },
+      {
+        "url": "http://localhost:5196/favicon.svg",
+        "bytes": 485
+      },
+      {
+        "url": "http://localhost:5196/data/neighbourhoods.geojson",
+        "bytes": 200372
+      },
+      {
+        "url": "http://localhost:5196/data/neighbourhood_metrics.json",
+        "bytes": 12367
+      },
+      {
+        "url": "http://localhost:5196/data/neighbourhood_content.json",
+        "bytes": 10926
+      },
+      {
+        "url": "http://localhost:5196/data/rents_zori_zip.json",
+        "bytes": 13443
+      },
+      {
+        "url": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29' fill='%23333'%3E %3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E %3C/svg%3E",
+        "bytes": 0
+      },
+      {
+        "url": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29' fill='%23333'%3E %3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E %3C/svg%3E",
+        "bytes": 0
+      },
+      {
+        "url": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E %3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E %3C/svg%3E",
+        "bytes": 0
+      },
+      {
+        "url": "https://tiles.openfreemap.org/styles/positron",
+        "bytes": 4186
+      },
+      {
+        "url": "https://tiles.openfreemap.org/sprites/ofm_f384/ofm.png",
+        "bytes": 50057
+      },
+      {
+        "url": "https://tiles.openfreemap.org/sprites/ofm_f384/ofm.json",
+        "bytes": 3953
+      },
+      {
+        "url": "https://tiles.openfreemap.org/planet",
+        "bytes": 2400
+      },
+      {
+        "url": "https://tiles.openfreemap.org/fonts/Noto%20Sans%20Italic/0-255.pbf",
+        "bytes": 48160
+      },
+      {
+        "url": "https://tiles.openfreemap.org/fonts/Noto%20Sans%20Regular/0-255.pbf",
+        "bytes": 43199
+      },
+      {
+        "url": "http://localhost:5196/data/regional_terrain.json",
+        "bytes": 1331
+      },
+      {
+        "url": "https://tiles.mapterhorn.com/11/327/791.webp",
+        "bytes": 48082
+      },
+      {
+        "url": "https://tiles.mapterhorn.com/12/654/1583.webp",
+        "bytes": 88330
+      },
+      {
+        "url": "https://tiles.mapterhorn.com/5/5/12.webp",
+        "bytes": 213336
+      },
+      {
+        "url": "https://tiles.mapterhorn.com/12/655/1583.webp",
+        "bytes": 56055
+      },
+      {
+        "url": "https://tiles.mapterhorn.com/12/654/1582.webp",
+        "bytes": 52051
+      },
+      {
+        "url": "http://localhost:5196/data/transit_routes.geojson",
+        "bytes": 195376
+      },
+      {
+        "url": "http://localhost:5196/data/transit_stops.geojson",
+        "bytes": 935136
+      },
+      {
+        "url": "http://localhost:5196/data/nightlife.json",
+        "bytes": 1095
+      },
+      {
+        "url": "http://localhost:5196/data/nightlife.png",
+        "bytes": 56194
+      },
+      {
+        "url": "http://localhost:5196/data/nightlife.png",
+        "bytes": 56194
+      },
+      {
+        "url": "http://localhost:5196/data/nightlife_venues.geojson",
+        "bytes": 275404
+      },
+      {
+        "url": "http://localhost:5196/data/topography.json",
+        "bytes": 864
+      },
+      {
+        "url": "http://localhost:5196/data/topography.png",
+        "bytes": 306423
+      },
+      {
+        "url": "http://localhost:5196/data/topography.png",
+        "bytes": 306423
+      },
+      {
+        "url": "http://localhost:5196/data/cafes.geojson",
+        "bytes": 434515
+      },
+      {
+        "url": "http://localhost:5196/data/restaurants.geojson",
+        "bytes": 1084264
+      },
+      {
+        "url": "https://tiles.mapterhorn.com/12/655/1582.webp",
+        "bytes": 19145
+      },
+      {
+        "url": "https://tiles.mapterhorn.com/11/328/791.webp",
+        "bytes": 53469
+      },
+      {
+        "url": "https://tiles.mapterhorn.com/11/327/790.webp",
+        "bytes": 39629
+      },
+      {
+        "url": "https://tiles.mapterhorn.com/10/164/395.webp",
+        "bytes": 128912
+      },
+      {
+        "url": "https://tiles.mapterhorn.com/10/163/395.webp",
+        "bytes": 71463
+      },
+      {
+        "url": "https://tiles.openfreemap.org/fonts/Noto%20Sans%20Regular/256-511.pbf",
+        "bytes": 56254
+      },
+      {
+        "url": "https://tiles.openfreemap.org/fonts/Noto%20Sans%20Regular/8192-8447.pbf",
+        "bytes": 23975
+      },
+      {
+        "url": "https://tiles.openfreemap.org/fonts/Noto%20Sans%20Regular/7680-7935.pbf",
+        "bytes": 38394
+      },
+      {
+        "url": "https://tiles.openfreemap.org/fonts/Noto%20Sans%20Italic/8192-8447.pbf",
+        "bytes": 25093
+      }
+    ],
+    "vectorTileDefinition": "Numeric XYZ PBF URLs; font glyph PBFs excluded"
+  },
+  "errors": [],
+  "failed": [],
+  "requests": [
+    {
+      "url": "http://localhost:5196/",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/assets/index-BzB0M2UZ.css",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/assets/rolldown-runtime-WkwZ5CU-.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/assets/index-CcjfzTHm.js",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/data/neighbourhoods.geojson",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/favicon.svg",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/data/neighbourhood_metrics.json",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/data/neighbourhood_content.json",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/data/rents_zori_zip.json",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/assets/maplibre-gl-worker-Boc9pDRP.mjs",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/styles/positron",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/sprites/ofm_f384/ofm.png",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/sprites/ofm_f384/ofm.json",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/10/163/395.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/10/163/396.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/10/164/395.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/10/164/396.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/10/162/395.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/10/162/396.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/fonts/Noto%20Sans%20Italic/0-255.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/fonts/Noto%20Sans%20Regular/0-255.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1310/3167.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1308/3167.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1309/3166.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1308/3166.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1310/3166.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1309/3167.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/data/regional_terrain.json",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/11/327/791.webp",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/654/1583.webp",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/5/5/12.webp",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/655/1583.webp",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2617/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2618/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2617/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6331.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6331.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/654/1582.webp",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2617/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/data/transit_routes.geojson",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/data/transit_stops.geojson",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/data/nightlife.json",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/data/nightlife.png",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/data/nightlife.png",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/data/nightlife_venues.geojson",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/data/topography.json",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/data/topography.png",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/data/topography.png",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/data/cafes.geojson",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:5196/data/restaurants.geojson",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/655/1582.webp",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1310/3165.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1309/3165.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1311/3166.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1311/3165.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1308/3166.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1308/3165.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/11/328/791.webp",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/11/327/790.webp",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/10/164/395.webp",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/10/163/395.webp",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1311/3167.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1310/3164.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1309/3164.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1312/3166.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1311/3164.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1312/3165.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1312/3164.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1310/3163.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1309/3163.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1313/3166.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/13/1313/3165.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/fonts/Noto%20Sans%20Regular/256-511.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/fonts/Noto%20Sans%20Regular/8192-8447.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/fonts/Noto%20Sans%20Regular/7680-7935.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2621/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2621/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6331.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2621/6331.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2622/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6331.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2622/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2621/6334.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2622/6331.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6330.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2621/6330.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6330.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2623/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2623/6331.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6329.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6329.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/fonts/Noto%20Sans%20Italic/8192-8447.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6330.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6330.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6331.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6331.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6331.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2621/6331.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6331.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2621/6331.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6331.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2621/6331.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2621/6331.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2622/6331.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2621/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2621/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2619/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2622/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2621/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2622/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2621/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2623/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2622/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2621/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2622/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2621/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2622/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2621/6333.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2621/6332.pbf",
+      "status": 200
+    },
+    {
+      "url": "https://tiles.openfreemap.org/planet/20261101_080013_pt/14/2620/6332.pbf",
+      "status": 200
+    }
+  ]
+}

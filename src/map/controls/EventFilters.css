@@ -1,0 +1,10 @@
+.event-filters { display: grid; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #d8e2dc; }
+.event-filters > label { display: block; font-size: 12px; }
+.event-filters select { display: block; width: 100%; margin-top: 4px; }
+.event-date-range { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 8px; }
+.event-date-range label { min-width: 0; font-size: 11px; }
+.event-date-range input { display: block; width: 100%; min-width: 0; font: inherit; margin-top: 4px; padding: 5px; }
+.event-popup { font: 12px/1.45 system-ui, sans-serif; max-height: min(440px,60vh); overflow-y: auto; }
+.event-popup p { margin: 7px 0; }
+.event-popup ul { margin: 6px 0; padding-left: 18px; }
+.event-popup a { color: #155e63; text-decoration: underline; }
