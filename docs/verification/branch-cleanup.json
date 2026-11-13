@@ -1,0 +1,52 @@
+{
+  "preservedCandidateCommit": "ae0a63694ed37a32d101e3eef7eed2548834557a",
+  "deleted": [
+    {
+      "scope": "local",
+      "branch": "feature/common-ground-household-upgrade",
+      "tip": "efbfad1226bb78e182dbeaf4e33837a47a8e89fd",
+      "ancestorVerified": true
+    },
+    {
+      "scope": "local",
+      "branch": "feature/regional-decision-redesign",
+      "tip": "f70b94ec9648ec9cf3beada8f9f1ca4d765b6024",
+      "ancestorVerified": true
+    },
+    {
+      "scope": "local",
+      "branch": "feature/desktop-map-refinements",
+      "tip": "ecfd5ae9eafd499f8137ea1aa40dffc7eae41fc9",
+      "ancestorVerified": true
+    },
+    {
+      "scope": "local",
+      "branch": "hack/fine-area-discovery",
+      "tip": "a938a3d34a45c37e12439d8b84efaec0a19b41fe",
+      "ancestorVerified": true
+    },
+    {
+      "scope": "remote",
+      "branch": "feature/common-ground-household-upgrade",
+      "tip": "efbfad1226bb78e182dbeaf4e33837a47a8e89fd",
+      "ancestorVerified": true
+    },
+    {
+      "scope": "remote",
+      "branch": "feature/regional-decision-redesign",
+      "tip": "f70b94ec9648ec9cf3beada8f9f1ca4d765b6024",
+      "ancestorVerified": true
+    },
+    {
+      "scope": "remote",
+      "branch": "hack/fine-area-discovery",
+      "tip": "a938a3d34a45c37e12439d8b84efaec0a19b41fe",
+      "ancestorVerified": true
+    }
+  ],
+  "productionPromotionPerformed": false,
+  "remainingLocalBranches": [
+    "consolidation/common-ground-regional",
+    "main"
+  ]
+}

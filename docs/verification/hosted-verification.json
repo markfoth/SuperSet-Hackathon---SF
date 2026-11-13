@@ -1,0 +1,57 @@
+{
+  "verifiedDatePacific": "2026-11-13",
+  "runtimeCommit": "ae0a63694ed37a32d101e3eef7eed2548834557a",
+  "previewUrl": "https://common-ground-3052t1fbr-marks-projects-ebc07d95.vercel.app",
+  "deploymentId": "dpl_DFCH5Hwhmr2WVyx8ZHqSbgVdjYcF",
+  "health": {
+    "service": "common-ground-routing",
+    "configured": true,
+    "applicationIdPresent": true,
+    "apiKeyPresent": true,
+    "status": "ready for live evaluation",
+    "provider": "traveltime",
+    "direction": "home-to-work",
+    "timezone": "America/Los_Angeles",
+    "supportedModes": [
+      "transit",
+      "walk",
+      "bike",
+      "drive"
+    ],
+    "dailyCap": 300,
+    "dryRun": false,
+    "cacheAllowed": false,
+    "capScope": "per running instance; provider account limits still apply",
+    "usage": "TravelTime Basic: research, development and evaluation only"
+  },
+  "browserLiveRouting": {
+    "passed": true,
+    "provider": "traveltime",
+    "customDestinations": [
+      "Berkeley",
+      "San Mateo"
+    ],
+    "fixtureUsed": false,
+    "arrivalDate": "2026-11-16",
+    "arrivalTimePacific": "08:45",
+    "jointLimitsMinutes": [
+      120,
+      120
+    ],
+    "jointMatchingCells": 3617,
+    "jointAreaGroups": 76,
+    "viewportIndependent": true,
+    "pageErrors": []
+  },
+  "dataContractsCI": {
+    "status": "success",
+    "runId": 43521500837,
+    "url": "https://github.com/markfoth/SuperSet-Hackathon---SF/actions/runs/43521500837"
+  },
+  "production": {
+    "unchanged": true,
+    "commit": "e2b6fccec2c430cd7c811768b83b8401c5d6f2ee",
+    "deploymentId": "dpl_BdGaTe13D3yBj7CiMHJoN2NkhXiD"
+  },
+  "pullRequest": "https://github.com/markfoth/SuperSet-Hackathon---SF/pull/5"
+}

@@ -30,5 +30,8 @@
   "datePacific": "2026-11-13",
   "finalAffectedBrowserTests": 6,
   "finalRegionalDataTests": 3,
-  "crimeDisplayMetresPerIncident": 0.05
+  "crimeDisplayMetresPerIncident": 0.05,
+  "hostedLiveCustomRouting": "passed; browser -> Vercel -> TravelTime -> joint matching",
+  "linuxDataCI": "passed",
+  "productionPromoted": false
 }

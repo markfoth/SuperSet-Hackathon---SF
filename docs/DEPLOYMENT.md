@@ -2,6 +2,8 @@
 
 ## Current boundary
 
+Review [draft PR #5](https://github.com/markfoth/SuperSet-Hackathon---SF/pull/5) and the final status in VERIFICATION.md.
+
 main is the intended canonical branch. The validated candidate is built on the latest desktop refinement history, not the older production implementation. A production push is held for final review because Vercel's Git integration deploys main.
 
 Verified Vercel project: common-ground-sf, prj_QxzvTW1Jmy67t7DxULV3brat3Yei. The production alias is <https://common-ground-sf.vercel.app/>. The recorded production deployment is dpl_BdGaTe13D3yBj7CiMHJoN2NkhXiD from main at e2b6fccec2c430cd7c811768b83b8401c5d6f2ee. No production change is implied by a branch preview.
