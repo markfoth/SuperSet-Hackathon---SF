@@ -66,6 +66,10 @@ function initialiseSources(map: maplibregl.Map, props: MapProps) {
     'line-width': ['case', ['==', ['get', 'selected'], true], 2.4, 0.6],
     'line-opacity': ['case', ['==', ['get', 'selected'], true], 1, 0.24],
   } }, before);
+  map.addLayer({ id: 'neighbourhood-hover', type: 'line', source: 'neighbourhoods', paint: {
+    'line-color': '#155e63', 'line-width': 3,
+    'line-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 1, 0],
+  } });
   map.addLayer({ id: 'selection-outline', type: 'line', source: 'matching', filter: ['==', ['get', 'selected'], true], paint: {
     'line-color': '#a9781f', 'line-width': ['case', ['==', ['get', 'focused'], true], 3.4, 2.3], 'line-opacity': 1,
   } });
@@ -73,9 +77,9 @@ function initialiseSources(map: maplibregl.Map, props: MapProps) {
     'line-color': '#213f36', 'line-width': 3.5,
   } });
   if (map.getSource('openmaptiles')) map.addLayer({ id: 'real-buildings', type: 'fill-extrusion', source: 'openmaptiles', 'source-layer': 'building', minzoom: 15,
-    layout: { visibility: 'none' }, filter: ['all', ['!=', ['get', 'hide_3d'], true], ['>', ['coalesce', ['get', 'render_height'], 0], 0]],
+    layout: { visibility: 'none' }, filter: ['all', ['!=', ['get', 'hide_3d'], true], ['>', ['coalesce', ['get', 'render_height'], 0], 0], ['<=', ['coalesce', ['get', 'render_height'], 0], 1000]],
     paint: { 'fill-extrusion-color': '#d3d1c5', 'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 0],
-      'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0], 'fill-extrusion-opacity': 0.88, 'fill-extrusion-vertical-gradient': true },
+      'fill-extrusion-base': ['min', ['max', 0, ['coalesce', ['get', 'render_min_height'], 0]], ['coalesce', ['get', 'render_height'], 0]], 'fill-extrusion-opacity': 0.88, 'fill-extrusion-vertical-gradient': true },
   }, before);
 }
 
@@ -88,13 +92,20 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
   const loading = useRef(new Set<string>());
   const [ready, setReady] = useState(0);
   const [is3D, setIs3D] = useState(false);
+  const [tilted, setTilted] = useState(false);
   const [terrain, setTerrain] = useState(false);
+  const terrainWanted = useRef(false);
+  const terrainGeneration = useRef(0);
   const [terrainBusy, setTerrainBusy] = useState(false);
   const [styleLoading, setStyleLoading] = useState(true);
   const [baseError, setBaseError] = useState('');
   const [layerErrors, setLayerErrors] = useState<Record<string, string>>({});
   const [zoom, setZoom] = useState(11);
   const [layerAttempt, setLayerAttempt] = useState(0);
+  function changeTilt(next: boolean) {
+    setTilted(next);
+    map.current?.easeTo({ pitch: next ? 52 : 0, duration: reducedMotion() ? 0 : 600 });
+  }
 
   const fit = () => {
     const m = map.current;
@@ -115,16 +126,21 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
     let m: maplibregl.Map;
     try {
       m = new maplibregl.Map({ container: el.current, style: BASE_STYLE, center: [-122.43, 37.725], zoom: 10.8,
-        minZoom: 9, maxZoom: 19, maxPitch: 60, maxBounds: [[-122.68, 37.50], [-122.22, 37.94]],
+        minZoom: 7, maxZoom: 19, maxPitch: 60,
         canvasContextAttributes: { antialias: true }, attributionControl: false, refreshExpiredTiles: true,
       });
     } catch { props.onWebGLFailure(); return; }
     map.current = m;
+    // A scoped renderer handle lets browser audits exercise the real production
+    // camera and query loaded elevation, without replacing or mocking WebGL.
+    Object.defineProperty(el.current, '__commonGroundMap', { value: m, configurable: true });
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
     m.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: 'Context: DataSF · San Mateo County · USGS · OSM' }), 'bottom-left');
     const onReady = () => {
       if (disposed || m.getSource('matching')) return;
       loaded.current.clear(); loading.current.clear();
+      terrainGeneration.current += 1;
+      setTerrainBusy(false);
       initialiseSources(m, latest.current);
       setTerrain(false);
       if (m.getSource('openmaptiles')) setStyleLoading(false);
@@ -140,13 +156,16 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
         m.setTerrain(null); setTerrain(false);
         if (m.getSource('terrain')) m.removeSource('terrain');
         if (el.current) el.current.dataset.terrainLoaded = 'false';
-        setLayerErrors((errors) => ({ ...errors, terrain: 'Terrain tiles could not load. The 2D map remains available.' }));
+        terrainGeneration.current += 1;
+        setTerrainBusy(false);
+        setLayerErrors((errors) => ({ ...errors, terrain: 'Terrain is temporarily unavailable. The flat map and buildings remain available.' }));
       } else if (!sourceId?.startsWith('context-')) setBaseError('Some basemap tiles are unavailable. Your matching locations are still shown.');
     });
     m.on('webglcontextlost', () => { if (!disposed) latest.current.onWebGLFailure(); });
     m.on('moveend', () => {
       setZoom(m.getZoom());
-      if (el.current) { el.current.dataset.zoom = m.getZoom().toFixed(2); el.current.dataset.pitch = m.getPitch().toFixed(0); }
+      if (el.current) { el.current.dataset.zoom = m.getZoom().toFixed(2); el.current.dataset.pitch = m.getPitch().toFixed(0);
+        el.current.dataset.centre = m.getCenter().toArray().map(n => n.toFixed(5)).join(','); el.current.dataset.bearing = m.getBearing().toFixed(0); }
     });
     m.on('sourcedata', (event) => {
       if (!el.current) return;
@@ -156,8 +175,10 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
     m.on('idle', () => {
       if (el.current) el.current.dataset.buildingCount = String(m.getLayer('real-buildings') ? m.queryRenderedFeatures({ layers: ['real-buildings'] }).length : 0);
     });
+    m.on('pitchend', () => setTilted(m.getPitch() > 5));
     const tooltip = new maplibregl.Popup({ closeButton: false, closeOnClick: false, className: 'cg-map-tooltip', offset: 14 });
     let hover: string | null = null;
+    let hoveredNeighbourhood: string | null = null;
     m.on('mousemove', (event) => {
       if (!m.getLayer('matching-fill')) return;
       if (latest.current.addingWorkplace || latest.current.pickingHome) { tooltip.remove(); return; }
@@ -166,13 +187,14 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
       if (hover && hover !== id) m.setFeatureState({ source: 'matching', id: hover }, { hover: false });
       hover = id ?? null;
       m.getCanvas().style.cursor = id ? 'pointer' : '';
-      if (!id) { tooltip.remove(); return; }
+      if (!id) { tooltip.remove(); if (hoveredNeighbourhood) latest.current.onHoverNeighbourhood?.(null); hoveredNeighbourhood = null; return; }
       m.setFeatureState({ source: 'matching', id }, { hover: true });
       const r = latest.current.cellResults[id];
+      if (r && hoveredNeighbourhood !== r.nhoodId) { hoveredNeighbourhood = r.nhoodId; latest.current.onHoverNeighbourhood?.(r.nhoodId); }
       if (r) { const node = document.createElement('div'); node.textContent = `${r.name} · ${r.eligible ? 'Matching location' : 'Required evidence unavailable'}`;
         tooltip.setLngLat(event.lngLat).setDOMContent(node).addTo(m); }
     });
-    m.on('mouseout', () => tooltip.remove());
+    m.on('mouseout', () => { tooltip.remove(); hoveredNeighbourhood = null; latest.current.onHoverNeighbourhood?.(null); });
     m.on('click', (event) => {
       const p = latest.current;
       if (p.pickingHome) { p.onHomePick?.(event.lngLat.lat, event.lngLat.lng); return; }
@@ -228,7 +250,7 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
       .catch(() => { if (!disposed) { setBaseError('Street tiles could not load. Matching locations and pins remain available.'); setStyleLoading(false); } })
       .finally(() => window.clearTimeout(timeout));
     const resize = new ResizeObserver(() => m.resize()); resize.observe(el.current);
-    return () => { disposed = true; controller.abort(); window.clearTimeout(timeout); resize.disconnect(); tooltip.remove(); markers.current.forEach((x) => x.remove()); markers.current = []; m.remove(); map.current = null; };
+    return () => { disposed = true; terrainGeneration.current += 1; controller.abort(); window.clearTimeout(timeout); resize.disconnect(); tooltip.remove(); markers.current.forEach((x) => x.remove()); markers.current = []; m.remove(); map.current = null; };
   }, []);
 
   useEffect(() => {
@@ -242,6 +264,14 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
       el.current.dataset.visibleCellCount = String(features.features.length);
       el.current.dataset.excludedVisible = String(features.features.filter((f) => f.properties?.state === 'excluded').length); }
   }, [ready, props.cells, props.cellResults, props.results, props.matchingActive, props.selectedId, props.selectedCellId, props.visibleLayers]);
+
+  const previousHover = useRef<string | null>(null);
+  useEffect(() => {
+    const m = map.current; if (!m?.getSource('neighbourhoods')) return;
+    if (previousHover.current) m.setFeatureState({ source: 'neighbourhoods', id: previousHover.current }, { hover: false });
+    if (props.hoveredNeighbourhoodId) m.setFeatureState({ source: 'neighbourhoods', id: props.hoveredNeighbourhoodId }, { hover: true });
+    previousHover.current = props.hoveredNeighbourhoodId ?? null;
+  }, [ready, props.hoveredNeighbourhoodId]);
 
   useEffect(() => {
     const m = map.current; if (!m?.getSource('commutes')) return;
@@ -293,15 +323,17 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
   useEffect(() => {
     const m = map.current; if (!m) return;
     const enabled = props.mapMode === 'explore';
-    if (props.mapMode) setIs3D(enabled);
+    if (props.mapMode) { setIs3D(enabled); changeTilt(enabled); }
   }, [props.mapMode]);
 
   useEffect(() => {
     const m = map.current; if (!m?.getStyle()) return;
     if (m.getLayer('real-buildings')) m.setLayoutProperty('real-buildings', 'visibility', is3D ? 'visible' : 'none');
-    m.easeTo({ pitch: is3D ? 52 : 0, bearing: is3D ? -12 : 0, duration: reducedMotion() ? 0 : 600 });
-    if (!is3D && terrain) { m.setTerrain(null); setTerrain(false); }
   }, [ready, is3D]);
+
+  useEffect(() => {
+    if (terrainWanted.current) void enableTerrain();
+  }, [ready]);
 
   useEffect(() => {
     const m = map.current; if (!m || props.selectedCellId || !props.selectedId) return;
@@ -327,33 +359,42 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
     if (m && h) m.easeTo({ center: [h.lon, h.lat], zoom: 16, padding: framePadding(m), duration: reducedMotion() ? 0 : 500 });
   }, [props.selectedHomeId]);
 
-  const toggleTerrain = async () => {
-    const m = map.current; if (!m || terrainBusy) return;
-    if (terrain) { m.setTerrain(null); setTerrain(false); return; }
+  async function enableTerrain() {
+    const m = map.current; if (!m || !terrainWanted.current) return;
+    const generation = ++terrainGeneration.current;
     setTerrainBusy(true);
     try {
-      const meta = await loadData<{ bounds: [number, number, number, number]; minzoom: number; maxzoom: number; tiles: string[] }>('terrain.json');
-      if (map.current !== m) return;
-      if (!m.getSource('terrain')) m.addSource('terrain', { type: 'raster-dem', tiles: meta.tiles.map((tile) => `${location.origin}${import.meta.env.BASE_URL}data/${tile}`),
-        tileSize: 256, minzoom: meta.minzoom, maxzoom: meta.maxzoom, bounds: meta.bounds, encoding: 'mapbox', attribution: 'Terrain: USGS 3DEP, public domain' });
-      m.setTerrain({ source: 'terrain', exaggeration: 1 }); setTerrain(true); setIs3D(true);
+      const meta = await loadData<{ bounds: [number, number, number, number]; minzoom: number; maxzoom: number; tiles: string[]; encoding: 'terrarium'; tileSize: number; attribution: string }>('regional_terrain.json');
+      if (map.current !== m || !terrainWanted.current || generation !== terrainGeneration.current) return;
+      if (meta.encoding !== 'terrarium' || meta.tileSize !== 512 || meta.minzoom !== 0 || meta.maxzoom !== 12) throw new Error('Unexpected terrain encoding');
+      if (!m.getSource('terrain')) m.addSource('terrain', { type: 'raster-dem', tiles: meta.tiles,
+        tileSize: meta.tileSize, minzoom: meta.minzoom, maxzoom: meta.maxzoom, bounds: meta.bounds, encoding: meta.encoding, attribution: meta.attribution });
+      m.setTerrain({ source: 'terrain', exaggeration: 1 }); setTerrain(true);
       setLayerErrors((e) => { const copy = { ...e }; delete copy.terrain; return copy; });
-    } catch { setLayerErrors((e) => ({ ...e, terrain: 'Terrain could not load. You can continue in 2D.' })); }
-    finally { setTerrainBusy(false); }
+    } catch { if (generation === terrainGeneration.current) setLayerErrors((e) => ({ ...e, terrain: 'Terrain could not load. Continue with the flat map or retry.' })); }
+    finally { if (generation === terrainGeneration.current) setTerrainBusy(false); }
+  }
+  const toggleTerrain = () => {
+    const m = map.current; if (!m) return;
+    if (terrainWanted.current && (terrain || terrainBusy)) {
+      terrainWanted.current = false; terrainGeneration.current += 1; m.setTerrain(null); setTerrain(false); setTerrainBusy(false);
+      setLayerErrors(e => { const next = { ...e }; delete next.terrain; return next; });
+    } else { terrainWanted.current = true; changeTilt(true); void enableTerrain(); }
   };
 
   const picking = props.addingWorkplace || props.pickingHome;
   return <>
     <div ref={el} className={`map${picking ? ' picking' : ''}`} aria-label="Map of San Francisco and northern Peninsula matching locations"
-      data-renderer="maplibre" data-selection-id={props.selectedCellId ?? props.selectedId ?? props.selectedHomeId ?? ''} data-3d={is3D} data-terrain={terrain} />
+      data-renderer="maplibre" data-selection-id={props.selectedCellId ?? props.selectedId ?? props.selectedHomeId ?? ''} data-3d={is3D} data-terrain={terrain} data-tilted={tilted} />
     <div className="map-navigation" aria-label="Map view controls">
-      <button className={is3D ? 'active' : ''} type="button" aria-label="3D buildings" aria-pressed={is3D} onClick={() => setIs3D((value) => !value)}>3D</button>
-      <button className={terrain ? 'active' : ''} type="button" aria-label="Terrain" aria-pressed={terrain} disabled={terrainBusy || styleLoading} onClick={() => void toggleTerrain()}>{terrainBusy ? '…' : '△'}</button>
+      <button className={is3D ? 'active' : ''} type="button" aria-label="3D buildings" title="Show approximate building heights" aria-pressed={is3D} onClick={() => { setIs3D(value => !value); if (!is3D) changeTilt(true); }}>3D</button>
+      <button className={terrain ? 'active' : ''} type="button" aria-label="Terrain" title="Show regional terrain at normal scale" aria-pressed={terrain} disabled={styleLoading} onClick={toggleTerrain}>{terrainBusy ? '…' : '△'}</button>
+      <button className={tilted ? 'active' : ''} type="button" aria-label="Map tilt" title="Toggle tilted or overhead view" aria-pressed={tilted} onClick={() => changeTilt(!tilted)}>Tilt</button>
       <button type="button" aria-label="Reset north" title="Reset north" onClick={() => map.current?.easeTo({ bearing: 0, duration: reducedMotion() ? 0 : 400 })}>N ↑</button>
       <button type="button" aria-label="Fit locations" title="Fit all matching locations and destinations" onClick={fit}>⛶</button>
     </div>
-    {is3D && <div className="map-3d-note">{zoom < 15 ? 'Zoom in for 3D buildings. ' : ''}OSM heights may be inferred from storeys.{terrain ? ' USGS terrain at actual scale; coverage SF to SFO.' : ''}</div>}
+    {(is3D || terrain) && <div className="map-3d-note">{is3D && zoom < 15 ? 'Zoom in for 3D buildings. ' : ''}{is3D ? 'OSM heights may be inferred from storeys. ' : ''}{terrain ? 'Regional terrain at normal scale. ' : ''}Housing analysis remains SF to SFO.</div>}
     {baseError && <div className="map-service-warning" role="status">{baseError}<button type="button" onClick={() => { setBaseError(''); map.current?.setStyle(STYLE_URL); }}>Retry tiles</button></div>}
-    {Object.entries(layerErrors).filter(([id]) => id === 'terrain' || props.visibleLayers.has(id)).map(([id, message]) => <div key={id} className="map-layer-error" role="alert">{message}<button type="button" onClick={() => { setLayerErrors((errors) => { const next = { ...errors }; delete next[id]; return next; }); setLayerAttempt((n) => n + 1); if (id === 'terrain') void toggleTerrain(); }}>Retry layer</button></div>)}
+    {Object.entries(layerErrors).filter(([id]) => id === 'terrain' || props.visibleLayers.has(id)).map(([id, message]) => <div key={id} className="map-layer-error" role="alert">{message}<button type="button" onClick={() => { setLayerErrors((errors) => { const next = { ...errors }; delete next[id]; return next; }); setLayerAttempt((n) => n + 1); if (id === 'terrain') { terrainWanted.current = true; void enableTerrain(); } }}>Retry layer</button></div>)}
   </>;
 }

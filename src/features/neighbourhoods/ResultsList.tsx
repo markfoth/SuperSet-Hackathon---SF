@@ -8,6 +8,7 @@ import { reasonText } from './reasons';
 import { sortResults, type ResultSort } from './sortResults';
 
 interface Props {
+  hoveredId?:string|null; onHover?:(id:string|null)=>void;
   ranked: AreaResult[];
   excluded: AreaResult[];
   content: Record<string, NeighbourhoodContent>;
@@ -51,14 +52,14 @@ export function ResultsList(p: Props) {
       </div>
       <label className="results-sort">Sort by
         <select aria-label="Sort by" value={p.sort} onChange={(e) => p.onSortChange(e.target.value as ResultSort)}>
-          <option value="recommended">{p.ranked.some(r => r.active > 0) ? 'Best lifestyle match' : 'Commute matches'}</option>
+          <option value="recommended">{p.ranked.some(r => r.active > 0) ? 'Best lifestyle match' : 'Areas within your commute limits'}</option>
           <option value="rent-asc">Rent: low to high</option>
           <option value="rent-desc">Rent: high to low</option>
         </select>
       </label>
       <p className="hint">{p.ranked.some(r => r.active > 0) ? 'Earlier priorities lead the order.' : 'No lifestyle priorities yet. This order reflects matching land, then name.'} Rent is ZIP-level context.</p>
       {p.ranked.length === 0 && (
-        <div className="notice">No confirmed matches yet. Use Explore a compromise in Your search to preview a longer commute or relax a Must-have. Unknown measurements remain separate from failed requirements.</div>
+        <div className="notice">No confirmed matches yet. Use Explore a compromise in Your search to preview a longer commute. If you have active Must-haves, those can be reviewed too. Unknown measurements remain separate from failed requirements.</div>
       )}
       <ol className="cards">
         {sortResults(p.ranked, p.metrics, p.sort).map((r, i) => (
@@ -92,7 +93,7 @@ export function ResultsList(p: Props) {
   );
 }
 
-function Card({ r, rank, content, metrics, onSelect, shortlist, onToggleShortlist, cellResults, workplaces }: Props & { r: AreaResult; rank: number }) {
+function Card({ r, rank, content, metrics, onSelect, shortlist, onToggleShortlist, cellResults, workplaces, hoveredId, onHover }: Props & { r: AreaResult; rank: number }) {
   const c = content[r.id];
   const m = metrics[r.id];
   const photo = c?.photos[0];
@@ -105,7 +106,7 @@ function Card({ r, rank, content, metrics, onSelect, shortlist, onToggleShortlis
     return def ? `${def.label}: ${def.format(value)}` : '';
   };
   return (
-    <li className="card" data-area-id={r.id} onClick={() => onSelect(r.id)}>
+    <li className={`card ${hoveredId===r.id ? "hovered" : ""}`} onMouseEnter={()=>onHover?.(r.id)} onMouseLeave={()=>onHover?.(null)} onFocusCapture={()=>onHover?.(r.id)} onBlurCapture={e=>{if(!e.currentTarget.contains(e.relatedTarget as Node))onHover?.(null);}} data-area-id={r.id} onClick={() => onSelect(r.id)}>
       <div className="card-photo">
         <NeighbourhoodPhoto key={photo?.local ?? photo?.url} photo={photo} />
         {photo && <a className="card-photo-credit" href={photo.page} target="_blank" rel="noreferrer"
@@ -124,6 +125,7 @@ function Card({ r, rank, content, metrics, onSelect, shortlist, onToggleShortlis
         <div className="suitability"><b>{r.eligibleCount} matching location{r.eligibleCount === 1 ? '' : 's'}</b><span>{m.region === 'peninsula' ? 'Peninsula community' : 'San Francisco'}</span></div>
         <div className="card-commutes">{workplaces.map((w, i) => <span key={w.id}><i style={{ background: w.colour || ['#e8590c', '#7048e8', '#0c8599', '#c2255c'][i % 4] }} />{w.personName || w.name}: within {w.maxMinutes} min</span>)}</div>
         <p className="card-reason"><b>Why it fits</b> {strength ? description(strength.prefId, strength.value) : 'The leading cell meets every commute limit.'}</p>
+        {cell?.cell.park_distance_m != null && <p className="card-reason"><b>Everyday context</b>Mapped green space approximately {Math.round(cell.cell.park_distance_m)} m from the representative location, straight line.</p>}
         <p className="card-compromise"><b>{compromise ? 'The compromise' : 'Keep in mind'}</b> {compromise ? description(compromise.prefId, compromise.value) : 'Not every address in this neighbourhood matches.'}</p>
         <div className="card-facts">
           {m.rents?.typical_rent_zip_weighted != null

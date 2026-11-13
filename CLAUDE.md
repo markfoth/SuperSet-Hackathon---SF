@@ -11,7 +11,7 @@ out to rental platforms.
   candidate cell is eligible; there is no neighbourhood-majority gate. Commutes are **home → work**.
 - **A requested commute that can't be computed blocks results** with a visible, recoverable error.
   Never fall back to silently ungated results.
-- **Preferences are order-independent.** Off / Nice / Important change ranking only; **Must** can
+- **Preferences are independent of input-edit history.** Explicit priority order remains deliberate and changes lexicographic ranking. Off / Nice / Important change ranking only; **Must** can
   exclude. Every failed constraint is listed. Before a Must is applied the UI says how many
   currently eligible areas it would remove (`previewMustHave`).
 - **Missing data is never a pass or a fail.** `null` stays `null`. A missing Must or required route
@@ -54,7 +54,7 @@ out to rental platforms.
 
 ## Architecture (see docs/ARCHITECTURE.md)
 
-- Frontend: React 19 + TypeScript + Vite + Leaflet (imperative, no react-leaflet) + two Turf modules.
+- Frontend: React 19 + TypeScript + Vite + MapLibre, with a lazy imperative Leaflet compatibility fallback and Turf geometry helpers.
 - Static files in `public/data/` are **copied** from `data/sf/processed/` by
   `scripts/sync_public_data.mjs` (runs on `predev`/`prebuild`). Edit/commit `data/sf/processed/` only.
 - Data pipeline: Python (GeoPandas, Shapely, H3, rasterio) in `scripts/`.

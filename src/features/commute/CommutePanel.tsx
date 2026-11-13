@@ -27,6 +27,7 @@ function selectedPlace(w: Workplace): string {
 export function CommutePanel({ workplaces, results, onChange, onRemove, onAdd, adding, onReset, onAddPlace, onFocus, onRetry }: Props) {
   const [editingPlace, setEditingPlace] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [started, setStarted] = useState(false);
   const liveEnabled = import.meta.env.VITE_COMMUTE_PROVIDER === 'proxy';
 
   return (
@@ -54,19 +55,19 @@ export function CommutePanel({ workplaces, results, onChange, onRemove, onAdd, a
           {editingPlace === w.id && <div className="change-place-search"><PlaceSearch onSelect={(place) => {
             onChange(w.id, { lat: place.lat, lon: place.lon, placeName: place.name }); setEditingPlace(null);
           }} /><p className="hint">Selecting a result changes this pin. Editing a label leaves its location unchanged.</p></div>}
-          <div className="household-person-row">
+          <details className="person-details"><summary>Person and colour</summary><div className="household-person-row">
             <label>Person<input value={w.personName ?? `Person ${i + 1}`} maxLength={40} aria-label="Person name"
               onChange={(e) => onChange(w.id, { personName: e.target.value, personId: e.target.value.trim().toLowerCase() || w.id })} /></label>
             <label>Colour<select aria-label="Person colour" value={w.colour || COLOURS[i % COLOURS.length]} onChange={(e) => onChange(w.id, { colour: e.target.value })}>
               <option value={COLOURS[0]}>Terracotta</option><option value={COLOURS[1]}>Violet</option><option value={COLOURS[2]}>Teal</option><option value={COLOURS[3]}>Rose</option>
             </select></label>
           </div>
-          <div className="workplace-controls">
+          </details><div className="workplace-controls">
             <label>Travel by<select value={w.mode} onChange={(e) => onChange(w.id, { mode: e.target.value as TravelMode })} aria-label="Travel mode">
               {TRAVEL_MODES.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
             </select></label>
             <label>One-way limit<select value={w.maxMinutes} onChange={(e) => onChange(w.id, { maxMinutes: Number(e.target.value) })} aria-label="Maximum commute">
-              {COMMUTE_MINUTES.map((m) => <option key={m} value={m}>Max {m} min</option>)}
+              {[...new Set([...COMMUTE_MINUTES,w.maxMinutes])].sort((a,b)=>a-b).map((m) => <option key={m} value={m}>Max {m} min</option>)}
             </select></label>
           </div>
           <details className="journey-settings"><summary>Office days & arrival time</summary><div className="workplace-controls">
@@ -83,8 +84,9 @@ export function CommutePanel({ workplaces, results, onChange, onRemove, onAdd, a
           {res && !res.ok && <div className="status error" role="status"><p>{res.reason}</p>{onRetry && <button className="btn" onClick={() => onRetry(w.id)}>Retry commute</button>}</div>}
         </div>;
       })}
-      {(!workplaces.length || showAdd) && onAddPlace && workplaces.length < 8 && <PlaceSearch onSelect={(place) => { onAddPlace(place); setShowAdd(false); }} />}
-      <div className="commute-add-actions">
+      {!workplaces.length && !started && <button className="btn primary wide" onClick={() => setStarted(true)}>Add your destinations</button>}
+      {((!workplaces.length && started) || showAdd) && onAddPlace && workplaces.length < 8 && <PlaceSearch onSelect={(place) => { onAddPlace(place); setShowAdd(false); }} />}
+      <div className="commute-add-actions" hidden={!workplaces.length && !started}>
         {!!workplaces.length && !showAdd && <button className="btn" onClick={() => setShowAdd(true)} disabled={workplaces.length >= 8}>+ Add destination</button>}
         <button className={`btn ${adding ? 'primary' : ''}`} onClick={onAdd} disabled={workplaces.length >= 8} aria-pressed={adding}>
           {adding ? 'Cancel pin placement' : 'Place a pin on the map'}

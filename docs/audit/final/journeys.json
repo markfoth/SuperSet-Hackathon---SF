@@ -1,0 +1,30 @@
+[
+  {
+    "name": "desktop",
+    "width": 1440,
+    "height": 900,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "name": "laptop",
+    "width": 1280,
+    "height": 800,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "name": "tablet",
+    "width": 768,
+    "height": 1024,
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "name": "mobile",
+    "width": 390,
+    "height": 844,
+    "errors": [],
+    "overflow": false
+  }
+]

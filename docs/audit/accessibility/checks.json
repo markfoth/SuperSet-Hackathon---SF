@@ -1,0 +1,34 @@
+[
+  {
+    "name": "desktop",
+    "loadingGateConfirmed": true,
+    "errorRetryByKeyboard": true,
+    "panelScrollPreservedMap": "not applicable"
+  },
+  {
+    "name": "laptop",
+    "loadingGateConfirmed": true,
+    "errorRetryByKeyboard": true,
+    "panelScrollPreservedMap": "not applicable"
+  },
+  {
+    "name": "tablet",
+    "loadingGateConfirmed": true,
+    "errorRetryByKeyboard": true,
+    "panelScrollPreservedMap": true
+  },
+  {
+    "name": "mobile",
+    "loadingGateConfirmed": true,
+    "errorRetryByKeyboard": true,
+    "panelScrollPreservedMap": true
+  },
+  {
+    "name": "desktop-200-percent-reflow",
+    "cssViewport": "720x450",
+    "deviceScaleFactor": 2,
+    "method": "1440x900 effective CSS viewport halved; installed Chrome headless, not browser toolbar zoom",
+    "keyboardPrimaryAction": true,
+    "horizontalOverflow": false
+  }
+]

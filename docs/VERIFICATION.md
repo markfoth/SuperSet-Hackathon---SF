@@ -1,163 +1,75 @@
-# Product upgrade verification
+# Regional decision revision verification
 
-Review date: 12 November 2026, America/Los_Angeles. Work remains on
-`feature/common-ground-household-upgrade`. Production was not deployed or merged.
+Review started 12 November 2026 Pacific and continued on 13 November. Branch: `feature/regional-decision-redesign`, based on `efbfad1`. Production remains the older main release; nothing was merged or deployed to production. Previous-upgrade evidence is preserved separately in [historical verification](VERIFICATION_PREVIOUS_UPGRADE.md).
 
-## Source and baseline
-
-The initial tree was clean. Current remote main and Vercel production both
-identified `e2b6fccec2c430cd7c811768b83b8401c5d6f2ee`. Production deployment ID:
-`dpl_BdGaTe13D3yBj7CiMHJoN2NkhXiD`, with the `common-ground-sf.vercel.app` alias.
-These were read from authenticated Git and Vercel metadata, not inferred from an
-old screenshot or a local branch name.
-
-The original app was exercised in Chrome at 1440 × 900, 1024 × 768 and 390 × 844.
-Its explicit example produced 494 matching cells across 32 neighbourhoods, with
-no page errors or horizontal overflow. Original local Stadia tiles did not load;
-that was not treated as successful basemap verification.
-
-## Automated results
+## Local commands and outcomes
 
 | Check | Actual outcome |
-|---|---|
-| `npm test` | 58 tests pass across nine files |
-| `npm run test:proxy` | 12 contracts pass |
-| `npm run build` | TypeScript and Vite production build pass |
-| Complete Chrome suite | 52 tests pass, desktop and mobile, one worker, 3.1 minutes |
-| Final recovery/scenario rerun | 18 tests pass after final loading/privacy guards |
-| Terrain, topography and Peninsula pytest subset | Six tests pass |
-| Full Python suite on Linux CI | 44 tests pass, two warnings, 5.33 seconds |
-| `scripts/validate_datasets.py` | All nine checks pass, zero errors |
-| npm security audit | Zero vulnerabilities after compatible updates |
-| Full local pytest | Not passed: host blocks the installed H3 native module; the existing GeoPandas display-file test also cannot load GDAL |
+| --- | --- |
+| `npm.cmd test` | 63 passed across 11 files. Includes source calendars, recurring-cost unknowns, conditional travel comparisons, ties, exclusions and missing measurements. |
+| `npm.cmd run test:proxy` | 12 passed. Inbound direction, Pacific date/DST, stale identities, provider failures, limits, exact-pin journeys, serverless origin/body checks and credential-free health. |
+| `npm.cmd run typecheck` | Passed. |
+| `$env:VITE_COMMUTE_PROVIDER='fixture'; npm.cmd run build` | Passed, including sync of 96 assets, 19.7 MB. No downloads/preprocessing run in frontend build. Existing large-chunk warning remains. |
+| `npm.cmd run test:browser -- --reporter=line` | 68 passed, desktop and mobile, real Chrome/MapLibre/WebGL. Affected flows were checked again after final comparison extraction and undo cleanup. |
+| `.venv/Scripts/python.exe -X utf8 -m pytest tests/test_decision_context.py tests/test_terrain.py` | 5 passed locally. |
+| `.venv/Scripts/python.exe -X utf8 scripts/validate_datasets.py` | All nine validator groups pass, zero errors. |
+| Full local `python -m pytest` | Collection blocked by Windows Application Control on the installed H3 DLL, in three inherited modules. Not recorded as a pass. Complete Linux CI is required separately. |
 
-The full native Python suite passed in [Linux CI](https://github.com/markfoth/SuperSet-Hackathon---SF/actions/runs/43381380983)
-on source commit `6cede3100c769c373654e29a7a79c0cdc7a4890f`: 44 passed, two
-warnings, 5.33 seconds, followed by zero dataset validation errors. The read-only
-workflow uses a standard runner only while the repository is public, no provider
-secrets, no deployment permission and no cache/artifact storage. The original
-workflow parse error was corrected and is not presented as a successful run.
+The new source builders were executed against actual public inputs, including a successful bounded expanded OSM query, actual official GTFS ZIP and complete paginated FEMA inventory. Cached rebuilds preserve source dates. The GTFS builder streams stop times and groups departures in one pass, avoiding quadratic per-stop scans. [Source records and refresh commands](DECISION_CONTEXT_DATA.md).
 
-The browser suite covers fresh/example sessions; progressive preferences;
-label versus confirmed place semantics; searched places and bounded coordinates;
-adding/removing destinations; mode, limit and office-day changes; multiple hard
-commutes; pending, failed and stale responses; Must-have previews and recovery;
-Peninsula missing evidence; real MapLibre, 2D/3D and genuine terrain; failed
-basemaps, context layers and DEM requests; WebGL-disabled Leaflet fallback;
-map/card/cell selection; real touch dragging; keyboard pin placement; three-item
-comparisons; notes; reload persistence; export/import; default-private and
-explicit-precise sharing; recipient confirmation and same-tab fragments;
-malformed storage/import recovery; home costs; unavailable exact times; keyboard
-focus containment, Escape and restoration. Reduced motion is enabled throughout.
+## Journey and accessibility evidence
 
-Tests that deliberately abort requests are failure simulations. They are not
-used as evidence that the public service loaded. Separate actual-network checks
-confirmed vector tiles, hundreds of rendered building features and local DEM
-responses. The final screenshot probe reported no page errors or horizontal
-overflow at all three requested sizes. See [the visual review](REVIEW.md).
+| Evidence | What was exercised |
+| --- | --- |
+| [Original live comparison](audit/original-live/comparison.json) | Four sizes; opening, immediate pin placement, demo results. Original live release returns 14 area cards. Read-only inspection, no production mutation. |
+| [Starting revision](audit/baseline/journeys.json) | Four sizes; opening, 494-location example, results, three-option comparison, both limits15 and empty state. |
+| [Final journeys](audit/final/journeys.json) | Same four sizes/states; no page errors or horizontal overflow. |
+| [Accessibility/recovery](audit/accessibility/checks.json) | Delayed required geometry holds matching pending; failed initial data has keyboard retry; mobile/tablet sheet sizes and panel scrolling retain map centre. |
+| [200% desktop reflow](audit/accessibility/desktop-200-percent-reflow.png) | 720x450 CSS pixels at device scale2, equivalent layout space to 1440x900 at200%. Primary action and search exercised with keyboard; no page overflow. This is not browser-toolbar zoom automation. |
 
-## Live routing evidence
+Sizes:1440x900 desktop,1280x800 laptop,768x1024 portrait tablet,390x844 mobile. Final images use an isolated browser and fixture production build. Loading/error PNGs are in `audit/accessibility/`; final opening/results/compare/empty PNGs are in `audit/final/`. Baseline opening captures may precede full background-tile settlement; final opening captures wait for vector source loading.
 
-After explicit user approval, one server-side request used the published
-Financial District and SFO example coordinates. TravelTime Routes returned
-HTTP 200 in 416 ms, with 4,099 seconds for the inbound journey to SFO, arriving
-08:45 Pacific on 13 November. Retrieved `2026-11-13T05:54:09.990Z`, which was
-12 November locally. No private prospective-home coordinate or credential was
-printed. This verified the actual Routes protocol and parsing, not every home,
-the complete transit timetable or commercial production rights.
+Browser coverage includes two searched destinations, priorities, three saved areas, comparison, actual home creation, reload/persistence, confirmed-label versus query semantics, invalid/outside inputs, required-route delays/failures, mode/days/removal, priority edit-history invariance, scenario switching/import, privacy defaults, Must preview/apply/undo, partial source failures and retry, missing GTFS calendars, context-layer recovery, actual missing DEM tiles, real WebGL context loss, 2D fallback and touch map dragging. Table comparisons scroll internally on mobile. Keyboard return from details restores the card focus and list position.
 
-All other route contracts use controlled responses, clearly separated from that
-live check. Offline fixtures stay approximate; non-transit fixtures are synthetic.
-Exact times are never derived from yes/no isochrones.
+The tests do not claim a physical-device study, complete address geocoding, complete park accessibility or live property inventory. Installed headless Chrome uses genuine renderer/tile requests; source-independent fixture matching assertions are separate from external-source smoke checks. Upstream road-shield null-filter warnings remain non-fatal and are not suppressed.
 
-## Asset and transfer measurements
+## Regional 3D
 
-The production artefact is approximately **23.45 MB**, including **16.27 MB** of
-processed data and **4.87 MB** of credited photos. Many data files are optional
-context layers and do not load on entry. Custom buildings add **0 bytes**.
-Genuine local terrain is **62 PNG tiles, 2,234,702 bytes** total, plus metadata.
-The combined custom buildings/terrain budget is about **2.23 MB**, below both the
-150 MB aim and 500 MB hard target.
+[Detailed diagnosis](3D_RENDERING_FIX.md), [baseline samples](audit/baseline-3d/diagnostics.json), [48-state terrain matrix](audit/repaired-production-3d/diagnostics.json), [12 combined views](audit/combined-production-3d/diagnostics.json) and [lifecycle checks](audit/terrain-lifecycle.json) record the actual source, cameras, tiles and errors.
 
-The primary application bundle is approximately 1.50 MB raw, 428 KB gzip,
-including MapLibre. The worker is a separate same-origin 519.5 KB raw asset.
-Leaflet is lazy, approximately 148.6 KB raw / 43.3 KB gzip, with its compatibility
-component and CSS also separate. Vite retains a large-primary-chunk advisory;
-it is not suppressed. MapLibre earns its place as the primary renderer.
+The repaired terrain-only matrix has432 finite elevation samples, range -1 to341.37 m, with no failed DEM responses or console/page errors. Combined building/terrain captures cover the same12 locations. Camera states are z9/p0/b0,z12/p45/b90,z15/p60/b35,z17/p60/b-45. Five toggling cycles and an actual style reset preserve source intent and independent controls. The formerly reproduced -10,000 m edge is absent in these samples. This is sampled navigation evidence, not an accuracy guarantee for every pixel/building.
 
-Measurements use the production build served by local `vite preview`, a fresh
-installed headless Chrome profile, 1440 × 900, reduced motion and CDP encoded
-network byte counts. Local preview headers and compression differ from Vercel.
-The initial duration ends after network idle and vector-source readiness; it is
-not a Core Web Vitals or real-device benchmark.
+## Production performance
 
-The first measurement found an unnecessary 3.36 MB geometry load before the
-first destination. Deferring canonical/display cells reduced opening transfer
-from 4.20 MB to **0.84 MB**, about **80%**. On the initial constrained run, opening
-time fell from 25.3 seconds to 8.6 seconds. Matching geometry is deferred, not
-removed; its first use remains a visible loading step and failures cannot confirm
-locations.
+`scripts/measure_map.cjs` uses installed headless Chrome,1440x900, reduced motion, fresh context and disabled browser cache. It records controls readiness, settled vector opening, first matching search, optional buildings/terrain, animation-frame intervals during a scripted pan and five garbage-collected heap samples after repeated pans. `CG_BASE_URL`, `CG_PERF_OUTPUT` and `CG_THROTTLE=1` configure it. Constrained mode is4x CPU,150 ms latency,200,000 B/s down,100,000 B/s up.
 
-Final measured values and raw evidence are in [unthrottled](review/performance.json)
-and [constrained](review/performance-throttled.json) reports. The unthrottled run
-recorded 837,002 initial encoded bytes in 18 requests, including two vector tile
-requests totalling 91,355 bytes; opening took 1.266 seconds. The first search
-transferred 3,599,262 bytes in four requests and completed in 291 ms locally.
-The focused building view added one 25,091-byte vector tile. The tested terrain
-view fetched 11 lazy DEM tiles, 480,938 encoded bytes, rather than the full pyramid.
+Baseline is an isolated `git archive efbfad1` production build, with the same Node/dependencies/static data and fixture mode. Optional new context files are not requested by the older UI. Final source is built separately; no browser/dev timings are substituted for production timings. Raw reports are under [performance](audit/performance/final/measurements.json). Opening transfer remains within the provisional20% budget; optional datasets load only for selected-location/home inspection. Final paired values are recorded below after the final capture pass.
 
-With matching, hundreds of real building extrusions and terrain loaded, the
-unthrottled drag sampled 60 frames: mean 16.26 ms, 95th percentile 16.8 ms,
-maximum 17.0 ms. Whole-flow long tasks include loading, parsing and source
-preparation, not only dragging: nine tasks, 1,693 ms total, maximum 809 ms.
-There were no console errors. Non-fatal upstream road-shield null-filter warnings
-were seen on some views and are not hidden by the test runner.
+Initial paired sample:837,007 bytes baseline versus841,606 bytes revision, about0.55% increase. Baseline main JS gzip427.94 KB; final main JS gzip432.24 KB. No new context dataset is part of opening transfer. Existing parse/source work and the large JS chunk remain material performance limits. Finite heap/pan samples cannot prove absence of a resource leak or guarantee phone frame rates.
 
-The constrained report uses four-times CPU slowdown, 150 ms latency, 200,000 B/s
-downstream and 100,000 B/s upstream. It waits for matching cells and actual
-building tiles before testing the full map interaction. Treat these finite
-samples as local evidence, not guaranteed frame rates on every phone.
+## API and deployment boundaries
 
-| Final production-preview sample | Unthrottled | Constrained |
-|---|---:|---:|
-| Opening transfer | 837,002 bytes | 837,014 bytes |
-| Opening duration | 1.266 s | 8.577 s |
-| First matching search duration | 0.291 s | 18.814 s |
-| First search transfer | 3,599,262 bytes | 3,599,262 bytes |
-| Focused-view vector tile transfer | 25,091 bytes | 25,098 bytes |
-| Optional DEM transfer | 480,938 bytes | 480,938 bytes |
-| Mean drag frame interval | 16.26 ms | 17.79 ms |
-| 95th-percentile drag interval | 16.8 ms | 33.3 ms |
-| Maximum sampled interval | 17.0 ms | 49.9 ms |
-| Console errors | 0 | 0 |
+Vite preview serves static assets and cannot execute Vercel functions. Serverless APIs are tested separately by the12 routing contracts. No new Railway backend is used. A previously authorised single published-example TravelTime request is recorded in [routing verification](SEARCH_ROUTING.md); it is not repeated here or relabelled as private-home verification. Working credentials do not change evaluation-only account rights.
 
-The constrained first search remains an 18.8-second wait over this deliberately
-slow local connection because canonical analysis is not yet cached. The loading
-state is explicit and cannot display confirmed matches prematurely. This is a
-material limit, not hidden behind the improved opening figure. The constrained
-whole flow recorded 21 long tasks, 3,609 ms total, maximum 921 ms. Production CDN
-compression/caching and real devices must be measured after an authorised release.
+Mapterhorn TileJSON and a real WebP tile were fetched:200,image/webp, wildcard CORS, week cache. Source rights and mixed resolution are recorded in the terrain descriptor. Deployed application headers are a release-time check because production was unchanged.
 
-## Static transport and deployment limits
+## Remaining limitations
 
-A real local terrain GET returned 200, `image/png`, 21,857 bytes. A Range request
-returned 206 with `Content-Range: bytes 0-31/21857` and 32 bytes. XYZ tiles use
-ordinary whole-tile requests; they do not depend on Range support. No city-wide
-building GeoJSON or PMTiles archive is downloaded.
+- Muni context is fresh for its feed period; other agencies, old isochrone fixtures and H3 frequent-service indicators retain their dates. No active calendar is unknown, not zero service.
+- Nine mapped park entrances are incomplete and unverified for accessible routing. All proximity is straight-line, with barriers disclosed.
+- FEMA geometry is contextual, simplified and panel-dated; a missing polygon is not no exposure. Sparse Peninsula incident/crash data remain unknown and cannot improve suitability.
+- TravelTime Basic remains evaluation-only. Persistent caching requires verified account rights. No exact journey time or fairness ranking is inferred from contours.
+- Rent indices retain ZIP/all-property resolution; user-entered home rent/bedrooms are separate. Other recurring costs remain unknown until entered. Sharing is portable copies, excluding precise locations by default.
+- Existing CalEnviroScreen portal redistribution metadata remains unresolved. Review it before public release rather than asserting a licence not established here.
+- Map terrain/buildings are best-effort geographic context with approximate heights, not surveys or photorealistic meshes. A source outage retains a reversible flat map.
+- Full H3-dependent Python validation is blocked locally by Windows policy; Linux CI outcome is recorded separately when available.
 
-Local preview returned `Cache-Control: no-cache`, with no cross-origin header.
-Terrain is same-origin, so special CORS is not required. The Vercel configuration
-adds one-day terrain caching and one-hour data caching; actual deployed headers
-remain a release-time check because production was not changed. Provider APIs
-use `no-store`. See [HTTP evidence](review/http-headers.json) and
-[deployment checklist](VERCEL_DEPLOYMENT.md).
+## Local run
 
-## Remaining limits
+```powershell
+npm.cmd ci
+$env:VITE_COMMUTE_PROVIDER='fixture'
+npm.cmd run dev -- --host localhost --port 5189
+```
 
-- Local named-place search is not complete street-address geocoding. Exact pins and coordinates are available.
-- TravelTime Basic is research/development/evaluation only. Persistent caching requires verified account rights; request caps are per instance. There is no paid-service substitution.
-- Household sharing is portable copies, not live synchronisation. Precise links are readable by anyone holding them and have no expiry or revocation.
-- Buildings are approximate OSM-derived rendering dimensions, potentially inferred from storeys. Terrain is bare-earth elevation, with disclosed flat padding outside measured pixels. Neither is a building survey.
-- Must-haves, commute failures and source resolutions remain strict. Incident reporting is not a safety score. Peninsula incident/crash gaps, dated timetables, ZIP rent resolution and other inherited dataset limits remain.
-- Existing CalEnviroScreen portal licence metadata is unresolved in the inherited manifest. Review its redistribution terms before a public release rather than claiming an explicit open-data licence that has not been established.
-- No aerial imagery, custom DataSF/Overture footprint layer, live Railway household store or production deployment was added. Their absence does not interrupt the complete local/shareable decision workflow.
+Open `http://localhost:5189`, then Add your destinations or Try the SF + SFO example. This shell override preserves the private local configuration and does not use live credentials. For a production preview, build with the same fixture override, then `npm.cmd run preview -- --host localhost --port 5192`.

@@ -14,6 +14,8 @@ export interface MapProps {
   results: Record<string, AreaResult>;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  hoveredNeighbourhoodId?: string | null;
+  onHoverNeighbourhood?: (id: string | null) => void;
   areas: CommuteArea[];
   workplaces: Workplace[];
   onMoveWorkplace: (id: string, lat: number, lon: number) => void;

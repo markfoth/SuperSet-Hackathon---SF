@@ -2,13 +2,14 @@ const { chromium } = require('@playwright/test');
 const fs = require('fs');
 (async () => {
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
-  const output = process.env.CG_THROTTLE === '1' ? 'test-results/map-performance-throttled' : 'test-results/map-performance';
+  const output = process.env.CG_PERF_OUTPUT || (process.env.CG_THROTTLE === '1' ? 'test-results/map-performance-throttled' : 'test-results/map-performance');
   fs.mkdirSync(output, { recursive: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
   page.setDefaultNavigationTimeout(120000);
   page.setDefaultTimeout(45000);
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Network.enable');
+  await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
   const throttled = process.env.CG_THROTTLE === '1';
   if (throttled) {
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
@@ -24,9 +25,12 @@ const fs = require('fs');
     new PerformanceObserver(list => list.getEntries().forEach(e => window.__longTasks.push({ start: e.startTime, duration: e.duration }))).observe({ type: 'longtask', buffered: true });
   });
   const started = Date.now();
-  await page.goto(process.env.CG_BASE_URL || 'http://localhost:5188', { waitUntil: 'networkidle' });
+  await page.goto(process.env.CG_BASE_URL || 'http://localhost:5188', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name:'Where do you need to get to?' }).waitFor();
+  const controlsMs = Date.now()-started;
+  await page.waitForLoadState('networkidle');
   await page.locator('.map[data-vector-loaded="true"]').waitFor({ timeout: 15000 });
-  const initial = { ms: Date.now() - started, bytes: transfers.reduce((s, e) => s + e.bytes, 0), requests: transfers.length,
+  const initial = { controlsMs, ms: Date.now() - started, bytes: transfers.reduce((s, e) => s + e.bytes, 0), requests: transfers.length,
     pbfBytes: transfers.filter(e => /\.pbf/.test(e.url)).reduce((s, e) => s + e.bytes, 0),
     pbfRequests: transfers.filter(e => /\.pbf/.test(e.url)).length };
   const beforeSearch = transfers.length, searchStarted = Date.now();
@@ -45,7 +49,7 @@ const fs = require('fs');
   await page.getByRole('button', { name: 'Terrain', exact: true }).click();
   await page.locator('.map[data-terrain-loaded="true"]').waitFor({ timeout: 15000 });
   await page.waitForTimeout(800);
-  const terrainTransfers = transfers.slice(beforeTerrain).filter(e => /\/data\/terrain\//.test(e.url));
+  const terrainTransfers = transfers.slice(beforeTerrain).filter(e => /\/data\/terrain\/|tiles\.mapterhorn\.com.*\.webp/.test(e.url));
   const terrain = { requests: terrainTransfers.length, bytes: terrainTransfers.reduce((s, e) => s + e.bytes, 0),
     map: await page.locator('.map').evaluate(e => ({ ...e.dataset })) };
   await page.evaluate(() => {
@@ -64,10 +68,16 @@ const fs = require('fs');
   const interaction = { frameSamples: frames.length, meanFrameMs: frames.reduce((s, value) => s + value, 0) / frames.length,
     p95FrameMs: sortedFrames[Math.floor(sortedFrames.length * 0.95)], maxFrameMs: Math.max(...frames) };
   const tasks = await page.evaluate(() => window.__longTasks);
+  const heapSamples=[];
+  for(let i=0;i<5;i++) {
+    await page.mouse.move(dragX,dragY);await page.mouse.down();await page.mouse.move(dragX-40,dragY+10,{steps:6});await page.mouse.up();
+    await page.waitForTimeout(200);await cdp.send('HeapProfiler.collectGarbage');
+    heapSamples.push((await cdp.send('Runtime.getHeapUsage')).usedSize);
+  }
   await page.screenshot({ path: `${output}/map-3d-measured.png`, fullPage: true });
   const result = { conditions: { viewport: '1440 × 900', browser: 'Headless installed Chrome', reducedMotion: true, cpuRate: throttled ? 4 : 1,
     network: throttled ? '150 ms latency, 200000 B/s down, 100000 B/s up' : 'Unthrottled' }, initial, firstSearch, focusedView, buildings, terrain, interaction,
-    longTasks: { count: tasks.length, totalMs: tasks.reduce((s, e) => s + e.duration, 0), maxMs: Math.max(0, ...tasks.map(e => e.duration)) }, consoleErrors };
+    longTasks: { count: tasks.length, totalMs: tasks.reduce((s, e) => s + e.duration, 0), maxMs: Math.max(0, ...tasks.map(e => e.duration)) }, heapSamples, consoleErrors };
   fs.writeFileSync(`${output}/measurements.json`, JSON.stringify(result, null, 2));
   console.log(JSON.stringify(result, null, 2));
   await browser.close();

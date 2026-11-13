@@ -57,4 +57,10 @@ describe('transparent monthly costs', () => {
     const home = { ...createHome(37.75, -122.41), rent: 3000, monthlyTransportOther: 100 };
     expect(homeMonthlyCost(home, workplaces.map((w) => ({ ...w, officeDays: 0 }))).monthlyTotal).toBe(3100);
   });
+  it('only includes other recurring costs when explicitly entered, including zero', () => {
+    const home = { ...createHome(37.75, -122.41), rent: 3000, transportReturnFare: 6 };
+    expect(homeMonthlyCost(home, workplaces).monthlyBudgetTotal).toBeNull();
+    expect(homeMonthlyCost({ ...home, monthlyRecurringOther: 200 }, workplaces).monthlyBudgetTotal).toBe(3330);
+    expect(homeMonthlyCost({ ...home, monthlyRecurringOther: 0 }, workplaces).monthlyBudgetTotal).toBe(3130);
+  });
 });

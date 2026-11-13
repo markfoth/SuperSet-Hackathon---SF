@@ -50,14 +50,16 @@ export function evaluateHome(home: Pick<Home, 'lat' | 'lon'>, workplaces: Workpl
     warnings: [...evaluated.warnings, 'Commutes are checked at the actual pin. Lifestyle measurements are inherited from the containing map cell; incident, pollution and rent context retain their larger source geographies.'], criteria: evaluated.criteria };
 }
 
-export interface HomeMonthlyCost { rent: number | null; monthlyTransport: number | null; monthlyTotal: number | null; officeDaysPerWeek: number; assumptions: string[] }
+export interface HomeMonthlyCost { rent: number | null; monthlyTransport: number | null; monthlyTotal: number | null; monthlyBudgetTotal: number | null; officeDaysPerWeek: number; assumptions: string[] }
 
-export function homeMonthlyCost(home: Pick<Home, 'rent' | 'transportReturnFare' | 'monthlyTransportOther'>, workplaces: Workplace[]): HomeMonthlyCost {
+export function homeMonthlyCost(home: Pick<Home, 'rent' | 'transportReturnFare' | 'monthlyTransportOther'> & Partial<Pick<Home, 'monthlyRecurringOther'>>, workplaces: Workplace[]): HomeMonthlyCost {
   const officeDaysPerWeek = workplaces.reduce((sum, workplace) => sum + ((workplace as Workplace & { officeDays?: number }).officeDays ?? 3), 0);
   const monthlyTransport = officeDaysPerWeek === 0 ? home.monthlyTransportOther
     : home.transportReturnFare == null ? null : home.transportReturnFare * officeDaysPerWeek * 52 / 12 + home.monthlyTransportOther;
-  return { rent: home.rent, monthlyTransport, monthlyTotal: home.rent == null || monthlyTransport == null ? null : home.rent + monthlyTransport, officeDaysPerWeek,
+  const monthlyTotal = home.rent == null || monthlyTransport == null ? null : home.rent + monthlyTransport;
+  return { rent: home.rent, monthlyTransport, monthlyTotal,
+    monthlyBudgetTotal: monthlyTotal == null || home.monthlyRecurringOther == null ? null : monthlyTotal + home.monthlyRecurringOther, officeDaysPerWeek,
     assumptions: ['Uses the rent and return fare you enter, in US dollars. No fare is inferred from travel mode or distance.',
       `${officeDaysPerWeek} destination days per week × 52 ÷ 12 weeks per month. Each destination day is counted as one return journey; check that days at multiple destinations are not double-counted.`,
-      'Add season tickets, parking and other transport costs manually. Excludes utilities, deposits and travel not entered here.'] };
+      'Add season tickets, parking, utilities and other recurring costs manually. Deposits and unentered costs are excluded. A blank recurring-cost field remains unknown.'] };
 }

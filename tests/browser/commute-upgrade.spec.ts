@@ -75,6 +75,7 @@ test('office days persist without changing eligibility; modes, adding and removi
 
 test('unmatched addresses and outside-coverage coordinates never become selected destinations', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('button', {name:'Add your destinations',exact:true}).click();
   await page.getByRole('textbox', { name: 'Search local places', exact: true }).fill('123 Imaginary Street');
   await page.getByRole('button', { name: 'Search places', exact: true }).click();
   await expect(page.locator('.place-search-results')).toContainText('No named place found');

@@ -30,13 +30,16 @@ The cost view uses entered rent, entered return fare per destination day and ent
 ```text
 monthly transport = return fare × sum(destination office days) × 52 ÷ 12 + other monthly transport
 monthly total = entered rent + monthly transport
+total entered monthly budget = monthly total + entered other recurring costs
 ```
 
 Missing rent or a required fare remains unknown. An explicitly entered zero is valid. Office-day defaults are three days per destination. Each destination day is counted separately; households must avoid counting the same journey twice when one person has several destinations. Season tickets, parking and other costs should be entered in the fixed monthly amount, with a per-day fare of zero if appropriate. Utilities, deposits and unentered travel are excluded. A ZIP rent index is never treated as a bedroom-specific estimate.
 
 The **Check journey times** action calls the configured routing adapter explicitly. Isochrone limits never become estimated journey durations. If the service cannot return measured routes, the view says **Not measured** and the original eligibility gate stays intact. When all active routes are measured, weekly return travel is illustrative: the measured inbound duration is doubled and multiplied by entered office days. The interface discloses that the return journey is assumed equal to the inbound one.
 
-Comparisons show total illustrative weekly travel, the longest individual one-way commute and the difference between the highest and lowest weekly person totals. Homes with stale coordinates or household settings do not reuse displayed evidence for a different request. The original adapter's request caching and server terms apply.
+Comparisons show total illustrative weekly travel, the longest individual one-way commute and the difference between the highest and lowest weekly person totals. At least two currently eligible homes with complete, current measurements are needed to enable Shortest measured household travel and Most balanced measured commutes. Ties and non-dominated alternatives are disclosed; incomplete or excluded homes cannot win. Homes with stale coordinates or household settings do not reuse displayed evidence for a different request. The original adapter's request caching and server terms apply.
+
+Other recurring costs, such as utilities, are optional user assumptions. A blank value is unknown, including on imported older scenarios. Zero must be entered explicitly. The rent-plus-transport subtotal stays separate from the total entered budget, which requires all three components. Deposits and unentered costs are excluded.
 
 ## Verification
 

@@ -13,6 +13,8 @@ export interface Home {
   /** User-entered return fare per destination day, not a provider fare estimate. */
   transportReturnFare: number | null;
   monthlyTransportOther: number;
+  /** Optional user-entered utilities or other recurring costs; null means unknown. */
+  monthlyRecurringOther: number | null;
   createdAt: string;
 }
 
@@ -108,6 +110,7 @@ export function validateHome(value: unknown): Home {
     listingUrl, notes: str(home.notes ?? '', 'Home notes', 5_000),
     transportReturnFare: nullableNum(home.transportReturnFare, 'Return fare', 0, 10_000),
     monthlyTransportOther: num(home.monthlyTransportOther ?? 0, 'Other monthly transport costs', 0, 1_000_000),
+    monthlyRecurringOther: nullableNum(home.monthlyRecurringOther, 'Other recurring monthly costs', 0, 1_000_000),
     createdAt: str(home.createdAt ?? new Date().toISOString(), 'Creation date', 60),
   };
 }

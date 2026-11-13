@@ -115,6 +115,23 @@ cycling_network:
     totals count each side. Category counts: lane 1757, neighborway 121, path 378, protected 678, route
     2611. grade_pct is a terrain estimate, not a surveyed street grade.'
   status: processed
+daily_essentials:
+  source: OpenStreetMap contributors
+  source_url: https://overpass-api.de/api/interpreter
+  licence: ODbL 1.0; https://www.openstreetmap.org/copyright
+  downloaded_at: '2026-11-13'
+  measurement_period: '2026-11-13T07:36:31Z'
+  resolution: Mapped points or polygon centres, WGS84; distance in metres
+  feature_count: 1372
+  raw_path: data/sf/raw/regional
+  processed_path:
+  - data/sf/processed/daily_essentials.json
+  script: scripts/build_decision_context.py
+  refresh: python scripts/build_decision_context.py --refresh
+  limitations: Volunteer mapping is incomplete. Park entrances are tagged nodes on mapped park boundaries,
+    not surveyed accessible routes. Park points are polygon centres, not access points. Opening hours
+    and accessibility may be missing. Proximity is not network walking time.
+  status: processed
 elevation:
   source: USGS 3DEP bare-earth DEM + official SF DPW and San Mateo County street centrelines
   source_url: https://data.sf.gov/d/3psu-pn9h; https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/26;
@@ -134,6 +151,23 @@ elevation:
     decks, tunnels, retaining walls or stairs. No windows on roads <40 m. Null cell grade below 100 m
     valid street length or 75% coverage. Median may hide a steep street: p90 and steep-length share are
     retained. No neighbourhood terrain mean used.'
+  status: processed
+flood_context:
+  source: FEMA National Flood Hazard Layer
+  source_url: https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28
+  licence: US government works; publisher licence record https://catalog.data.gov/dataset/national-flood-hazard-layer
+    points to https://www.usa.gov/government-works; attribute FEMA
+  downloaded_at: '2026-11-13'
+  measurement_period: Effective FIRM polygons as served on download date; effective dates vary by panel
+  resolution: FIRM zone polygons, simplified approximately 3 m; original categories retained
+  feature_count: 546
+  raw_path: data/sf/raw/regional
+  processed_path:
+  - data/sf/processed/flood_context.json
+  script: scripts/build_decision_context.py
+  refresh: python scripts/build_decision_context.py --refresh
+  limitations: Context only, not an address-level flood determination or insurance advice. Absence of
+    a mapped zone does not mean no flood exposure. No hazard is a ranking input.
   status: processed
 food_drink_pois:
   source: OpenStreetMap contributors via Overpass API (amenity=cafe|restaurant|bar|pub, shop=coffee)
@@ -274,6 +308,23 @@ injury_collisions:
   refresh: quarterly
   limitations: Injury crashes only (no property-damage-only). Recent months are incomplete due to reporting
     lag. Counts reflect traffic volume as much as danger.
+  status: processed
+muni_service:
+  source: SFMTA official GTFS via DataSF
+  source_url: https://data.sf.gov/api/views/dni7-qpv3/files/ba275feb-bf3d-46ed-b527-dd42555fcd8d?download=true
+  licence: SFMTA Transit Data Licence; required notice retained in About the data
+  downloaded_at: '2026-11-13'
+  measurement_period: SFMTA_GTFS_20260829_20270115v2.zip
+  resolution: Scheduled departures per stop, service ID and GTFS hour (including 24+ hours)
+  feature_count: 3240
+  raw_path: data/sf/raw/regional
+  processed_path:
+  - data/sf/processed/muni_service.json
+  script: scripts/build_decision_context.py
+  refresh: python scripts/build_decision_context.py --refresh
+  limitations: Muni only; not real-time or reliability. Other agencies remain in the existing dated context.
+    Apply Pacific service date, calendar exceptions and prior-day overnight service. Old commute fixtures
+    are not rebuilt by this context dataset.
   status: processed
 neighbourhood_content:
   source: Common Ground editorial drafts (data/sf/content/neighbourhoods.yaml) + Wikimedia Commons photos
@@ -522,6 +573,26 @@ police_incidents:
     or unsafe. 1708 incidents could not be placed in a neighbourhood.'
   status: processed
   incidents_counted: 49515
+regional_terrain:
+  source: Mapterhorn, USGS 3DEP and global context contributors
+  source_url: https://tiles.mapterhorn.com/tilejson.json
+  licence: 'Underlying USGS datasets: US public domain; Copernicus GLO-30: full, free and open licence.
+    Full source attribution: https://mapterhorn.com/attribution/'
+  downloaded_at: '2026-11-12'
+  measurement_period: Source-specific acquisition dates; provider catalogue accessed 2025-2026
+  resolution: 512px WebP Terrarium XYZ; z0-12 globally complete context pyramid; approximately 15 m pixels
+    at z12 near SF, overzoomed at street scale
+  feature_count: null
+  raw_path: Remote viewport tiles, not downloaded as a dataset
+  processed_path:
+  - data/sf/processed/regional_terrain.json
+  script: scripts/build_regional_terrain.py
+  refresh: Rerun to verify provider TileJSON and source catalogue; viewport requests use normal HTTP caching
+  limitations: Rendering context only. Source acquisition dates and vertical datums vary. Uses globally
+    complete z0-12 pyramid, overzoomed at street scale; not a building survey or street-grade measurement.
+    Hosted best-effort service without an application SLA. No local flat or fabricated elevation fallback.
+  status: processed
+  processed_at: '2026-11-12'
 rents_zori:
   source: Zillow Research — ZORI (ZIP, all homes, smoothed, monthly); ZIP geography from Census 2020 ZCTAs
   source_url: https://www.zillow.com/research/data/ ; TIGERweb ZCTA 2020

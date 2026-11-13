@@ -84,11 +84,12 @@ Browser tests use installed Google Chrome, one worker, fixture routing and an is
 
 Canonical processed data lives in `data/sf/processed/`; frontend builds copy it to ignored `public/data/`. Heavy preprocessing stays outside runtime and frontend builds. Dataset sources, licences, dates, resolution and limits are in [the manifest](data/sf/manifest.yaml).
 
-Optional terrain uses **62 genuine USGS Terrain RGB tiles, 2,234,702 bytes** total, at actual scale. It is independent of the existing coloured topographic overlay. Buildings come from viewport vector tiles, with approximate OSM-derived metre heights, including storey inference. Building height never encodes suitability. No custom city-wide building GeoJSON, global extract or mesh is shipped.
+Optional terrain uses continuous, attributed **Mapterhorn Terrarium tiles** at normal scale. Buildings, terrain and camera tilt are independent. The former clipped USGS display pyramid is retained only as a reproducible historical asset; it is no longer the display source. It is independent of the existing coloured topographic overlay. Buildings come from viewport vector tiles, with approximate OSM-derived metre heights, including storey inference. Building height never encodes suitability. No custom city-wide building GeoJSON, global extract or mesh is shipped.
 
 ```powershell
 .venv/Scripts/python.exe -X utf8 scripts/rebuild_all.py --dry-run
-.venv/Scripts/python.exe -X utf8 scripts/build_terrain.py
+.venv/Scripts/python.exe -X utf8 scripts/build_regional_terrain.py
+.venv/Scripts/python.exe -X utf8 scripts/build_decision_context.py
 node scripts/measure_map.cjs
 ```
 
@@ -96,6 +97,10 @@ The complete data preparation, source decisions and HTTP/asset budgets are in [m
 
 ## Review and deployment
 
+- [Product audit and resolved findings](docs/PRODUCT_AUDIT.md)
+- [Journey redesign](docs/UX_REDESIGN.md)
+- [Regional 3D diagnosis and repair](docs/3D_RENDERING_FIX.md)
+- [New context sources and refresh commands](docs/DECISION_CONTEXT_DATA.md)
 - [Verification, measurements and limitations](docs/VERIFICATION.md)
 - [Desktop, tablet and mobile screenshots](docs/REVIEW.md)
 - [Vercel and Railway deployment checklist](docs/VERCEL_DEPLOYMENT.md)

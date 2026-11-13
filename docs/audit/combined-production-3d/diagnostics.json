@@ -1,0 +1,1230 @@
+{
+  "results": [
+    {
+      "name": "downtown",
+      "requested": [
+        -122.3999,
+        37.7946
+      ],
+      "camera": {
+        "centre": [
+          -122.3999,
+          37.7946
+        ],
+        "zoom": 15,
+        "pitch": 60,
+        "bearing": 35
+      },
+      "terrain": {
+        "source": "terrain",
+        "exaggeration": 1
+      },
+      "sources": {
+        "terrain": {
+          "type": "raster-dem",
+          "tiles": [
+            "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"
+          ],
+          "tileSize": 512,
+          "minzoom": 0,
+          "maxzoom": 12,
+          "bounds": [
+            -180,
+            -85.0511287,
+            180,
+            85.0511287
+          ],
+          "encoding": "terrarium",
+          "attribution": "Terrain: <a href='https://mapterhorn.com/attribution/'>Mapterhorn and source contributors</a> · USGS 3DEP"
+        }
+      },
+      "samples": [
+        {
+          "lon": -122.4149,
+          "lat": 37.7796,
+          "elevation": 16.5
+        },
+        {
+          "lon": -122.4149,
+          "lat": 37.7946,
+          "elevation": 98.83182010173789
+        },
+        {
+          "lon": -122.4149,
+          "lat": 37.8096,
+          "elevation": 0
+        },
+        {
+          "lon": -122.3999,
+          "lat": 37.7796,
+          "elevation": 4.205864927414117
+        },
+        {
+          "lon": -122.3999,
+          "lat": 37.7946,
+          "elevation": 4
+        },
+        {
+          "lon": -122.3999,
+          "lat": 37.8096,
+          "elevation": 0
+        },
+        {
+          "lon": -122.3849,
+          "lat": 37.7796,
+          "elevation": -1
+        },
+        {
+          "lon": -122.3849,
+          "lat": 37.7946,
+          "elevation": 0
+        },
+        {
+          "lon": -122.3849,
+          "lat": 37.8096,
+          "elevation": 0
+        }
+      ],
+      "requests": [
+        "https://tiles.mapterhorn.com/12/655/1582.webp",
+        "https://tiles.mapterhorn.com/12/655/1583.webp",
+        "https://tiles.mapterhorn.com/11/327/791.webp",
+        "https://tiles.mapterhorn.com/5/5/12.webp"
+      ]
+    },
+    {
+      "name": "twin-peaks",
+      "requested": [
+        -122.4477,
+        37.7544
+      ],
+      "camera": {
+        "centre": [
+          -122.4477,
+          37.7544
+        ],
+        "zoom": 15,
+        "pitch": 60,
+        "bearing": 35
+      },
+      "terrain": {
+        "source": "terrain",
+        "exaggeration": 1
+      },
+      "sources": {
+        "terrain": {
+          "type": "raster-dem",
+          "tiles": [
+            "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"
+          ],
+          "tileSize": 512,
+          "minzoom": 0,
+          "maxzoom": 12,
+          "bounds": [
+            -180,
+            -85.0511287,
+            180,
+            85.0511287
+          ],
+          "encoding": "terrarium",
+          "attribution": "Terrain: <a href='https://mapterhorn.com/attribution/'>Mapterhorn and source contributors</a> · USGS 3DEP"
+        }
+      },
+      "samples": [
+        {
+          "lon": -122.4627,
+          "lat": 37.739399999999996,
+          "elevation": 142.1412807384414
+        },
+        {
+          "lon": -122.4627,
+          "lat": 37.7544,
+          "elevation": 147.4172551776906
+        },
+        {
+          "lon": -122.4627,
+          "lat": 37.7694,
+          "elevation": 74.64689449485036
+        },
+        {
+          "lon": -122.4477,
+          "lat": 37.739399999999996,
+          "elevation": 197.12587859953948
+        },
+        {
+          "lon": -122.4477,
+          "lat": 37.7544,
+          "elevation": 249.71866597834742
+        },
+        {
+          "lon": -122.4477,
+          "lat": 37.7694,
+          "elevation": 86.16267058794621
+        },
+        {
+          "lon": -122.4327,
+          "lat": 37.739399999999996,
+          "elevation": 155.974848377119
+        },
+        {
+          "lon": -122.4327,
+          "lat": 37.7544,
+          "elevation": 91.63801109050247
+        },
+        {
+          "lon": -122.4327,
+          "lat": 37.7694,
+          "elevation": 45.67130666662706
+        }
+      ],
+      "requests": [
+        "https://tiles.mapterhorn.com/12/654/1583.webp",
+        "https://tiles.mapterhorn.com/12/654/1582.webp"
+      ]
+    },
+    {
+      "name": "sf-daly-boundary",
+      "requested": [
+        -122.462,
+        37.708
+      ],
+      "camera": {
+        "centre": [
+          -122.462,
+          37.708
+        ],
+        "zoom": 15,
+        "pitch": 60,
+        "bearing": 35
+      },
+      "terrain": {
+        "source": "terrain",
+        "exaggeration": 1
+      },
+      "sources": {
+        "terrain": {
+          "type": "raster-dem",
+          "tiles": [
+            "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"
+          ],
+          "tileSize": 512,
+          "minzoom": 0,
+          "maxzoom": 12,
+          "bounds": [
+            -180,
+            -85.0511287,
+            180,
+            85.0511287
+          ],
+          "encoding": "terrarium",
+          "attribution": "Terrain: <a href='https://mapterhorn.com/attribution/'>Mapterhorn and source contributors</a> · USGS 3DEP"
+        }
+      },
+      "samples": [
+        {
+          "lon": -122.477,
+          "lat": 37.693,
+          "elevation": 38.87533919629641
+        },
+        {
+          "lon": -122.477,
+          "lat": 37.708,
+          "elevation": 40.20038069146951
+        },
+        {
+          "lon": -122.477,
+          "lat": 37.723,
+          "elevation": 42.48121492814587
+        },
+        {
+          "lon": -122.462,
+          "lat": 37.693,
+          "elevation": 80.3971446492651
+        },
+        {
+          "lon": -122.462,
+          "lat": 37.708,
+          "elevation": 123.93187526678646
+        },
+        {
+          "lon": -122.462,
+          "lat": 37.723,
+          "elevation": 80.59635407765744
+        },
+        {
+          "lon": -122.447,
+          "lat": 37.693,
+          "elevation": 278.2121236390512
+        },
+        {
+          "lon": -122.447,
+          "lat": 37.708,
+          "elevation": 110.50482776256099
+        },
+        {
+          "lon": -122.447,
+          "lat": 37.723,
+          "elevation": 67.29967942952271
+        }
+      ],
+      "requests": [
+        "https://tiles.mapterhorn.com/12/654/1584.webp",
+        "https://tiles.mapterhorn.com/12/655/1584.webp",
+        "https://tiles.mapterhorn.com/11/327/792.webp"
+      ]
+    },
+    {
+      "name": "colma",
+      "requested": [
+        -122.458,
+        37.676
+      ],
+      "camera": {
+        "centre": [
+          -122.458,
+          37.676
+        ],
+        "zoom": 15,
+        "pitch": 60,
+        "bearing": 35
+      },
+      "terrain": {
+        "source": "terrain",
+        "exaggeration": 1
+      },
+      "sources": {
+        "terrain": {
+          "type": "raster-dem",
+          "tiles": [
+            "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"
+          ],
+          "tileSize": 512,
+          "minzoom": 0,
+          "maxzoom": 12,
+          "bounds": [
+            -180,
+            -85.0511287,
+            180,
+            85.0511287
+          ],
+          "encoding": "terrarium",
+          "attribution": "Terrain: <a href='https://mapterhorn.com/attribution/'>Mapterhorn and source contributors</a> · USGS 3DEP"
+        }
+      },
+      "samples": [
+        {
+          "lon": -122.473,
+          "lat": 37.661,
+          "elevation": 147.50873563045752
+        },
+        {
+          "lon": -122.473,
+          "lat": 37.676,
+          "elevation": 97.3141659584362
+        },
+        {
+          "lon": -122.473,
+          "lat": 37.691,
+          "elevation": 42.82413809723221
+        },
+        {
+          "lon": -122.458,
+          "lat": 37.661,
+          "elevation": 48.91369930956377
+        },
+        {
+          "lon": -122.458,
+          "lat": 37.676,
+          "elevation": 34.44347086370454
+        },
+        {
+          "lon": -122.458,
+          "lat": 37.691,
+          "elevation": 58.166279383089034
+        },
+        {
+          "lon": -122.443,
+          "lat": 37.661,
+          "elevation": 25.91554294064197
+        },
+        {
+          "lon": -122.443,
+          "lat": 37.676,
+          "elevation": 89.6709900109071
+        },
+        {
+          "lon": -122.443,
+          "lat": 37.691,
+          "elevation": 298.9801350554142
+        }
+      ],
+      "requests": [
+        "https://tiles.mapterhorn.com/10/163/395.webp"
+      ]
+    },
+    {
+      "name": "brisbane",
+      "requested": [
+        -122.405,
+        37.681
+      ],
+      "camera": {
+        "centre": [
+          -122.405,
+          37.681
+        ],
+        "zoom": 15,
+        "pitch": 60,
+        "bearing": 35
+      },
+      "terrain": {
+        "source": "terrain",
+        "exaggeration": 1
+      },
+      "sources": {
+        "terrain": {
+          "type": "raster-dem",
+          "tiles": [
+            "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"
+          ],
+          "tileSize": 512,
+          "minzoom": 0,
+          "maxzoom": 12,
+          "bounds": [
+            -180,
+            -85.0511287,
+            180,
+            85.0511287
+          ],
+          "encoding": "terrarium",
+          "attribution": "Terrain: <a href='https://mapterhorn.com/attribution/'>Mapterhorn and source contributors</a> · USGS 3DEP"
+        }
+      },
+      "samples": [
+        {
+          "lon": -122.42,
+          "lat": 37.666,
+          "elevation": 130.60757093318517
+        },
+        {
+          "lon": -122.42,
+          "lat": 37.681,
+          "elevation": 264.7881229631163
+        },
+        {
+          "lon": -122.42,
+          "lat": 37.696,
+          "elevation": 83.11985302361522
+        },
+        {
+          "lon": -122.405,
+          "lat": 37.666,
+          "elevation": 55.34966943396149
+        },
+        {
+          "lon": -122.405,
+          "lat": 37.681,
+          "elevation": 50.63396082818508
+        },
+        {
+          "lon": -122.405,
+          "lat": 37.696,
+          "elevation": 4.201730005711609
+        },
+        {
+          "lon": -122.39,
+          "lat": 37.666,
+          "elevation": 0.41465384907584124
+        },
+        {
+          "lon": -122.39,
+          "lat": 37.681,
+          "elevation": 1
+        },
+        {
+          "lon": -122.39,
+          "lat": 37.696,
+          "elevation": -0.037111111101694405
+        }
+      ],
+      "requests": []
+    },
+    {
+      "name": "south-sf",
+      "requested": [
+        -122.411,
+        37.654
+      ],
+      "camera": {
+        "centre": [
+          -122.411,
+          37.654
+        ],
+        "zoom": 15,
+        "pitch": 60,
+        "bearing": 35
+      },
+      "terrain": {
+        "source": "terrain",
+        "exaggeration": 1
+      },
+      "sources": {
+        "terrain": {
+          "type": "raster-dem",
+          "tiles": [
+            "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"
+          ],
+          "tileSize": 512,
+          "minzoom": 0,
+          "maxzoom": 12,
+          "bounds": [
+            -180,
+            -85.0511287,
+            180,
+            85.0511287
+          ],
+          "encoding": "terrarium",
+          "attribution": "Terrain: <a href='https://mapterhorn.com/attribution/'>Mapterhorn and source contributors</a> · USGS 3DEP"
+        }
+      },
+      "samples": [
+        {
+          "lon": -122.426,
+          "lat": 37.639,
+          "elevation": 25.5
+        },
+        {
+          "lon": -122.426,
+          "lat": 37.654,
+          "elevation": 8
+        },
+        {
+          "lon": -122.426,
+          "lat": 37.669000000000004,
+          "elevation": 110.26095006838167
+        },
+        {
+          "lon": -122.411,
+          "lat": 37.639,
+          "elevation": 5
+        },
+        {
+          "lon": -122.411,
+          "lat": 37.654,
+          "elevation": 10.389466666674707
+        },
+        {
+          "lon": -122.411,
+          "lat": 37.669000000000004,
+          "elevation": 91.17920556435449
+        },
+        {
+          "lon": -122.396,
+          "lat": 37.639,
+          "elevation": 0.47801360195026504
+        },
+        {
+          "lon": -122.396,
+          "lat": 37.654,
+          "elevation": 5.080033127742353
+        },
+        {
+          "lon": -122.396,
+          "lat": 37.669000000000004,
+          "elevation": 18.595254209591076
+        }
+      ],
+      "requests": [
+        "https://tiles.mapterhorn.com/12/655/1585.webp"
+      ]
+    },
+    {
+      "name": "san-bruno",
+      "requested": [
+        -122.411,
+        37.63
+      ],
+      "camera": {
+        "centre": [
+          -122.411,
+          37.63
+        ],
+        "zoom": 15,
+        "pitch": 60,
+        "bearing": 35
+      },
+      "terrain": {
+        "source": "terrain",
+        "exaggeration": 1
+      },
+      "sources": {
+        "terrain": {
+          "type": "raster-dem",
+          "tiles": [
+            "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"
+          ],
+          "tileSize": 512,
+          "minzoom": 0,
+          "maxzoom": 12,
+          "bounds": [
+            -180,
+            -85.0511287,
+            180,
+            85.0511287
+          ],
+          "encoding": "terrarium",
+          "attribution": "Terrain: <a href='https://mapterhorn.com/attribution/'>Mapterhorn and source contributors</a> · USGS 3DEP"
+        }
+      },
+      "samples": [
+        {
+          "lon": -122.426,
+          "lat": 37.615,
+          "elevation": 117.53753043630958
+        },
+        {
+          "lon": -122.426,
+          "lat": 37.63,
+          "elevation": 37.582867374818306
+        },
+        {
+          "lon": -122.426,
+          "lat": 37.645,
+          "elevation": 8.589741487114225
+        },
+        {
+          "lon": -122.411,
+          "lat": 37.615,
+          "elevation": 25.838415203451632
+        },
+        {
+          "lon": -122.411,
+          "lat": 37.63,
+          "elevation": 5.629822222224902
+        },
+        {
+          "lon": -122.411,
+          "lat": 37.645,
+          "elevation": 3.5
+        },
+        {
+          "lon": -122.396,
+          "lat": 37.615,
+          "elevation": 2
+        },
+        {
+          "lon": -122.396,
+          "lat": 37.63,
+          "elevation": 1.9391555555630473
+        },
+        {
+          "lon": -122.396,
+          "lat": 37.645,
+          "elevation": 3.4500760974158693
+        }
+      ],
+      "requests": []
+    },
+    {
+      "name": "sfo",
+      "requested": [
+        -122.379,
+        37.6213
+      ],
+      "camera": {
+        "centre": [
+          -122.379,
+          37.6213
+        ],
+        "zoom": 15,
+        "pitch": 60,
+        "bearing": 35
+      },
+      "terrain": {
+        "source": "terrain",
+        "exaggeration": 1
+      },
+      "sources": {
+        "terrain": {
+          "type": "raster-dem",
+          "tiles": [
+            "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"
+          ],
+          "tileSize": 512,
+          "minzoom": 0,
+          "maxzoom": 12,
+          "bounds": [
+            -180,
+            -85.0511287,
+            180,
+            85.0511287
+          ],
+          "encoding": "terrarium",
+          "attribution": "Terrain: <a href='https://mapterhorn.com/attribution/'>Mapterhorn and source contributors</a> · USGS 3DEP"
+        }
+      },
+      "samples": [
+        {
+          "lon": -122.394,
+          "lat": 37.6063,
+          "elevation": 8.11373333336087
+        },
+        {
+          "lon": -122.394,
+          "lat": 37.6213,
+          "elevation": 2.5
+        },
+        {
+          "lon": -122.394,
+          "lat": 37.6363,
+          "elevation": 3
+        },
+        {
+          "lon": -122.379,
+          "lat": 37.6063,
+          "elevation": 2.574075585472034
+        },
+        {
+          "lon": -122.379,
+          "lat": 37.6213,
+          "elevation": 1.7822005268382592
+        },
+        {
+          "lon": -122.379,
+          "lat": 37.6363,
+          "elevation": 0
+        },
+        {
+          "lon": -122.364,
+          "lat": 37.6063,
+          "elevation": 0
+        },
+        {
+          "lon": -122.364,
+          "lat": 37.6213,
+          "elevation": 0
+        },
+        {
+          "lon": -122.364,
+          "lat": 37.6363,
+          "elevation": 0
+        }
+      ],
+      "requests": [
+        "https://tiles.mapterhorn.com/12/656/1585.webp",
+        "https://tiles.mapterhorn.com/11/328/792.webp"
+      ]
+    },
+    {
+      "name": "pacifica",
+      "requested": [
+        -122.487,
+        37.613
+      ],
+      "camera": {
+        "centre": [
+          -122.487,
+          37.613
+        ],
+        "zoom": 15,
+        "pitch": 60,
+        "bearing": 35
+      },
+      "terrain": {
+        "source": "terrain",
+        "exaggeration": 1
+      },
+      "sources": {
+        "terrain": {
+          "type": "raster-dem",
+          "tiles": [
+            "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"
+          ],
+          "tileSize": 512,
+          "minzoom": 0,
+          "maxzoom": 12,
+          "bounds": [
+            -180,
+            -85.0511287,
+            180,
+            85.0511287
+          ],
+          "encoding": "terrarium",
+          "attribution": "Terrain: <a href='https://mapterhorn.com/attribution/'>Mapterhorn and source contributors</a> · USGS 3DEP"
+        }
+      },
+      "samples": [
+        {
+          "lon": -122.502,
+          "lat": 37.598,
+          "elevation": 4.119090250143502
+        },
+        {
+          "lon": -122.502,
+          "lat": 37.613,
+          "elevation": 0
+        },
+        {
+          "lon": -122.502,
+          "lat": 37.628,
+          "elevation": 0
+        },
+        {
+          "lon": -122.487,
+          "lat": 37.598,
+          "elevation": 119.37839063373394
+        },
+        {
+          "lon": -122.487,
+          "lat": 37.613,
+          "elevation": 27.62035701597222
+        },
+        {
+          "lon": -122.487,
+          "lat": 37.628,
+          "elevation": 51.21195303555578
+        },
+        {
+          "lon": -122.472,
+          "lat": 37.598,
+          "elevation": 181.31275703924032
+        },
+        {
+          "lon": -122.472,
+          "lat": 37.613,
+          "elevation": 102.5357562902779
+        },
+        {
+          "lon": -122.472,
+          "lat": 37.628,
+          "elevation": 129.24066817894345
+        }
+      ],
+      "requests": [
+        "https://tiles.mapterhorn.com/12/654/1585.webp"
+      ]
+    },
+    {
+      "name": "beyond-south",
+      "requested": [
+        -122.411,
+        37.575
+      ],
+      "camera": {
+        "centre": [
+          -122.411,
+          37.575
+        ],
+        "zoom": 15,
+        "pitch": 60,
+        "bearing": 35
+      },
+      "terrain": {
+        "source": "terrain",
+        "exaggeration": 1
+      },
+      "sources": {
+        "terrain": {
+          "type": "raster-dem",
+          "tiles": [
+            "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"
+          ],
+          "tileSize": 512,
+          "minzoom": 0,
+          "maxzoom": 12,
+          "bounds": [
+            -180,
+            -85.0511287,
+            180,
+            85.0511287
+          ],
+          "encoding": "terrarium",
+          "attribution": "Terrain: <a href='https://mapterhorn.com/attribution/'>Mapterhorn and source contributors</a> · USGS 3DEP"
+        }
+      },
+      "samples": [
+        {
+          "lon": -122.426,
+          "lat": 37.56,
+          "elevation": 265.3414033271827
+        },
+        {
+          "lon": -122.426,
+          "lat": 37.575,
+          "elevation": 293.9692397720646
+        },
+        {
+          "lon": -122.426,
+          "lat": 37.59,
+          "elevation": 137.30098599754274
+        },
+        {
+          "lon": -122.411,
+          "lat": 37.56,
+          "elevation": 341.3728175384458
+        },
+        {
+          "lon": -122.411,
+          "lat": 37.575,
+          "elevation": 199.44190643873299
+        },
+        {
+          "lon": -122.411,
+          "lat": 37.59,
+          "elevation": 162.97248220145377
+        },
+        {
+          "lon": -122.396,
+          "lat": 37.56,
+          "elevation": 102.5180006644867
+        },
+        {
+          "lon": -122.396,
+          "lat": 37.575,
+          "elevation": 178.39793648413084
+        },
+        {
+          "lon": -122.396,
+          "lat": 37.59,
+          "elevation": 67.7465288413805
+        }
+      ],
+      "requests": [
+        "https://tiles.mapterhorn.com/12/655/1586.webp",
+        "https://tiles.mapterhorn.com/11/327/793.webp",
+        "https://tiles.mapterhorn.com/10/164/396.webp"
+      ]
+    },
+    {
+      "name": "oakland",
+      "requested": [
+        -122.271,
+        37.804
+      ],
+      "camera": {
+        "centre": [
+          -122.271,
+          37.804
+        ],
+        "zoom": 15,
+        "pitch": 60,
+        "bearing": 35
+      },
+      "terrain": {
+        "source": "terrain",
+        "exaggeration": 1
+      },
+      "sources": {
+        "terrain": {
+          "type": "raster-dem",
+          "tiles": [
+            "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"
+          ],
+          "tileSize": 512,
+          "minzoom": 0,
+          "maxzoom": 12,
+          "bounds": [
+            -180,
+            -85.0511287,
+            180,
+            85.0511287
+          ],
+          "encoding": "terrarium",
+          "attribution": "Terrain: <a href='https://mapterhorn.com/attribution/'>Mapterhorn and source contributors</a> · USGS 3DEP"
+        }
+      },
+      "samples": [
+        {
+          "lon": -122.286,
+          "lat": 37.789,
+          "elevation": 3.5
+        },
+        {
+          "lon": -122.286,
+          "lat": 37.804,
+          "elevation": 7.034948668250886
+        },
+        {
+          "lon": -122.286,
+          "lat": 37.819,
+          "elevation": 3.459066666662693
+        },
+        {
+          "lon": -122.271,
+          "lat": 37.789,
+          "elevation": 0.5
+        },
+        {
+          "lon": -122.271,
+          "lat": 37.804,
+          "elevation": 13
+        },
+        {
+          "lon": -122.271,
+          "lat": 37.819,
+          "elevation": 11.081065463364025
+        },
+        {
+          "lon": -122.256,
+          "lat": 37.789,
+          "elevation": 4
+        },
+        {
+          "lon": -122.256,
+          "lat": 37.804,
+          "elevation": 1
+        },
+        {
+          "lon": -122.256,
+          "lat": 37.819,
+          "elevation": 25.777801090618595
+        }
+      ],
+      "requests": [
+        "https://tiles.mapterhorn.com/12/656/1582.webp",
+        "https://tiles.mapterhorn.com/12/657/1582.webp",
+        "https://tiles.mapterhorn.com/11/328/791.webp"
+      ]
+    },
+    {
+      "name": "berkeley",
+      "requested": [
+        -122.273,
+        37.872
+      ],
+      "camera": {
+        "centre": [
+          -122.273,
+          37.872
+        ],
+        "zoom": 15,
+        "pitch": 60,
+        "bearing": 35
+      },
+      "terrain": {
+        "source": "terrain",
+        "exaggeration": 1
+      },
+      "sources": {
+        "terrain": {
+          "type": "raster-dem",
+          "tiles": [
+            "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"
+          ],
+          "tileSize": 512,
+          "minzoom": 0,
+          "maxzoom": 12,
+          "bounds": [
+            -180,
+            -85.0511287,
+            180,
+            85.0511287
+          ],
+          "encoding": "terrarium",
+          "attribution": "Terrain: <a href='https://mapterhorn.com/attribution/'>Mapterhorn and source contributors</a> · USGS 3DEP"
+        }
+      },
+      "samples": [
+        {
+          "lon": -122.288,
+          "lat": 37.857,
+          "elevation": 16.101313909527015
+        },
+        {
+          "lon": -122.288,
+          "lat": 37.872,
+          "elevation": 23.133644444460515
+        },
+        {
+          "lon": -122.288,
+          "lat": 37.887,
+          "elevation": 28.782877532357812
+        },
+        {
+          "lon": -122.273,
+          "lat": 37.857,
+          "elevation": 33.37904272781452
+        },
+        {
+          "lon": -122.273,
+          "lat": 37.872,
+          "elevation": 52
+        },
+        {
+          "lon": -122.273,
+          "lat": 37.887,
+          "elevation": 74.02475965850746
+        },
+        {
+          "lon": -122.258,
+          "lat": 37.857,
+          "elevation": 64.5
+        },
+        {
+          "lon": -122.258,
+          "lat": 37.872,
+          "elevation": 96.98904952821734
+        },
+        {
+          "lon": -122.258,
+          "lat": 37.887,
+          "elevation": 220.41264085829573
+        }
+      ],
+      "requests": [
+        "https://tiles.mapterhorn.com/12/656/1581.webp",
+        "https://tiles.mapterhorn.com/12/657/1581.webp",
+        "https://tiles.mapterhorn.com/11/328/790.webp"
+      ]
+    }
+  ],
+  "requests": [
+    "http://localhost:5192/data/regional_terrain.json",
+    "https://tiles.mapterhorn.com/12/655/1582.webp",
+    "https://tiles.mapterhorn.com/12/655/1583.webp",
+    "https://tiles.mapterhorn.com/11/327/791.webp",
+    "https://tiles.mapterhorn.com/5/5/12.webp",
+    "https://tiles.mapterhorn.com/12/654/1583.webp",
+    "https://tiles.mapterhorn.com/12/654/1582.webp",
+    "https://tiles.mapterhorn.com/12/654/1584.webp",
+    "https://tiles.mapterhorn.com/12/655/1584.webp",
+    "https://tiles.mapterhorn.com/11/327/792.webp",
+    "https://tiles.mapterhorn.com/10/163/395.webp",
+    "https://tiles.mapterhorn.com/12/655/1585.webp",
+    "https://tiles.mapterhorn.com/12/656/1585.webp",
+    "https://tiles.mapterhorn.com/11/328/792.webp",
+    "https://tiles.mapterhorn.com/12/654/1585.webp",
+    "https://tiles.mapterhorn.com/12/655/1586.webp",
+    "https://tiles.mapterhorn.com/11/327/793.webp",
+    "https://tiles.mapterhorn.com/10/164/396.webp",
+    "https://tiles.mapterhorn.com/12/656/1582.webp",
+    "https://tiles.mapterhorn.com/12/657/1582.webp",
+    "https://tiles.mapterhorn.com/11/328/791.webp",
+    "https://tiles.mapterhorn.com/12/656/1581.webp",
+    "https://tiles.mapterhorn.com/12/657/1581.webp",
+    "https://tiles.mapterhorn.com/11/328/790.webp"
+  ],
+  "responses": [
+    {
+      "url": "http://localhost:5192/data/regional_terrain.json",
+      "status": 200,
+      "type": "application/json"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/655/1582.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/11/327/791.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/655/1583.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/5/5/12.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/654/1582.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/654/1583.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/655/1584.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/654/1584.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/11/327/792.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/10/163/395.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/655/1585.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/656/1585.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/11/328/792.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/654/1585.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/655/1586.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/11/327/793.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/10/164/396.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/656/1582.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/11/328/791.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/657/1582.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/656/1581.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/12/657/1581.webp",
+      "status": 200,
+      "type": "image/webp"
+    },
+    {
+      "url": "https://tiles.mapterhorn.com/11/328/790.webp",
+      "status": 200,
+      "type": "image/webp"
+    }
+  ],
+  "errors": []
+}

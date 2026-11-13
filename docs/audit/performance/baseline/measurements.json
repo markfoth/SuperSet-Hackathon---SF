@@ -1,0 +1,78 @@
+{
+  "conditions": {
+    "viewport": "1440 × 900",
+    "browser": "Headless installed Chrome",
+    "reducedMotion": true,
+    "cpuRate": 1,
+    "network": "Unthrottled"
+  },
+  "initial": {
+    "controlsMs": 577,
+    "ms": 2299,
+    "bytes": 837007,
+    "requests": 18,
+    "pbfBytes": 91352,
+    "pbfRequests": 2
+  },
+  "firstSearch": {
+    "ms": 416,
+    "bytes": 3599262,
+    "requests": 4
+  },
+  "focusedView": {
+    "vectorRequests": 1,
+    "vectorBytes": 25088
+  },
+  "buildings": {
+    "renderer": "maplibre",
+    "selectionId": "",
+    "3d": "true",
+    "terrain": "false",
+    "mapReady": "true",
+    "zoom": "15.00",
+    "pitch": "52",
+    "eligibleCount": "494",
+    "visibleCellCount": "494",
+    "excludedVisible": "0",
+    "buildingCount": "675",
+    "vectorLoaded": "true"
+  },
+  "terrain": {
+    "requests": 11,
+    "bytes": 480938,
+    "map": {
+      "renderer": "maplibre",
+      "selectionId": "",
+      "3d": "true",
+      "terrain": "true",
+      "mapReady": "true",
+      "zoom": "15.00",
+      "pitch": "52",
+      "eligibleCount": "494",
+      "visibleCellCount": "494",
+      "excludedVisible": "0",
+      "buildingCount": "455",
+      "vectorLoaded": "true",
+      "terrainLoaded": "true"
+    }
+  },
+  "interaction": {
+    "frameSamples": 68,
+    "meanFrameMs": 16.527941176448675,
+    "p95FrameMs": 18.200000000000728,
+    "maxFrameMs": 33.399999999999636
+  },
+  "longTasks": {
+    "count": 10,
+    "totalMs": 1696,
+    "maxMs": 807
+  },
+  "heapSamples": [
+    28389968,
+    28199964,
+    26814036,
+    26888256,
+    27711852
+  ],
+  "consoleErrors": []
+}

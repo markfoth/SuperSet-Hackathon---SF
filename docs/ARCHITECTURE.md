@@ -37,8 +37,7 @@ commute polygons and keeps inherited local measurements distinct.
 `mapData.ts`. Unknown and excluded states are preserved; excluded cells never enter the
 visible matching source. `LeafletMap` and Leaflet itself are loaded only when needed for
 WebGL compatibility. Context builders fetch only on explicit toggles. Buildings use the
-viewport basemap source, not a startup city GeoJSON. `scripts/build_terrain.py` creates a
-bounded, lazy XYZ Terrain RGB pyramid from the genuine cached USGS DEM.
+viewport basemap source, not a startup city GeoJSON. `scripts/build_regional_terrain.py` records the continuous Mapterhorn Terrarium descriptor and attribution. Display terrain is lazy and separate from the USGS analysis raster. `scripts/build_decision_context.py` builds bounded OSM essentials, date-aware Muni context and FEMA zones. These assets load only for a selected location or home. Independent source failures preserve successful context.
 
 `commuteRequestKey` includes the confirmed coordinate, mode, limit and supported arrival
  time. Request generations prevent stale responses satisfying new constraints. Exact
@@ -149,7 +148,7 @@ App.tsx                       state: workplaces (sessionStorage), prefs/layers/s
 features/commute/             provider.ts (adapter), eligibility.ts, CommutePanel.tsx
 features/filters/             preferences.ts (definitions), ranking.ts (+ test), PreferencePanel.tsx
 features/neighbourhoods/      ResultsList.tsx, NeighbourhoodDetail.tsx, reasons.ts
-map/MapView.tsx               Leaflet map; panes; neighbourhood styling; workplace pins; commute outlines
+map/MapView.tsx               MapLibre selection and context; lazy Leaflet compatibility fallback
 map/layers/contextLayers.ts   9 independent, lazily-loaded overlays (crime, hills, cycling, transit, parks,
                               supermarkets, crashes, air pollution, food & drink); each built exactly once
 components/NeighbourhoodPhoto local image -> Commons thumbnail -> placeholder (never a broken image)

@@ -81,8 +81,11 @@ test('specific homes keep entered costs and distinguish unknown exact journey ti
   await dialog.locator('summary').filter({ hasText: 'Monthly transport assumptions' }).click();
   await dialog.getByLabel('Return fare per destination day · USD', { exact: true }).fill('6');
   await dialog.getByLabel('Other transport each month · USD', { exact: true }).fill('30');
+  await dialog.getByLabel('Other recurring costs each month', { exact: true }).fill('200');
   await dialog.getByRole('button', { name: 'Save home details', exact: true }).click();
   await expect(dialog.getByRole('region', { name: 'Compare home costs' })).toContainText('$3,386');
+  await expect(dialog.getByRole('row', { name: /Total entered monthly budget/ })).toContainText('$3,586');
+  await expect(dialog.getByRole('option', { name: 'Shortest measured household travel' })).toHaveAttribute('disabled','');
   await dialog.getByRole('button', { name: 'Check journey times', exact: true }).click();
   await expect(dialog.getByRole('region', { name: 'Exact journey estimates' })).toContainText('Not measured');
   await expect(dialog.getByRole('region', { name: 'Exact journey estimates' })).toContainText('Offline contours');
@@ -94,6 +97,7 @@ test('specific homes keep entered costs and distinguish unknown exact journey ti
   await expect(dialog.getByLabel('Home label')).toHaveValue('Flat near 24th Street');
   await expect(dialog.getByLabel('Monthly rent · USD', { exact: true })).toHaveValue('3200');
   await expect(dialog.getByLabel('Notes', { exact: true })).toHaveValue('Ask about bicycle storage.');
+  await expect(dialog.getByLabel('Other recurring costs each month', { exact: true })).toHaveValue('200');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 

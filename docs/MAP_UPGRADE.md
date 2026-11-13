@@ -66,7 +66,11 @@ the basemap before it replaces buildings inside an explicit boundary. It should
 not be layered over duplicate OSM footprints. No global download or extra runtime
 service was introduced for an unverified marginal benefit.
 
-## Actual terrain
+## Previous bounded terrain, superseded
+
+The following documents the earlier pipeline. The current display source is continuous Mapterhorn Terrarium terrain. The clipped local source reproduced a -10,000 m edge defect and is no longer used for display. See [reproduction, replacement and camera evidence](3D_RENDERING_FIX.md). The original USGS analysis raster and derived street gradients are unchanged.
+
+### Historical pipeline
 
 The coloured `topography.png` remains a contextual elevation picture. It is never
 passed to `raster-dem`. Terrain uses newly generated Terrain RGB tiles from the
@@ -107,7 +111,7 @@ every output path. USGS elevation is public domain. Tests decode known elevation
 check real relief at Twin Peaks versus downtown, preserve missing coverage and
 enforce an asset budget.
 
-## Measured budgets and transport
+## Previous local asset budgets and transport
 
 The current build produces **62 tiles, 2,234,702 bytes** total, plus a small JSON
 manifest. Custom building assets are **0 bytes**. The combined custom building and

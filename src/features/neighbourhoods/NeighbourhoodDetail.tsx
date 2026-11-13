@@ -1,3 +1,4 @@
+import { LocationExplorer } from '../explorer/LocationExplorer';
 import { NeighbourhoodPhoto } from '../../components/NeighbourhoodPhoto';
 import { num, pct, usd } from '../../lib/format';
 import { ranked, type AreaResult, type CellResult } from '../filters/ranking';
@@ -123,6 +124,8 @@ export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, wor
         <p className="hint">Census median rent <b>paid</b> by current tenants (ACS 2020–24, all units incl. long-held leases): {usd(m.population.median_gross_rent_popweighted)}/month.</p>
       )}
 
+      {cellResult && <LocationExplorer lat={cellResult.cell.check_lat} lon={cellResult.cell.check_lon} />}
+      {!cellResult && <p className="hint">Select a matching location above for nearby essentials, dated transport service and environmental coverage.</p>}
       <h3>Search for homes here</h3>
       <div className="row">
         {rentalSearchLinks(c?.rental_search_name ?? m.name, m.region).map((l) => <a key={l.label} className="btn" href={l.url} target="_blank" rel="noreferrer">{l.label} ↗</a>)}

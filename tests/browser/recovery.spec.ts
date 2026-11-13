@@ -42,6 +42,7 @@ test('same-tab share links are noticed without replacing current work', async ({
 
 test('keyboard map pin placement and a no-overlap search remain recoverable', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('button', {name:'Add your destinations',exact:true}).click();
   await page.getByRole('button', { name: 'Place a pin on the map', exact: true }).click();
   const canvas = page.locator('.maplibregl-canvas');
   await canvas.focus(); await canvas.press('Enter');
