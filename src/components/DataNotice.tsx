@@ -14,7 +14,7 @@ export function DataNotice({ onClose }: { onClose: () => void }) {
           <li><b>Neighbourhoods, police incidents, bike network, parks, injury crashes</b>; DataSF (ODC PDDL).</li>
           <li><b>Northern Peninsula through SFO</b>; San Mateo County GIS city/unincorporated boundaries, streets, existing bikeways, parks and coastline. Peninsula groups are cities or unincorporated areas; SF groups are analysis neighbourhoods. Coverage stops at SFO’s southern edge.</li>
           <li><b>Local incidents and injury crashes</b>; the SF feeds do not cover Peninsula areas. Missing local values are unavailable, never zero; city-wide annual reports are not assigned to individual hexagons.</li>
-          <li><b>Transit</b>; BART, SFMTA (Muni), Caltrain and SamTrans GTFS schedules. BART, Caltrain and SamTrans timetables cover 22 Oct 2026; the public Muni timetable is from summer 2026.</li>
+          <li><b>Transit</b>; commute examples retain BART, Caltrain and SamTrans schedules for 22 Oct 2026 and the older summer Muni model. Selected-location Muni service uses the August 2026 to January 2027 feed and its date-specific calendars. Neither is live reliability data.</li>
           <li><b>Street gradients</b>; U.S. Geological Survey 3DEP elevation and official SF / San Mateo County street centrelines. Rolling 40 m DEM estimates, not surveyed road grades.</li>
           <li><b>Residents and rent paid</b>; U.S. Census Bureau, American Community Survey 2020–2024 (tract).</li>
           <li><b>Air pollution</b>; CalEnviroScreen 5.0, California OEHHA (tract; pollution indicators only).</li>

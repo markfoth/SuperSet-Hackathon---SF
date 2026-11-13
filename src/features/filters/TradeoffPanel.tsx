@@ -38,11 +38,11 @@ export function TradeoffPanel({ input, workplaces, commute, onApply, onUndo }: {
   return <details className="tradeoff-panel panel-section" onToggle={() => setPreview(null)}>
     <summary><span>Explore a compromise</span><span aria-hidden="true">↗</span></summary>
     <p className="hint">Preview a change before applying it to your search.</p>
-    {noMatches && <div className="constraint-diagnosis"><p>Current checks across candidate residential land:</p><ul>{[...failures,...mustFailures].filter(f => f.count > 0).map(f => <li key={f.label}>{f.label}: {f.count} locations fail this condition.</li>)}</ul><p className="hint">{now.filter(r => r.state === 'unknown').length} locations have missing required evidence. Counts can overlap; one change may leave another condition unmet.</p></div>}
+    {noMatches && <div className="constraint-diagnosis"><p>Current checks across candidate residential land:</p><ul>{[...failures,...mustFailures].filter(f => f.count > 0).map(f => <li key={f.label}>{f.label}: {f.count} locations fail this condition.</li>)}</ul><p className="hint">{now.filter(r => r.unchecked.length > 0).length} locations have missing required evidence. Counts can overlap; one change may leave another condition unmet.</p></div>}
     {onUndo && <button className="btn" onClick={onUndo}>Undo last adjustment</button>}
     <div className="tradeoff-options">
       {musts.map(p => <button className="btn" disabled={loading} key={p.id} onClick={() => { setError(''); setPreview({ title: `${p.label}: Must to Important`, input: { ...input, prefs: { ...input.prefs, [p.id]: 'important' } } }); }}>Relax {p.label}</button>)}
-      {workplaces.filter(w => w.maxMinutes < 60).flatMap(w => (import.meta.env.VITE_COMMUTE_PROVIDER === 'proxy' ? [5,10] : [15]).map(increment => <button className="btn" disabled={loading} key={w.id + increment} onClick={() => void previewCommute(w,increment)}>+{increment} min for {w.personName || w.name}</button>))}
+      {workplaces.filter(w => w.maxMinutes < 60).flatMap(w => (import.meta.env.VITE_COMMUTE_PROVIDER === 'proxy' ? [5,10] : [15]).filter(increment => w.maxMinutes + increment <= 60).map(increment => <button className="btn" disabled={loading} key={w.id + increment} onClick={() => void previewCommute(w,increment)}>+{increment} min for {w.personName || w.name}</button>))}
       <button className="btn" disabled={loading} onClick={() => {
         const order = orderedPreferences(input.priorityOrder).map(p => p.id);
         [order[0], order[1]] = [order[1], order[0]];

@@ -1,0 +1,12 @@
+{
+  "commit": "cc0859b5dbe8694d1f41e22406c1a742de76003a",
+  "run": 43390643743,
+  "job": 131769431536,
+  "url": "https://github.com/markfoth/SuperSet-Hackathon---SF/actions/runs/43390643743/job/131769431536",
+  "python": "3.11.18",
+  "platform": "ubuntu-latest public standard runner",
+  "tests_passed": 47,
+  "validator_errors": 0,
+  "warnings": "Two inherited Rasterio/Affine PendingDeprecationWarnings",
+  "conclusion": "success"
+}

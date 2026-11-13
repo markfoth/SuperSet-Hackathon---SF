@@ -7,21 +7,21 @@
     "network": "Unthrottled"
   },
   "initial": {
-    "controlsMs": 313,
-    "ms": 1272,
-    "bytes": 841606,
+    "controlsMs": 458,
+    "ms": 1431,
+    "bytes": 841988,
     "requests": 18,
-    "pbfBytes": 91355,
+    "pbfBytes": 91365,
     "pbfRequests": 2
   },
   "firstSearch": {
-    "ms": 253,
+    "ms": 390,
     "bytes": 3599262,
     "requests": 4
   },
   "focusedView": {
     "vectorRequests": 1,
-    "vectorBytes": 25097
+    "vectorBytes": 25091
   },
   "buildings": {
     "renderer": "maplibre",
@@ -42,7 +42,7 @@
   },
   "terrain": {
     "requests": 5,
-    "bytes": 388609,
+    "bytes": 388614,
     "map": {
       "renderer": "maplibre",
       "selectionId": "",
@@ -64,21 +64,21 @@
   },
   "interaction": {
     "frameSamples": 59,
-    "meanFrameMs": 16.12372881350881,
-    "p95FrameMs": 16.800000000000182,
-    "maxFrameMs": 17.399999999999636
+    "meanFrameMs": 16.257627118644066,
+    "p95FrameMs": 16.900000000000546,
+    "maxFrameMs": 17.199999999999818
   },
   "longTasks": {
-    "count": 11,
-    "totalMs": 1836,
-    "maxMs": 932
+    "count": 10,
+    "totalMs": 1886,
+    "maxMs": 1020
   },
   "heapSamples": [
-    28137264,
-    26341944,
-    26503252,
-    27624060,
-    27594980
+    28169912,
+    26538092,
+    26381748,
+    26381016,
+    26514512
   ],
   "consoleErrors": []
 }

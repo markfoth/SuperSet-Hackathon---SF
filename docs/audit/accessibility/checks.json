@@ -29,6 +29,15 @@
     "deviceScaleFactor": 2,
     "method": "1440x900 effective CSS viewport halved; installed Chrome headless, not browser toolbar zoom",
     "keyboardPrimaryAction": true,
+    "unobscuredMapControls": [
+      "3D buildings",
+      "Terrain",
+      "Map tilt",
+      "Reset north",
+      "Fit locations",
+      "Zoom in",
+      "Zoom out"
+    ],
     "horizontalOverflow": false
   }
 ]

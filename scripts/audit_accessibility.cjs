@@ -35,12 +35,19 @@ const fs=require('node:fs');
  }
  const page=await browser.newPage({viewport:{width:720,height:450},deviceScaleFactor:2,reducedMotion:'reduce'});await page.goto(base);
  await page.getByRole('button',{name:'Add your destinations',exact:true}).waitFor();
+ await page.locator('.map[data-map-ready="true"]').waitFor({timeout:45000});
+ const unobscured=[];
+ for(const name of ['3D buildings','Terrain','Map tilt','Reset north','Fit locations','Zoom in','Zoom out']) {
+  const button=page.getByRole('button',{name,exact:true});
+  const visible=await button.evaluate(node=>{const box=node.getBoundingClientRect();const hit=document.elementFromPoint(box.x+box.width/2,box.y+box.height/2);return node===hit||node.contains(hit);});
+  if(!visible)throw Error(`Map control obscured at 200% reflow: ${name}`);unobscured.push(name);
+ }
  let reached=false;
  for(let i=0;i<35;i++) {await page.keyboard.press('Tab');if(await page.getByRole('button',{name:'Add your destinations',exact:true}).evaluate(e=>e===document.activeElement)){reached=true;break;}}
  if(!reached)throw Error('Primary action unreachable by keyboard');await page.keyboard.press('Enter');
  await page.getByRole('textbox',{name:'Search local places',exact:true}).focus();await page.keyboard.type('Financial District');await page.keyboard.press('Enter');
  await page.locator('.place-search-result').first().waitFor();await page.screenshot({path:`${output}/desktop-200-percent-reflow.png`});
  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);if(overflow)throw Error('Horizontal page overflow at 200% equivalent reflow');
- report.push({name:'desktop-200-percent-reflow',cssViewport:'720x450',deviceScaleFactor:2,method:'1440x900 effective CSS viewport halved; installed Chrome headless, not browser toolbar zoom',keyboardPrimaryAction:true,horizontalOverflow:overflow});
+ report.push({name:'desktop-200-percent-reflow',cssViewport:'720x450',deviceScaleFactor:2,method:'1440x900 effective CSS viewport halved; installed Chrome headless, not browser toolbar zoom',keyboardPrimaryAction:true,unobscuredMapControls:unobscured,horizontalOverflow:overflow});
  fs.writeFileSync(`${output}/checks.json`,JSON.stringify(report,null,2));console.log(JSON.stringify(report));await browser.close();
 })().catch(error=>{console.error(error);process.exit(1);});

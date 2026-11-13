@@ -106,3 +106,16 @@ test('identical priorities reached through different edit histories produce iden
  expect(await page.locator('.cards>.card[data-area-id]').evaluateAll(nodes=>nodes.map(node=>node.getAttribute('data-area-id')))).toEqual(before);
  await expect(page.locator('.map')).toHaveAttribute('data-eligible-count',count!);
 });
+
+test('short desktop reflow keeps every map control unobscured',async({page})=>{
+ await page.setViewportSize({width:720,height:450});await page.goto('/');
+ await expect(page.locator('.map')).toHaveAttribute('data-map-ready','true');
+ for(const name of ['3D buildings','Terrain','Map tilt','Reset north','Fit locations','Zoom in','Zoom out']) {
+   const hit=await page.getByRole('button',{name,exact:true}).evaluate(node=>{
+     const box=node.getBoundingClientRect(),target=document.elementFromPoint(box.x+box.width/2,box.y+box.height/2);
+     return node===target||node.contains(target);
+   });
+   expect(hit,`${name} must remain reachable`).toBe(true);
+ }
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
