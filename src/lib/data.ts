@@ -10,7 +10,7 @@ export function loadData<T>(file: string): Promise<T> {
       fetch(url).then((r) => {
         if (!r.ok) throw new Error(`Could not load ${file} (HTTP ${r.status})`);
         return r.json();
-      }),
+      }).catch((error: unknown) => { cache.delete(file); throw error; }),
     );
   }
   return cache.get(file) as Promise<T>;

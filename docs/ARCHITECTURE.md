@@ -13,14 +13,41 @@
                         data/sf/processed/  + data/sf/manifest.yaml           (committed, ~9 MB)
                                    │  scripts/sync_public_data.mjs (predev / prebuild)
                                    ▼
-                        public/data/  ──► Vite static build ──► browser (React + Leaflet)
+                        public/data/  ──► Vite static build ──► browser (React + MapLibre; lazy Leaflet fallback)
                                                                    │
                                      CommuteProvider ──► fixtures (offline) │ proxy → routing API (later)
 ```
 
-No database and no permanent backend. Everything static is precomputed; the only per-user
-runtime computation is client-side (commute coverage, ranking). A small proxy is needed only
-when live routing is added, to keep keys server-side.
+No household database is required. Committed open-data inputs are precomputed; matching,
+local scenarios, home evidence, portable sharing and monthly costs run in the browser.
+Optional evaluation routing is served by the existing Vercel functions or the small Node
+proxy, with private server-only credentials. The upgrade does not migrate production
+infrastructure or add a collaboration service.
+
+## Product upgrade
+
+`App.tsx` owns the shared household, confirmed destinations, current routing identities,
+preferences, selection, map modes, homes and bookmarks. Versioned, validated local snapshots
+replace session-only workplace persistence while preserving valid legacy settings.
+Named scenarios and share/import logic live in `features/scenarios`; precise coordinates
+are excluded from links unless the user opts in. `features/homes` tests actual pins against
+commute polygons and keeps inherited local measurements distinct.
+
+`MapLibreMap` renders OpenFreeMap vector tiles and renderer-neutral GeoJSON derived by
+`mapData.ts`. Unknown and excluded states are preserved; excluded cells never enter the
+visible matching source. `LeafletMap` and Leaflet itself are loaded only when needed for
+WebGL compatibility. Context builders fetch only on explicit toggles. Buildings use the
+viewport basemap source, not a startup city GeoJSON. `scripts/build_terrain.py` creates a
+bounded, lazy XYZ Terrain RGB pyramid from the genuine cached USGS DEM.
+
+`commuteRequestKey` includes the confirmed coordinate, mode, limit and supported arrival
+ time. Request generations prevent stale responses satisfying new constraints. Exact
+journey checks are explicit, bounded home-to-destination requests through `/api/journeys`;
+they do not change the hard eligibility gate. Provider failures return unknown evidence.
+
+Detailed current contracts: [maps](MAP_UPGRADE.md), [routing/search](SEARCH_ROUTING.md)
+and [households/homes](HOUSEHOLD_SCENARIOS.md). The original data pipeline and ranking
+contracts below remain applicable.
 
 ## Data pipeline (`scripts/`)
 

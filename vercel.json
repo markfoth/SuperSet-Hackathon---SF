@@ -6,6 +6,11 @@
   "installCommand": "npm ci",
   "regions": ["sfo1"],
   "functions": {
-    "api/isochrone.js": { "maxDuration": 30 }
-  }
+    "api/isochrone.js": { "maxDuration": 30 },
+    "api/journeys.js": { "maxDuration": 30 }
+  },
+  "headers": [
+    { "source": "/data/terrain/:path*", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }] },
+    { "source": "/data/:file", "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, stale-while-revalidate=86400" }] }
+  ]
 }

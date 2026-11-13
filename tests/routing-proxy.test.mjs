@@ -20,6 +20,9 @@ test('outbound, invalid hours and unsupported locations cannot reach a provider'
   const base = { lat: 37.79, lon: -122.4, mode: 'transit', minutes: 45 };
   assert.match(validate({ ...base, direction: 'from_workplace' }).error, /inbound/);
   assert.match(validate({ ...base, arrive_by: '99:99' }).error, /valid/);
+  assert.match(validate({ ...base, arrive_by: '9:15' }).error, /valid/);
+  assert.match(validate({ ...base, minutes: 30.5 }).error, /whole number/);
+  assert.match(validate({ ...base, lat: null }).error, /lat\/lon/);
   assert.match(validate({ ...base, lon: 0 }).error, /outside/);
   assert.equal(validate(base).error, undefined);
 });
@@ -47,6 +50,11 @@ test('HTTP proxy: missing credentials return 503; dry-run shows a genuine inboun
       const body = await response.json();
       if (dry === '1') assert.equal(body.request.arrival_searches[0].transportation.type, 'public_transport');
       else assert.match(body.error, /not configured/);
+      const journeys = await fetch(`${url}/api/journeys`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ home: { lat: 37.76, lon: -122.42 }, destinations: [{ id: 'office', lat: 37.79, lon: -122.4, mode: 'transit' }] }) });
+      assert.equal(journeys.status, 503);
+      const foreign = await fetch(`${url}/isochrone`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'https://other.example' }, body: '{}' });
+      assert.equal(foreign.status, 403);
     } finally { child.kill(); }
   }
 });

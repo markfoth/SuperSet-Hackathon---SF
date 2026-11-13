@@ -16,6 +16,14 @@ export interface Workplace {
   lon: number;
   mode: TravelMode;
   maxMinutes: number;
+  /** Display labels are independent of the confirmed map location. */
+  placeName?: string;
+  personId?: string;
+  personName?: string;
+  colour?: string;
+  officeDays?: number;
+  /** Pacific arrival time, only used by providers that support arrive-by searches. */
+  arrivalTime?: string;
 }
 
 export type PreferenceLevel = 'off' | 'nice' | 'important' | 'must';

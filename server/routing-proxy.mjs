@@ -8,8 +8,8 @@
 // Commutes are HOME -> WORK: TravelTime `arrival_searches` (arrive at the workplace by
 // `arrive_by`, default 08:45, on the next weekday, America/Los_Angeles).
 // Uses only Node built-ins (Node >= 18). Reads TRAVELTIME_APP_ID / TRAVELTIME_API_KEY from the
-// environment or the repo's .env. Without them every request returns 503 and the app falls back
-// to its offline fixtures. TravelTime's free Basic plan is for development/testing only.
+// environment or the repo's .env. Without them every request returns 503; the app explicitly
+// labels its two offline examples. TravelTime Basic is for research/development/evaluation.
 import { createServer } from 'node:http';
 import { createRoutingService } from './routing-core.mjs';
 export { buildRequest, nextWeekdayArrival, validate } from './routing-core.mjs';
@@ -21,7 +21,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const env = { ...readDotEnv(join(ROOT, '.env')), ...process.env };
 const APP_ID = env.TRAVELTIME_APP_ID || '';
 const API_KEY = env.TRAVELTIME_API_KEY || '';
-const PORT = Number(env.ROUTING_PROXY_PORT || 8787);
+const PORT = Number(env.PORT || env.ROUTING_PROXY_PORT || 8787);
 const CACHE_FILE = join(ROOT, 'data', 'cache', 'isochrones.json');
 
 function readDotEnv(path) {
@@ -34,9 +34,21 @@ function readDotEnv(path) {
   return out;
 }
 
-const cache = existsSync(CACHE_FILE) ? JSON.parse(readFileSync(CACHE_FILE, 'utf8')) : {};
+let cache = {};
+if (env.ROUTING_CACHE_ALLOWED === '1' && existsSync(CACHE_FILE)) {
+  try {
+    const parsed = JSON.parse(readFileSync(CACHE_FILE, 'utf8'));
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) cache = parsed;
+  } catch { console.warn('[proxy] unreadable optional routing cache; continuing without it'); }
+}
 
 function saveCache() {
+  // Keep a small bounded local cache, including precise locations only when rights are enabled.
+  const now = Date.now();
+  cache = Object.fromEntries(Object.entries(cache).filter(([, entry]) => {
+    const age = now - Date.parse(entry?.fetched || entry?.fetchedAt);
+    return age >= 0 && age < 86400000;
+  }).slice(-512));
   mkdirSync(dirname(CACHE_FILE), { recursive: true });
   writeFileSync(CACHE_FILE, JSON.stringify(cache));
 }
@@ -47,7 +59,7 @@ const routing = createRoutingService({ env, cache: {
 } });
 
 function send(res, status, obj) {
-  res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': env.ROUTING_ALLOW_ORIGIN || 'http://localhost:5173', 'Access-Control-Allow-Headers': 'Content-Type' });
+  res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Access-Control-Allow-Origin': env.ROUTING_ALLOW_ORIGIN || 'http://localhost:5173', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Allow-Methods': 'POST, GET, OPTIONS' });
   res.end(JSON.stringify(obj));
 }
 
@@ -57,13 +69,15 @@ const server = createServer(async (req, res) => {
   if (req.method === 'GET' && path === '/health') {
     return send(res, 200, { ...routing.health(), cached: Object.keys(cache).length });
   }
-  if (req.method !== 'POST' || path !== '/isochrone') return send(res, 404, { error: 'not found' });
+  if (req.method !== 'POST' || !['/isochrone', '/journeys'].includes(path)) return send(res, 404, { error: 'not found' });
+  const origin = req.headers.origin;
+  if (origin && origin !== `http://${req.headers.host}` && origin !== env.ROUTING_ALLOW_ORIGIN) return send(res, 403, { error: 'cross-origin routing is not allowed' });
 
   let raw = '';
   for await (const chunk of req) { raw += chunk; if (raw.length > 10000) return send(res, 413, { error: 'body too large' }); }
   let body;
   try { body = JSON.parse(raw); } catch { return send(res, 400, { error: 'invalid JSON' }); }
-  const result = await routing.run(body);
+  const result = await (path === '/journeys' ? routing.runJourneys(body) : routing.run(body));
   return send(res, result.status, result.body);
 });
 

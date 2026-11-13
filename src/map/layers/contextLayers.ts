@@ -1,9 +1,13 @@
 // Independent context overlays. Each is lazily loaded the first time it is
 // switched on, and any combination can be visible at once.
-import L from 'leaflet';
+import type L from 'leaflet';
 import type { Feature, FeatureCollection } from 'geojson';
 import { loadData } from '../../lib/data';
 import { num } from '../../lib/format';
+
+// LayerPanel imports metadata from this module. Defer the compatibility renderer
+// until an actual Leaflet layer is requested so normal MapLibre sessions omit it.
+const getLeaflet = () => import('leaflet').then((module) => module.default);
 
 export interface LegendItem { color: string; label: string; dashed?: boolean }
 
@@ -47,6 +51,7 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
       label: i === 0 ? `< ${CRIME_BREAKS[0]} per km²` : i === CRIME_COLORS.length - 1 ? `${num(CRIME_BREAKS[i - 1])}+` : `${CRIME_BREAKS[i - 1]}–${CRIME_BREAKS[i]}`,
     })),
     build: async () => {
+      const L = await getLeaflet();
       const fc = await loadData<FeatureCollection>('crime_grid.geojson');
       return L.geoJSON(fc, {
         pane: 'context-fill',
@@ -66,6 +71,7 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
       color, label: ['0 m · sea level', '50 m', '100 m', '200 m', '300 m', '450 m+'][i],
     })),
     build: async () => {
+      const L = await getLeaflet();
       const data = await loadData<{ image: string; bounds: [[number, number], [number, number]] }>('topography.json');
       const url = `${import.meta.env.BASE_URL}data/${data.image}`;
       const image = new Image();
@@ -80,6 +86,7 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
     note: 'SFMTA and San Mateo County existing bikeways. Protected, painted and shared routes are shown separately; proposed lanes omitted.',
     legend: ['protected', 'path', 'lane', 'neighborway', 'route'].map((k) => ({ color: BIKE_STYLE[k].color, label: BIKE_STYLE[k].label, dashed: !!BIKE_STYLE[k].dashArray })),
     build: async () => {
+      const L = await getLeaflet();
       const fc = await loadData<FeatureCollection>('cycling_network.geojson');
       return L.geoJSON(fc, {
         pane: 'context-lines',
@@ -104,6 +111,7 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
       { color: '#4e2a84', label: 'Muni Metro / streetcar' }, { color: '#8b94a3', label: 'Muni / SamTrans bus' },
     ],
     build: async (map) => {
+      const L = await getLeaflet();
       const [routes, stops] = await Promise.all([
         loadData<FeatureCollection>('transit_routes.geojson'),
         loadData<FeatureCollection>('transit_stops.geojson'),
@@ -113,7 +121,7 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
       const routeLayer = L.geoJSON(routes, {
         pane: 'context-lines',
         style: (f) => ({ color: f!.properties!.mode === 'bus' ? modeColor.bus : f!.properties!.color ?? modeColor[f!.properties!.mode], weight: rail(f!) ? 4 : 1.5, opacity: rail(f!) ? 0.9 : 0.55 }),
-        onEachFeature: (f, l) => l.bindTooltip(`${esc(f.properties!.agency)} ${esc(f.properties!.short_name)} — ${esc(f.properties!.long_name)}`, { sticky: true }),
+        onEachFeature: (f, l) => l.bindTooltip(`${esc(f.properties!.agency)} ${esc(f.properties!.short_name)}; ${esc(f.properties!.long_name)}`, { sticky: true }),
       });
       const stopLayer = (railOnly: boolean) => L.geoJSON(stops, {
         pane: 'context-points',
@@ -145,6 +153,7 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
     note: 'SF Rec & Park, San Mateo County mapped parks, and OpenStreetMap parks/open spaces. Entrance access unverified.',
     legend: [{ color: '#5aa469', label: 'Park or open space' }],
     build: async () => {
+      const L = await getLeaflet();
       const fc = await loadData<FeatureCollection>('parks.geojson');
       return L.geoJSON(fc, {
         pane: 'context-fill',
@@ -159,6 +168,7 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
     note: 'Supermarkets and greengrocers mapped in OpenStreetMap.',
     legend: [{ color: '#d97706', label: 'Supermarket' }, { color: '#65a30d', label: 'Greengrocer' }],
     build: async () => {
+      const L = await getLeaflet();
       const fc = await loadData<FeatureCollection>('groceries.geojson');
       return L.geoJSON(fc, {
         pane: 'context-points',
@@ -173,6 +183,7 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
     note: 'SF coverage only; Peninsula data unavailable. Injury crashes over 3 years, per ~0.7 km² hexagon. Reflects traffic volume as well as danger.',
     legend: ['< 5 crashes', '5–20', '20–50', '50–100', '100+'].map((label, i) => ({ color: CRIME_COLORS[i], label })),
     build: async () => {
+      const L = await getLeaflet();
       const fc = await loadData<FeatureCollection>('collisions_grid.geojson');
       return L.geoJSON(fc, {
         pane: 'context-fill',
@@ -190,6 +201,7 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
     note: 'CalEnviroScreen 5.0, per census tract: statewide PM2.5 percentile (100 = most burdened in California). Click a tract for diesel, traffic and other pollution indicators.',
     legend: ['< 20th percentile', '20–40th', '40–60th', '60–80th', '80th+'].map((label, i) => ({ color: AIR_COLORS[i], label })),
     build: async () => {
+      const L = await getLeaflet();
       const fc = await loadData<FeatureCollection>('census_tracts.geojson');
       return L.geoJSON(fc, {
         pane: 'context-fill',
@@ -211,6 +223,7 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
       color, label: ['2 · fewer mapped venues', '5', '10', '20', '40+ · more mapped venues'][i] + ' / km²',
     })),
     build: async () => {
+      const L = await getLeaflet();
       const data = await loadData<{ image: string; bounds: [[number, number], [number, number]] }>('nightlife.json');
       const url = `${import.meta.env.BASE_URL}data/${data.image}`;
       const image = new Image(); image.src = url; await image.decode();
@@ -220,9 +233,10 @@ export const CONTEXT_LAYERS: ContextLayerDef[] = [
   {
     id: 'food',
     label: 'Cafés, restaurants & bars',
-    note: 'OpenStreetMap places, shown at street zoom (zoom in to see them). For exploring a neighbourhood — not used in ranking.',
+    note: 'OpenStreetMap places, shown at street zoom (zoom in to see them). For exploring a neighbourhood; not used in ranking.',
     legend: [{ color: '#8b5a2b', label: 'Café / coffee' }, { color: '#e03131', label: 'Restaurant' }, { color: '#7048e8', label: 'Bar / pub' }],
     build: async (map) => {
+      const L = await getLeaflet();
       const [cafes, restaurants, bars] = await Promise.all([
         loadData<FeatureCollection>('cafes.geojson'), loadData<FeatureCollection>('restaurants.geojson'), loadData<FeatureCollection>('bars.geojson'),
       ]);

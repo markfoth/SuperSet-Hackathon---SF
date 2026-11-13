@@ -42,15 +42,16 @@ export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, wor
       )}
       <h2>{m.name}</h2>
       {m.region === 'peninsula' && <p className="hint">Peninsula {m.boundary_kind === 'unincorporated area' ? 'county community' : m.boundary_kind ?? 'area'} grouping, limited to land north of SFO’s southern edge. Local incident and injury-crash data are unavailable here.</p>}
-      <p className="suitability"><b>{result.eligibleCount} area{result.eligibleCount === 1 ? '' : 's'} found.</b> {result.unknownCount > 0 ? `${result.unknownCount} areas have insufficient information.` : ''}</p>
-      {cellResult && <CellDetail result={cellResult} workplaces={workplaces} />}
-      {!cellResult && <div className="local-choices"><p className="hint">Choose a hexagon on the map for local measurements, or explore a leading eligible cell:</p>
+      <p className="suitability"><b>{result.eligibleCount} matching location{result.eligibleCount === 1 ? '' : 's'}.</b> {result.unknownCount > 0 ? `${result.unknownCount} locations have insufficient information.` : ''}</p>
+      {cellResult && <details className="detail-group" open><summary>Selected location</summary><CellDetail result={cellResult} workplaces={workplaces} /></details>}
+      {!cellResult && result.eligible && <div className="local-choices"><p className="hint">Choose a map cell for local evidence, or explore one of these leading matching locations:</p>
         {ranked(cellResults).slice(0, 3).map((r) => <button className="btn" key={r.id} onClick={() => onSelectCell(r.id)}>{r.state === 'strong' ? 'Strong' : 'Partial'} · {r.cell.street_grade_pct == null ? 'Grade unavailable' : `${r.cell.street_grade_pct}% street grade`}</button>)}
       </div>}
       {c?.description && <p>{c.description}</p>}
       <div className="tags">{c?.tags.map((t) => <span key={t} className="tag">{t}</span>)}</div>
 
-      {!result.eligible && (
+      {result.state === 'unknown' && <div className="notice"><b>Required evidence unavailable.</b><p>{result.unknownCount} candidate locations cannot be confirmed because a required measurement or commute is missing. Missing information is not a failed requirement.</p><p className="hint">{result.unchecked.map(id => id === 'commute' ? 'One or more commutes' : id).join(', ')}</p></div>}
+      {!result.eligible && result.state !== 'unknown' && (
         <div className="notice">
           <b>Excluded by your current settings:</b>
           <ul>{result.reasons.map((r, i) => <li key={i}>{r.kind === 'mustHave' ? 'Example cell: ' : ''}{reasonText(r, workplaces)}</li>)}</ul>
@@ -59,16 +60,18 @@ export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, wor
 
       {result.commute && (
         <>
-          <h3>Commute</h3>
+          <h3>Commutes</h3>
           <ul className="facts">
             {workplaces.map((w) => (
-              <li key={w.id}><span>{w.name}</span><b>{pct(result.commute!.byWorkplace[w.id])} of area ≤ {w.maxMinutes} min</b></li>
+              <li key={w.id}><span>{w.personName ? `${w.personName} · ` : ''}{w.name}</span><b>{pct(result.commute!.byWorkplace[w.id])} of candidate land within {w.maxMinutes} min</b></li>
             ))}
           </ul>
         </>
       )}
 
-      <h3>Area context</h3>
+      <p className="hint">These shares summarise representative points across the neighbourhood. They are not exact times for a home. Home comparisons can request a route at the selected pin.</p>
+      <details className="detail-group"><summary>Neighbourhood context</summary>
+      <p className="hint">Whole-neighbourhood summaries below use their original source geographies. They do not replace selected-cell measurements.</p>
       <ul className="facts">
         {m.parks?.share_within_400m != null && <li><span>Area within 400 m of parks</span><b>{pct(m.parks.share_within_400m)}</b></li>}
         {m.cycling && <li><span>Bike lane/path density (area)</span><b>{num(m.cycling.dedicated_km_per_km2, 1)} km/km²</b></li>}
@@ -101,7 +104,8 @@ export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, wor
         </>
       )}
 
-      <h3>Rents</h3>
+      </details>
+      <h3>Rent and costs</h3>
       {zipRent && mainZip ? (
         <>
           <p>

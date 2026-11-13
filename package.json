@@ -21,6 +21,7 @@
     "@turf/intersect": "^7.4.0",
     "@vercel/functions": "^3.10.3",
     "leaflet": "^1.9.4",
+    "maplibre-gl": "^6.18.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

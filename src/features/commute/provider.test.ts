@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { DEFAULT_WORKPLACES, getCommuteProvider, isAreaGeometry, proxyProvider } from './provider';
+import { commuteRequestKey, DEFAULT_WORKPLACES, fixtureProvider, getCommuteProvider, isAreaGeometry, proxyProvider } from './provider';
 
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 it('validates geometry instead of accepting empty or malformed successful responses', () => {
@@ -13,6 +13,16 @@ it('sends inbound home-to-work requests through the server proxy', async () => {
   vi.stubGlobal('fetch', fetch);
   expect((await proxyProvider('/api').getArea(DEFAULT_WORKPLACES[0])).ok).toBe(true);
   expect(JSON.parse(fetch.mock.calls[0][1].body)).toMatchObject({ direction: 'to_workplace', mode: 'transit', minutes: 60 });
+});
+it('sends chosen arrival times and includes them in request identity while labels and days stay independent', async () => {
+  const fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ geometry: { type: 'Polygon', coordinates: [[[0, 0], [1, 0], [1, 1], [0, 0]]] } }) });
+  vi.stubGlobal('fetch', fetch);
+  const changed = { ...DEFAULT_WORKPLACES[0], arrivalTime: '09:30' };
+  await proxyProvider('/api').getArea(changed);
+  expect(JSON.parse(fetch.mock.calls[0][1].body).arrive_by).toBe('09:30');
+  expect(commuteRequestKey(changed)).not.toBe(commuteRequestKey(DEFAULT_WORKPLACES[0]));
+  expect(commuteRequestKey({ ...changed, name: 'My office', officeDays: 5 })).toBe(commuteRequestKey(changed));
+  expect((await fixtureProvider.getArea(changed)).ok).toBe(false);
 });
 it('provider failures and invalid payloads remain recoverable failures', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ dryRun: true }) }));

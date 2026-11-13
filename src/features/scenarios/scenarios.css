@@ -1,0 +1,72 @@
+.decision-backdrop { z-index: 1200; padding: 24px; }
+.modal.decision-dialog { width: min(800px, 100%); max-width: 800px; max-height: calc(100dvh - 48px); overflow: auto; color: var(--ink, #233b35); }
+.decision-dialog-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; position: sticky; top: -25px; background: var(--panel, #fffefa); padding-top: 8px; margin-top: -8px; z-index: 2; }
+.decision-dialog-heading h2 { margin: 0; font-size: 1.65rem; letter-spacing: -.04em; }
+.decision-dialog-heading .icon-btn { flex: none; min-width: 44px; min-height: 44px; font-size: 1.4rem; }
+.decision-intro { font-size: 1.1rem; line-height: 1.5; margin: 8px 0; }
+.decision-dialog label { display: grid; gap: 6px; font-size: .8rem; font-weight: 600; }
+.decision-dialog input:not([type=checkbox]), .decision-dialog textarea, .decision-dialog select { width: 100%; min-height: 42px; border: 1px solid #d6ddd7; border-radius: 8px; background: #fff; padding: 10px 12px; color: inherit; font: inherit; font-weight: 400; box-sizing: border-box; }
+.decision-dialog textarea { resize: vertical; }
+.decision-dialog input:focus-visible, .decision-dialog textarea:focus-visible, .decision-dialog select:focus-visible { outline: 3px solid #a0c7b4; outline-offset: 2px; }
+.scenario-form { display: grid; gap: 14px; margin-top: 24px; }
+.decision-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.decision-actions .btn { min-height: 40px; }
+.scenario-snapshot { display: flex; flex-wrap: wrap; gap: 8px 18px; color: #607369; font-size: .8rem; }
+.scenario-share, .scenario-library { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e1e6df; }
+.scenario-share h3, .scenario-library h3 { margin: 0 0 8px; }
+.decision-dialog .check-label { display: flex; align-items: center; gap: 10px; margin: 14px 0; font-weight: 500; font-size: .85rem; }
+.check-label input { width: 20px; height: 20px; accent-color: #2d6753; }
+.share-link { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; margin-top: 12px; }
+.share-link label { min-width: 0; }
+.scenario-message { color: #376b51; font-size: .85rem; padding: 12px; background: #edf5ef; border-radius: 8px; }
+.scenario-row { display: grid; gap: 12px; padding: 18px 0; border-top: 1px solid #e1e6df; }
+.scenario-row h4 { margin: 0 0 4px; font-size: 1rem; }
+.scenario-row p { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .85rem; margin: 8px 0 0; }
+.scenario-row small { color: #6b7b72; }
+.scenario-import { border: 1px solid #a6bdab; border-radius: 10px; padding: 16px; margin-top: 16px; }
+.decision-dialog .section-heading { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.visually-hidden { position: absolute; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0 !important; }
+.decision-dialog .danger { color: #963f36; }
+.modal.home-dialog { width: min(1080px, 100%); max-width: 1080px; }
+.home-layout { display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); gap: 24px; margin-top: 20px; }
+.home-list { border-right: 1px solid #e1e6df; padding-right: 20px; }
+.home-list-item { padding: 14px 0; border-top: 1px solid #e1e6df; }
+.home-list-item:first-child { border-top: 0; }
+.home-list-item > button { display: block; width: 100%; text-align: left; padding: 12px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.home-list-item.selected > button { background: #eef3ed; border-color: #c6d5c8; }
+.home-list-item strong, .home-list-item small { display: block; }
+.home-list-item small { margin-top: 4px; color: #66766c; }
+.home-form { display: grid; gap: 14px; }
+.home-form h3 { margin: 0; }
+.home-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.home-fields .full-width { grid-column: 1 / -1; }
+.home-evidence { padding: 18px 0; margin-top: 18px; border-top: 1px solid #e1e6df; }
+.home-evidence h3 { margin: 0 0 8px; }
+.home-evidence .facts { padding: 0; list-style: none; }
+.home-evidence .facts li { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; font-size: .8rem; border-bottom: 1px solid #eff1ed; }
+.home-evidence .facts li b { text-align: right; }
+.home-state { display: inline-block; border-radius: 5px; padding: 5px 8px; background: #eff2ec; font-size: .8rem; font-weight: 600; }
+.home-state.strong, .home-state.partial { background: #e4f0e6; color: #326447; }
+.home-state.excluded { background: #f6eae6; color: #94483b; }
+.home-comparison { margin-top: 24px; border-top: 1px solid #e1e6df; padding-top: 20px; }
+.home-comparison-scroll { overflow-x: auto; }
+.home-comparison table { border-collapse: collapse; width: 100%; min-width: 500px; font-size: .8rem; }
+.home-comparison th, .home-comparison td { text-align: left; vertical-align: top; padding: 12px; border-bottom: 1px solid #e1e6df; min-width: 140px; }
+.home-comparison th:first-child { min-width: 155px; }
+.home-comparison td small { display: block; margin-top: 4px; color: #6b7b72; }
+.home-comparison th button { font: inherit; font-weight: 600; color: inherit; cursor: pointer; background: none; border: 0; text-align: left; padding: 0; }
+.home-notes { white-space: pre-wrap; overflow-wrap: anywhere; }
+.journey-summary { display: flex; flex-wrap: wrap; gap: 16px; background: #edf3ed; padding: 14px; border-radius: 8px; margin: 12px 0; }
+.journey-summary > span { display: grid; gap: 3px; font-size: .75rem; }
+.journey-summary b { font-size: 1rem; }
+@media (max-width: 680px) {
+  .decision-backdrop { padding: 10px; align-items: end; }
+  .decision-dialog { max-height: calc(100dvh - 20px); border-radius: 18px 18px 10px 10px; padding: 20px; }
+  .decision-dialog-heading h2 { font-size: 1.4rem; }
+  .home-layout { grid-template-columns: 1fr; gap: 18px; }
+  .home-list { border: 0; padding: 0 0 18px; border-bottom: 1px solid #e1e6df; }
+  .home-list-item { display: inline-block; width: calc(50% - 5px); vertical-align: top; border: 0; }
+  .home-list-item > button { padding: 10px; }
+  .home-fields { gap: 10px; }
+  .decision-dialog .btn { min-height: 44px; }
+}

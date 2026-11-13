@@ -14,6 +14,8 @@ export interface CommuteArea {
   label: string; // shown to the user verbatim, e.g. "Synthetic (straight-line speed model)"
   synthetic: boolean;
   source: string;
+  fetchedAt?: string;
+  arrivalDate?: string;
 }
 
 export type CommuteResult = { ok: true; area: CommuteArea } | { ok: false; reason: string };
@@ -38,9 +40,12 @@ export interface CommuteProvider {
 
 // Default workplaces have precomputed fixtures (scripts/build_commute_fixtures.py).
 export const DEFAULT_WORKPLACES: Workplace[] = [
-  { id: 'sfo', name: 'SFO Airport', lat: 37.6213, lon: -122.379, mode: 'transit', maxMinutes: 60 },
-  { id: 'fidi', name: 'Financial District', lat: 37.7946, lon: -122.3999, mode: 'transit', maxMinutes: 45 },
+  { id: 'sfo', name: 'SFO Airport', placeName: 'SFO Airport', personName: 'Alex', personId: 'alex', colour: '#e8590c', officeDays: 3, arrivalTime: '08:45', lat: 37.6213, lon: -122.379, mode: 'transit', maxMinutes: 60 },
+  { id: 'fidi', name: 'Financial District', placeName: 'Financial District', personName: 'Sam', personId: 'sam', colour: '#7048e8', officeDays: 3, arrivalTime: '08:45', lat: 37.7946, lon: -122.3999, mode: 'transit', maxMinutes: 45 },
 ];
+
+/** Labels, colours and office days do not change reachable geometry. Arrival time does. */
+export const commuteRequestKey = (w: Workplace): string => `${w.lat.toFixed(5)},${w.lon.toFixed(5)},${w.mode},${w.maxMinutes},${w.arrivalTime || '08:45'}`;
 
 function fixtureKey(wp: Workplace): string | null {
   // A workplace matches a fixture only if it is still at the default location (±50 m).
@@ -53,6 +58,7 @@ function fixtureKey(wp: Workplace): string | null {
 export const fixtureProvider: CommuteProvider = {
   id: 'fixture',
   async getArea(wp) {
+    if (wp.arrivalTime && wp.arrivalTime !== '08:45') return { ok: false, reason: 'Offline examples only model an 08:45 arrival. Restore that time or use configured live evaluation routing.' };
     const key = fixtureKey(wp);
     if (!key) {
       return { ok: false, reason: 'No offline commute data for this location (offline data covers the two demo workplaces).' };
@@ -70,7 +76,7 @@ export const fixtureProvider: CommuteProvider = {
         mode: wp.mode,
         minutes: wp.maxMinutes,
         geometry: f.geometry,
-        label: f.properties.label,
+        label: f.properties.label.replace(/\s*\u2014\s*/g, '; '),
         synthetic: f.properties.synthetic,
         source: 'fixture',
       },
@@ -89,7 +95,7 @@ export function proxyProvider(baseUrl: string): CommuteProvider {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             lat: wp.lat, lon: wp.lon, mode: wp.mode, minutes: wp.maxMinutes,
-            direction: 'to_workplace', arrive_by: '08:45',
+            direction: 'to_workplace', arrive_by: wp.arrivalTime || '08:45',
           }),
           signal: AbortSignal.timeout(25000),
         });
@@ -97,7 +103,7 @@ export function proxyProvider(baseUrl: string): CommuteProvider {
           const detail = await r.json().then((b: { error?: string }) => b.error).catch(() => undefined);
           return { ok: false, reason: `Live routing unavailable${detail ? `: ${detail}` : ` (HTTP ${r.status})`}.` };
         }
-        const body = (await r.json()) as { geometry: AreaGeometry; label?: string; source?: string; dryRun?: boolean };
+        const body = (await r.json()) as { geometry: AreaGeometry; label?: string; source?: string; dryRun?: boolean; fetchedAt?: string; arrivalDate?: string };
         if (body.dryRun) return { ok: false, reason: 'Live routing is in dry-run mode. Set ROUTING_DRY_RUN=0 in .env and restart the routing proxy.' };
         if (!isAreaGeometry(body.geometry)) return { ok: false, reason: 'Live routing returned no valid reachable area.' };
         return {
@@ -105,6 +111,7 @@ export function proxyProvider(baseUrl: string): CommuteProvider {
           area: {
             workplaceId: wp.id, mode: wp.mode, minutes: wp.maxMinutes, geometry: body.geometry,
             label: body.label ?? 'Live routing', synthetic: false, source: body.source ?? 'proxy',
+            fetchedAt: body.fetchedAt, arrivalDate: body.arrivalDate,
           },
         };
       } catch {
