@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRoutingService } from '../server/routing-core.mjs';
+import { createRoutingService, routingConfiguration } from '../server/routing-core.mjs';
 import handler from '../api/isochrone.js';
 import journeysHandler from '../api/journeys.js';
 import healthHandler from '../api/health.js';
@@ -118,5 +118,14 @@ test('journey endpoint and health checks protect method, origin, body size and c
   assert.equal(health.status, 200);
   assert.equal(health.headers.get('cache-control'), 'no-store');
   const healthBody = await health.json();
-  assert.deepEqual(Object.keys(healthBody).sort(), ['cacheAllowed', 'configured', 'dryRun', 'service', 'usage']);
+  assert.deepEqual(Object.keys(healthBody).sort(), ['apiKeyPresent','applicationIdPresent','cacheAllowed','capScope','configured','dailyCap','direction','dryRun','provider','service','status','supportedModes','timezone','usage'].sort());
+  assert.equal(typeof healthBody.applicationIdPresent, 'boolean');
+  assert.equal(typeof healthBody.apiKeyPresent, 'boolean');
+  assert.equal(healthBody.direction, 'home-to-work');
+  assert.equal(healthBody.timezone, 'America/Los_Angeles');
+  assert.ok(healthBody.supportedModes.includes('transit'));
+  assert.equal(routingConfiguration({}).status, 'missing server credentials');
+  assert.equal(routingConfiguration(configured).status, 'ready for live evaluation');
+  assert.equal(routingConfiguration({...configured,ROUTING_DRY_RUN:'1'}).status, 'dry run; live requests disabled');
+  assert.equal(JSON.stringify(routingConfiguration(configured)).includes(configured.TRAVELTIME_API_KEY), false);
 });

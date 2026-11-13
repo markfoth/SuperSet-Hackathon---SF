@@ -1,4 +1,4 @@
-efbfad1226bb78e182dbeaf4e33837a47a8e89fd	refs/heads/feature/common-ground-household-upgrade
-f70b94ec9648ec9cf3beada8f9f1ca4d765b6024	refs/heads/feature/regional-decision-redesign
-a938a3d34a45c37e12439d8b84efaec0a19b41fe	refs/heads/hack/fine-area-discovery
-e2b6fccec2c430cd7c811768b83b8401c5d6f2ee	refs/heads/main
+efbfad1226bb78e182dbeaf4e33837a47a8e89fd	refs/heads/feature/common-ground-household-upgrade
+f70b94ec9648ec9cf3beada8f9f1ca4d765b6024	refs/heads/feature/regional-decision-redesign
+a938a3d34a45c37e12439d8b84efaec0a19b41fe	refs/heads/hack/fine-area-discovery
+e2b6fccec2c430cd7c811768b83b8401c5d6f2ee	refs/heads/main

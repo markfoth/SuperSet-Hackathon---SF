@@ -57,21 +57,28 @@ export function validate(body) {
   return { lat: Math.round(lat * 1e4) / 1e4, lon: Math.round(lon * 1e4) / 1e4, mode: body.mode, minutes, arriveBy, arrivalTime: nextWeekdayArrival(arriveBy) };
 }
 
+/** Shared, credential-free configuration for local and hosted health endpoints. */
+export function routingConfiguration(env = process.env) {
+  const requestedCap = Number(env.ROUTING_DAILY_CAP ?? 300);
+  const dailyCap = Number.isInteger(requestedCap) && requestedCap >= 0 ? requestedCap : 300;
+  const dryRun = env.ROUTING_DRY_RUN === '1';
+  const applicationIdPresent = Boolean(env.TRAVELTIME_APP_ID), apiKeyPresent = Boolean(env.TRAVELTIME_API_KEY);
+  return { configured: applicationIdPresent && apiKeyPresent, applicationIdPresent, apiKeyPresent,
+    status: !applicationIdPresent || !apiKeyPresent ? 'missing server credentials' : dryRun ? 'dry run; live requests disabled' : 'ready for live evaluation',
+    provider: 'traveltime', direction: 'home-to-work', timezone: 'America/Los_Angeles', supportedModes: Object.keys(MODES),
+    dailyCap, dryRun, cacheAllowed: env.ROUTING_CACHE_ALLOWED === '1', capScope: 'per running instance; provider account limits still apply' };
+}
+
 /** Same routing behavior for localhost and Vercel, with storage supplied by the host. */
 export function createRoutingService({ env = process.env, cache, fetchImpl = fetch } = {}) {
   const appId = env.TRAVELTIME_APP_ID || '';
   const apiKey = env.TRAVELTIME_API_KEY || '';
-  const requestedCap = Number(env.ROUTING_DAILY_CAP ?? 300);
-  const dailyCap = Number.isInteger(requestedCap) && requestedCap >= 0 ? requestedCap : 300;
-  const dryRun = env.ROUTING_DRY_RUN === '1';
+  const configuration = routingConfiguration(env);
+  const { dailyCap, dryRun, cacheAllowed } = configuration;
   // Basic-plan storage rights are not assumed. An operator must verify their rights first.
-  const cacheAllowed = env.ROUTING_CACHE_ALLOWED === '1';
   const inflight = new Map();
   let liveToday = { day: new Date().toISOString().slice(0, 10), count: 0 };
-  const health = () => ({ configured: Boolean(appId && apiKey), applicationIdPresent: Boolean(appId), apiKeyPresent: Boolean(apiKey),
-    status: !appId || !apiKey ? 'missing server credentials' : dryRun ? 'dry run; live requests disabled' : 'ready for live evaluation',
-    provider: 'traveltime', direction: 'home-to-work', timezone: 'America/Los_Angeles', supportedModes: Object.keys(MODES), liveToday: liveToday.count,
-    dailyCap, dryRun, cacheAllowed, capScope: 'per running instance; provider account limits still apply' });
+  const health = () => ({ ...configuration, liveToday: liveToday.count });
   const reply = (status, body) => ({ status, body });
 
   async function requestProvider(endpoint, request, hits = 1) {
