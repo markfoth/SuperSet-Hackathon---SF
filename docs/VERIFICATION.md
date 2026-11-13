@@ -26,15 +26,17 @@ that was not treated as successful basemap verification.
 | Complete Chrome suite | 52 tests pass, desktop and mobile, one worker, 3.1 minutes |
 | Final recovery/scenario rerun | 18 tests pass after final loading/privacy guards |
 | Terrain, topography and Peninsula pytest subset | Six tests pass |
+| Full Python suite on Linux CI | 44 tests pass, two warnings, 5.33 seconds |
 | `scripts/validate_datasets.py` | All nine checks pass, zero errors |
 | npm security audit | Zero vulnerabilities after compatible updates |
 | Full local pytest | Not passed: host blocks the installed H3 native module; the existing GeoPandas display-file test also cannot load GDAL |
 
-The full native Python suite is additionally configured in a read-only Linux
-GitHub Actions workflow. It uses a standard runner only while the repository is
-public, no provider secrets, no deployment permission and no cache/artifact
-storage. Its actual result belongs in the draft PR checks; do not infer success
-from the existence of the workflow.
+The full native Python suite passed in [Linux CI](https://github.com/markfoth/SuperSet-Hackathon---SF/actions/runs/43381380983)
+on source commit `6cede3100c769c373654e29a7a79c0cdc7a4890f`: 44 passed, two
+warnings, 5.33 seconds, followed by zero dataset validation errors. The read-only
+workflow uses a standard runner only while the repository is public, no provider
+secrets, no deployment permission and no cache/artifact storage. The original
+workflow parse error was corrected and is not presented as a successful run.
 
 The browser suite covers fresh/example sessions; progressive preferences;
 label versus confirmed place semantics; searched places and bounded coordinates;
