@@ -1,8 +1,9 @@
 import type { Map as GLMap, AddLayerObject, ExpressionSpecification } from 'maplibre-gl';
-import type { FeatureCollection, Feature } from 'geojson';
+import type { Feature } from 'geojson';
 import { loadData } from '../../lib/data';
 import { addPlaceContext } from './placeContext';
 import { addEventContext, type EventFilterState } from './eventDetails';
+import { viewportContext, followViewport } from '../viewportData';
 
 export const AIR_COLORS = ['#e5f5e7', '#abd8c5', '#65b8b6', '#32778e', '#143d63'];
 export const AIR_STOPS = [5, 12, 20, 28, 35];
@@ -19,11 +20,12 @@ export async function addContext(map: GLMap, id: string, isCurrent = () => true,
   if (id === 'food' || id === 'groceries' || id === 'character') return addPlaceContext(map, id, isCurrent);
   const added: LoadedContext = { layers: [], sources: [] };
   const addGeo = async (suffix: string, file: string, layers: WithoutSource<AddLayerObject>[], filter?: (f: Feature) => boolean) => {
-    const fc = await loadData<FeatureCollection>(file);
+    const fc = await viewportContext(map, [file]);
     if (!isCurrent() || !map.getLayer('matching-fill')) return;
     const source = layerId(id, suffix);
     map.addSource(source, { type: 'geojson', data: filter ? { ...fc, features: fc.features.filter(filter) } : fc });
     added.sources.push(source);
+    followViewport(map, source, [file], isCurrent, data => filter ? {...data,features:data.features.filter(filter)} : data);
     layers.forEach((layer, i) => {
       const key = `${source}-${i}`;
       const pointOrLine = layer.type === 'circle' || layer.type === 'line';

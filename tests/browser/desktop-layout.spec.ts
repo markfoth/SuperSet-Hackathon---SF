@@ -17,19 +17,10 @@ for (const [width, height] of [[1280, 800], [1440, 900], [1920, 1080]]) {
     expect(layout.mapWidth).toBeGreaterThan(500);
     expect(layout.overflow).toBe(false);
     await expect(page.getByRole('combobox', { name: 'Travel mode', exact: true }).first()).toBeVisible();
-    // Show pin retains camera padding. A subsequent fit must replace that
-    // padding, rather than adding another copy of both desktop panels.
+    // Initial result framing is automatic. Deliberate pin focus is retained.
     await page.getByRole('button', { name: 'Show pin', exact: true }).first().click();
     await expect(page.locator('.map')).toHaveAttribute('data-zoom', '15.00');
-    await page.getByRole('button', { name: 'Fit locations', exact: true }).click();
-    await expect.poll(() => page.evaluate(() => {
-      const left = document.querySelector('.criteria-panel')!.getBoundingClientRect();
-      const right = document.querySelector('.matches-panel')!.getBoundingClientRect();
-      return [...document.querySelectorAll('.cg-destination-pin')].every(node => {
-        const box = node.getBoundingClientRect();
-        return box.x + box.width / 2 > left.right && box.x + box.width / 2 < right.left;
-      });
-    })).toBe(true);
+    await expect(page.getByRole('button', {name:'Fit locations',exact:true})).toHaveCount(0);
     await page.getByRole('button', { name: 'Collapse your search', exact: true }).click();
     await expect(page.locator('.criteria-panel')).toBeHidden();
     await expect(page.locator('.matches-panel')).toBeVisible();

@@ -1,0 +1,81 @@
+{
+  "conditions": {
+    "browser": "Installed Chrome, headless",
+    "viewport": "1440x900",
+    "productionBuild": true,
+    "baseline": false,
+    "cacheDisabled": true,
+    "reducedMotion": true,
+    "network": "Unthrottled",
+    "cpuRate": 1,
+    "cycles": "Five Satellite/Terrain switches and incident toggles",
+    "routingBuild": "proxy; explicit offline example"
+  },
+  "initial": {
+    "controlsMs": 308,
+    "ms": 1550,
+    "bytes": 2392702,
+    "requests": 26
+  },
+  "firstSearch": {
+    "ms": 638,
+    "bytes": 1423105,
+    "requests": 8
+  },
+  "defaultInteraction": {
+    "frameSamples": 75,
+    "meanFrameMs": 16.413333333293593,
+    "p95FrameMs": 17,
+    "maxFrameMs": 17.600000000000364
+  },
+  "optional": {
+    "bytes": 384602,
+    "requests": 8
+  },
+  "combinedInteraction": {
+    "frameSamples": 61,
+    "meanFrameMs": 16.960655737607205,
+    "p95FrameMs": 17,
+    "maxFrameMs": 33.30000000000109
+  },
+  "heapSamples": [
+    65025900,
+    66192748,
+    66542752,
+    66281952,
+    65478848
+  ],
+  "sourceCounts": [
+    {
+      "sources": 11,
+      "layers": 81,
+      "crimeSources": 2
+    },
+    {
+      "sources": 11,
+      "layers": 81,
+      "crimeSources": 2
+    },
+    {
+      "sources": 11,
+      "layers": 81,
+      "crimeSources": 2
+    },
+    {
+      "sources": 11,
+      "layers": 81,
+      "crimeSources": 2
+    },
+    {
+      "sources": 11,
+      "layers": 81,
+      "crimeSources": 2
+    }
+  ],
+  "longTasks": {
+    "count": 26,
+    "totalMs": 10447,
+    "maxMs": 1283
+  },
+  "errors": []
+}

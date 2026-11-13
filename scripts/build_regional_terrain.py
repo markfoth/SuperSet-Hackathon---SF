@@ -1,6 +1,6 @@
 """Record a verified viewport-only terrain service, without downloading a planet archive.
 
-The old clipped USGS pyramid remains a reproducible baseline, not a runtime source.
+The retired clipped USGS rendering pyramid is available in git history.
 Run outside frontend builds. Network requests are bounded metadata GETs only.
 """
 import requests

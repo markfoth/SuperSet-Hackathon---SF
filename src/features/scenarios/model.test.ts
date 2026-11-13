@@ -7,6 +7,12 @@ const snapshot = (): ScenarioSnapshot => ({ workplaces: [{ id: 'person-work', na
   bookmarks: [], homes: [createHome(37.75, -122.41, 'A prospective home')] });
 
 describe('portable household scenarios', () => {
+  it('reads legacy mode fields without losing saved homes, bookmarks or destinations',()=>{
+    const prior=snapshot();prior.bookmarks=[createBookmark({id:'old-cell',kind:'cell',name:'Saved corner',neighbourhoodId:'mission',cellId:'8928308280fffff',lat:37.75,lon:-122.41},prior)];
+    const migrated=validateSnapshot({...prior,mapMode:'explore',mode:'compare'});
+    expect(migrated.homes).toEqual(prior.homes);expect(migrated.bookmarks).toEqual(prior.bookmarks);expect(migrated.workplaces).toEqual(prior.workplaces);
+    expect('mapMode' in migrated).toBe(false);
+  });
   it('round-trips a complete export with homes, three shortlisted neighbourhoods and household fields', () => {
     const scenario = makeScenario('Our next chapter', 'Café nearby, please', snapshot());
     const file = parseScenarioFile(JSON.stringify(scenarioFile(scenario)));

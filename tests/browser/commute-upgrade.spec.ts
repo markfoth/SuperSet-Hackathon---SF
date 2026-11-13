@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import type { AreaCellCollection, AreaCellDisplayCollection, CommuteFixtureFeature } from '../../src/types';
@@ -81,10 +82,10 @@ test('unmatched addresses and outside-coverage coordinates never become selected
   await expect(page.locator('.place-search-results')).toContainText('No named place found');
   await expect(page.locator('.workplace')).toHaveCount(0);
   await page.getByRole('button', { name: 'Use precise coordinates', exact: true }).click();
-  await page.getByRole('textbox', { name: 'Latitude', exact: true }).fill('37.50');
+  await page.getByRole('textbox', { name: 'Latitude', exact: true }).fill('34.50');
   await page.getByRole('textbox', { name: 'Longitude', exact: true }).fill('-122.40');
   await page.getByRole('button', { name: 'Use coordinate', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('within SF to SFO');
+  await expect(page.getByRole('alert')).toContainText('Bay Area');
   await expect(page.locator('.workplace')).toHaveCount(0);
   await page.getByRole('textbox', { name: 'Latitude', exact: true }).fill('37.7946');
   await page.getByRole('textbox', { name: 'Longitude', exact: true }).fill('-122.3999');
@@ -111,8 +112,8 @@ test('failed required routing data blocks matches and a deliberate retry recover
 
 test('pending route evidence cannot confirm matches and stale settings cannot replace the revised commute', async ({ page }) => {
   const [cells, display, fixtures] = await Promise.all([
-    page.request.get('/data/area_cells.geojson').then((response) => response.json()) as Promise<AreaCellCollection>,
-    page.request.get('/data/area_cell_display.geojson').then((response) => response.json()) as Promise<AreaCellDisplayCollection>,
+    Promise.resolve(JSON.parse(readFileSync('data/sf/processed/area_cells.geojson','utf8')) as AreaCellCollection),
+    Promise.resolve(JSON.parse(readFileSync('data/sf/processed/area_cell_display.geojson','utf8')) as AreaCellDisplayCollection),
     page.request.get('/data/commute_fixtures.geojson').then((response) => response.json()) as Promise<{ features: CommuteFixtureFeature[] }>,
   ]);
   const footprints = new Set(display.features.map((feature) => feature.properties.h3));

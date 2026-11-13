@@ -1,0 +1,93 @@
+{
+  "browser": "chrome",
+  "gestures": [
+    {
+      "start": {
+        "zoom": 14.5,
+        "pitch": 0,
+        "bearing": 0
+      },
+      "right": {
+        "error": 0.15357122748011176,
+        "zoom": 15.3,
+        "pitch": 0,
+        "bearing": 0
+      },
+      "middle": {
+        "error": 0.06608071466581641,
+        "zoom": 14.5,
+        "pitch": 20,
+        "bearing": 28
+      }
+    },
+    {
+      "start": {
+        "zoom": 15,
+        "pitch": 35,
+        "bearing": 85
+      },
+      "right": {
+        "error": 0.0908991835388319,
+        "zoom": 15.8,
+        "pitch": 35,
+        "bearing": 85.00000000000001
+      },
+      "middle": {
+        "error": 0.20170979366615843,
+        "zoom": 15,
+        "pitch": 55.00000000000001,
+        "bearing": 113
+      }
+    },
+    {
+      "start": {
+        "zoom": 15.5,
+        "pitch": 55,
+        "bearing": -35
+      },
+      "right": {
+        "error": 0.15090490400704015,
+        "zoom": 16.3,
+        "pitch": 55.00000000000001,
+        "bearing": -35
+      },
+      "middle": {
+        "error": 0.05141753064296969,
+        "zoom": 15.5,
+        "pitch": 60,
+        "bearing": -7
+      }
+    }
+  ],
+  "layouts": [
+    {
+      "width": 1280,
+      "height": 800,
+      "left": 307.1875,
+      "right": 345.59375,
+      "mapWidth": 595.21875,
+      "selectorVisible": true,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "left": 345.59375,
+      "right": 388.796875,
+      "mapWidth": 673.609375,
+      "selectorVisible": true,
+      "overflow": false
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "left": 350,
+      "right": 390,
+      "mapWidth": 1148,
+      "selectorVisible": true,
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "success": true
+}

@@ -23,7 +23,6 @@ export interface MapProps {
   addingWorkplace: boolean;
   onMapPick: (lat: number, lon: number) => void;
   visibleLayers: Set<string>;
-  mapMode?: 'find' | 'explore' | 'compare';
   focusWorkplaceId?: string | null;
   homes?: MapHome[];
   selectedHomeId?: string | null;
@@ -35,4 +34,7 @@ export interface MapProps {
   eventFilters?: Record<EventKind, EventFilterState>;
   onInspectContext?: () => void;
   airScale?: 'local' | 'statewide';
+  onViewportChange?: (bounds: number[]) => void;
+  onAvailabilityChange?: (available: boolean) => void;
+  onResultsFramed?: () => void;
 }

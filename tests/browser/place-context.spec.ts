@@ -63,8 +63,8 @@ test('real POI markers take click priority and distinguish checked, mapped and m
   await expect(popup.getByRole('link', { name: 'Web search for this place' })).toHaveAttribute('href', /^https:\/\/www\.google\.com\/search\?q=/);
   await expect(popup.getByRole('link', { name: 'OpenStreetMap source page' })).toHaveAttribute('href', 'https://www.openstreetmap.org/node/293573361');
   expect(requests.some(url => url.endsWith('/bars.geojson'))).toBe(false);
-  await mkdir('docs/audit/place-context', { recursive: true });
-  await page.screenshot({ path: 'docs/audit/place-context/missing-website.png' });
+  await mkdir('test-results/screenshots/place-context', { recursive: true });
+  await page.screenshot({ path: 'test-results/screenshots/place-context/missing-website.png' });
   await page.locator('.maplibregl-popup-close-button').click();
   const mapped: [number, number] = [-122.42125, 37.75643];
   await camera(page, mapped, 16.3);
@@ -90,7 +90,7 @@ test('nightlife and character progressively expose real clusters, venue names an
   expect(await visibleCount(page, 'context-nightlife-places-names')).toBe(0);
   await camera(page, [-122.4215, 37.7612], 15.2);
   await expect.poll(() => visibleCount(page, 'context-nightlife-places-names')).toBeGreaterThan(0);
-  await page.screenshot({ path: 'docs/audit/place-context/nightlife-street.png' });
+  await page.screenshot({ path: 'test-results/screenshots/place-context/nightlife-street.png' });
   await page.getByRole('checkbox', { name: 'Nightlife', exact: true }).uncheck();
   await page.getByRole('checkbox', { name: 'Neighbourhood character', exact: true }).check();
   await expect(page.locator('.map')).toHaveAttribute('data-context-loaded', /character/);
@@ -106,7 +106,7 @@ test('nightlife and character progressively expose real clusters, venue names an
   await expect(popup).toContainText('Reviewed 2026-11-13');
   await expect(popup.getByRole('link', { name: 'Calle 24 cultural district' })).toHaveAttribute('href', 'https://www.calle24sf.org/');
   await expect(popup).toContainText('not a safety judgement or housing ranking input');
-  await page.screenshot({ path: 'docs/audit/place-context/character-tilted.png' });
+  await page.screenshot({ path: 'test-results/screenshots/place-context/character-tilted.png' });
 });
 
 test('delayed POIs survive rapid visibility changes and an actual basemap style reload without duplicate sources', async ({ page }) => {
@@ -114,7 +114,7 @@ test('delayed POIs survive rapid visibility changes and an actual basemap style 
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error' && /already exists|Cannot add|not in the map|context-food/.test(message.text())) errors.push(message.text()); });
-  await page.route('**/data/{cafes,restaurants}.geojson', async route => {
+  await page.route('**/data/context/{cafes,restaurants}/**', async route => {
     await new Promise(resolve => setTimeout(resolve, 900));
     await route.continue();
   });

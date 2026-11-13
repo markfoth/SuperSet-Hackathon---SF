@@ -25,13 +25,13 @@ test('priorities, details, bookmarks and map selection stay synchronised', async
   const cell = await page.locator('.map').getAttribute('data-selection-id');
   expect(cell).toMatch(/^[0-9a-f]+$/);
   await page.getByRole('button', { name: '+ Bookmark this location', exact: true }).click();
-  await page.getByRole('button', { name: 'Shortlist 1', exact: true }).click();
+  await page.getByRole('button', { name: 'Compare saved places 1', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Compare your shortlist' });
   await expect(dialog).toContainText('Settings unchanged since saved');
   await dialog.locator('.bookmark-notes textarea').fill('Visit after work.');
   await page.keyboard.press('Escape');
   await page.reload();
-  await page.getByRole('button', { name: 'Shortlist 1', exact: true }).click();
+  await page.getByRole('button', { name: 'Compare saved places 1', exact: true }).click();
   await expect(dialog.locator('.bookmark-notes textarea')).toHaveValue('Visit after work.');
   expect(errors).toEqual([]);
 });
@@ -47,19 +47,20 @@ test('three neighbourhoods compare and rent sorting preserves the eligible set',
     expect([...ids].sort()).toEqual([...original].sort());
   }
   for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Save to shortlist', exact: true }).first().click();
-  await page.getByRole('button', { name: 'Shortlist 3', exact: true }).click();
+  await page.getByRole('button', { name: 'Compare saved places 3', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Compare your shortlist' });
   await expect(dialog.locator('thead th')).toHaveCount(4);
   await expect(dialog).toContainText('ZIP overlap asking-rent index');
   await expect(dialog).toContainText('No exact time inferred');
   await page.keyboard.press('Escape');
-  await expect(page.getByRole('button', { name: 'Shortlist 3', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Compare saved places 3', exact: true })).toBeFocused();
 });
 
 test('Must-have relaxation is previewed before it changes eligibility', async ({ page }) => {
   await example(page);
   await page.getByRole('button', { name: /Make it feel like home/ }).click();
   await page.locator('.pref').filter({ hasText: 'Flatter streets' }).getByRole('radio', { name: 'Must', exact: true }).click();
+  await expect(page.locator('.map-badge[role="status"]')).toHaveCount(0);
   const before = await page.locator('.match-legend b').textContent();
   await page.locator('.tradeoff-panel summary').click();
   await page.getByRole('button', { name: 'Relax Flatter streets', exact: true }).click();

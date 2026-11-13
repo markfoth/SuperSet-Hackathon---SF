@@ -1,0 +1,90 @@
+id,name,region,candidate_cells,residential_candidates,park_measured_cells,grocery_measured_cells,rail_measured_cells,pollution_measured_cells,rent_measured_cells,incidents_measured_cells,gradient_measured_cells
+bayview-hunters-point,Bayview Hunters Point,sf,150,144,150,150,150,149,147,125,102
+bernal-heights,Bernal Heights,sf,25,25,25,25,25,25,25,25,25
+brisbane,Brisbane,peninsula,82,82,82,82,82,82,2,0,61
+brisbane-quarry,Brisbane Quarry,peninsula,8,0,8,8,8,8,0,0,2
+broadmoor,Broadmoor,peninsula,12,12,12,12,12,12,12,0,12
+burlingame,Burlingame,peninsula,6,6,6,6,6,6,6,0,6
+california-golf-club,California Golf Club,peninsula,7,0,7,7,7,7,7,0,5
+castro-upper-market,Castro/Upper Market,sf,21,21,21,21,21,20,21,21,21
+chinatown,Chinatown,sf,5,5,5,5,5,5,4,5,5
+colma,Colma,peninsula,48,48,48,48,48,48,48,0,35
+country-club-park,Country Club Park,peninsula,2,2,2,2,2,2,2,0,2
+daly-city,Daly City,peninsula,188,185,188,188,188,188,187,0,171
+excelsior,Excelsior,sf,32,32,32,32,32,32,32,32,32
+financial-district-south-beach,Financial District/South Beach,sf,35,35,35,35,35,35,22,35,30
+glen-park,Glen Park,sf,14,14,14,14,14,14,14,14,14
+golden-gate-park,Golden Gate Park,sf,39,19,39,39,39,39,37,37,16
+haight-ashbury,Haight Ashbury,sf,12,12,12,12,12,12,12,12,12
+hayes-valley,Hayes Valley,sf,12,12,12,12,12,12,12,12,12
+inner-richmond,Inner Richmond,sf,18,18,18,18,18,18,18,18,18
+inner-sunset,Inner Sunset,sf,31,31,31,31,31,31,31,31,31
+japantown,Japantown,sf,3,3,3,3,3,3,3,3,3
+lakeshore,Lakeshore,sf,70,47,70,70,70,70,54,63,46
+lincoln-park,Lincoln Park,sf,12,8,12,12,12,12,12,10,2
+lone-mountain-usf,Lone Mountain/USF,sf,15,15,15,15,15,15,15,15,15
+marina,Marina,sf,29,25,29,29,29,29,29,29,26
+mclaren-park,McLaren Park,sf,13,8,13,13,13,13,13,13,5
+millbrae,Millbrae,peninsula,46,46,46,46,46,46,45,0,42
+mission,Mission,sf,45,45,45,45,45,45,45,45,45
+mission-bay,Mission Bay,sf,25,25,25,25,25,25,25,21,21
+nob-hill,Nob Hill,sf,10,10,10,10,10,10,10,10,10
+noe-valley,Noe Valley,sf,21,21,21,21,21,21,21,21,21
+north-beach,North Beach,sf,15,15,15,15,15,15,15,14,11
+northern-peninsula-unincorporated-areas,Northern Peninsula unincorporated areas,peninsula,42,17,42,42,42,42,42,0,9
+oceanview-merced-ingleside,Oceanview/Merced/Ingleside,sf,26,26,26,26,26,26,26,26,26
+olympic-country-club,Olympic Country Club,peninsula,9,0,9,9,9,9,9,0,3
+outer-mission,Outer Mission,sf,24,24,24,24,24,24,24,24,24
+outer-richmond,Outer Richmond,sf,44,43,44,44,44,44,43,44,41
+pacific-heights,Pacific Heights,sf,17,17,17,17,17,17,17,17,17
+pacifica,Pacifica,peninsula,202,153,202,202,202,201,201,0,103
+portola,Portola,sf,21,21,21,21,21,21,21,21,21
+potrero-hill,Potrero Hill,sf,33,33,33,33,33,33,33,28,28
+presidio,Presidio,sf,65,17,65,65,65,65,65,42,7
+presidio-heights,Presidio Heights,sf,13,13,13,13,13,13,13,13,13
+russian-hill,Russian Hill,sf,16,16,16,16,16,16,16,16,14
+san-bruno,San Bruno,peninsula,128,127,128,128,128,128,128,0,123
+san-bruno-mountain-park,San Bruno Mountain Park,peninsula,88,0,88,88,88,88,58,0,43
+seacliff,Seacliff,sf,7,7,7,7,7,7,7,7,5
+sfo-airport,SFO Airport,peninsula,96,0,96,96,96,96,6,0,48
+south-of-market,South of Market,sf,20,20,20,20,20,20,20,20,20
+south-san-francisco,South San Francisco,peninsula,233,232,233,233,233,233,225,0,209
+sunset-parkside,Sunset/Parkside,sf,111,111,111,111,111,110,103,110,105
+tenderloin,Tenderloin,sf,10,10,10,10,10,10,10,10,10
+treasure-island,Treasure Island,sf,34,34,34,34,34,34,34,16,31
+twin-peaks,Twin Peaks,sf,18,18,18,18,18,18,18,18,18
+unincorporated-colma,Unincorporated Colma,peninsula,1,1,1,1,1,1,1,0,1
+visitacion-valley,Visitacion Valley,sf,15,15,15,15,15,15,15,15,15
+west-of-twin-peaks,West of Twin Peaks,sf,71,71,71,71,71,70,71,71,71
+western-addition,Western Addition,sf,13,13,13,13,13,13,13,13,13
+census-0600562,Alameda,east_bay,295,291,295,0,295,295,295,0,0
+census-0602980,Ashland,east_bay,43,43,43,0,43,43,43,0,0
+census-0603092,Atherton,peninsula,131,131,131,0,131,131,2,0,0
+census-0605108,Belmont,peninsula,111,109,111,0,111,111,111,0,0
+census-0606000,Berkeley,east_bay,280,270,280,0,280,280,231,0,0
+census-0609066,Burlingame,peninsula,115,115,115,0,115,115,115,0,0
+census-0611964,Castro Valley,east_bay,445,432,445,0,445,445,445,0,0
+census-0612902,Cherryland,east_bay,29,29,29,0,29,29,29,0,0
+census-0617610,Cupertino,peninsula,265,265,265,0,265,265,265,0,0
+census-0620956,East Palo Alto,peninsula,68,59,68,0,68,68,67,0,0
+census-0622594,Emeryville,east_bay,36,35,36,0,36,36,36,0,0
+census-0625338,Foster City,peninsula,107,107,107,0,107,107,107,0,0
+census-0626000,Fremont,east_bay,1087,1064,1087,0,1087,1087,1087,0,0
+census-0633000,Hayward,east_bay,807,702,807,0,807,807,807,0,0
+census-0633798,Hillsborough,peninsula,161,161,161,0,161,161,161,0,0
+census-0643280,Los Altos,peninsula,164,164,164,0,164,164,164,0,0
+census-0643294,Los Altos Hills,peninsula,239,237,239,0,239,239,234,0,0
+census-0646870,Menlo Park,peninsula,251,247,251,0,251,251,170,0,0
+census-0647486,Millbrae,peninsula,36,36,36,0,36,36,36,0,0
+census-0649670,Mountain View,peninsula,291,288,291,0,291,291,291,0,0
+census-0650916,Newark,east_bay,196,195,196,0,196,196,196,0,0
+census-0653000,Oakland,east_bay,1405,1371,1405,0,1405,1405,1392,0,0
+census-0655282,Palo Alto,peninsula,314,298,314,0,314,314,259,0,0
+census-0660102,Redwood City,peninsula,391,390,391,0,391,391,383,0,0
+census-0665070,San Carlos,peninsula,152,152,152,0,152,152,152,0,0
+census-0668084,San Leandro,east_bay,326,318,326,0,326,325,326,0,0
+census-0668112,San Lorenzo,east_bay,74,74,74,0,74,74,74,0,0
+census-0668252,San Mateo,peninsula,309,302,309,0,309,309,308,0,0
+census-0669084,Santa Clara,peninsula,463,462,463,0,463,463,458,0,0
+census-0677000,Sunnyvale,peninsula,496,478,496,0,496,496,496,0,0
+census-0681204,Union City,east_bay,287,275,287,0,287,287,287,0,0

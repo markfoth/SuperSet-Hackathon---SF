@@ -8,7 +8,10 @@ import type { MapProps } from './mapTypes';
 import { commuteFeatures, geometryBounds, matchingFeatures, neighbourhoodFeatures, WORKPLACE_COLORS } from './mapData';
 import { addContext, airColour, contextText, type LoadedContext } from './layers/mapLibreContext';
 import { loadData } from '../lib/data';
-import { installRightDragZoom } from './rightDragZoom';
+import { installDesktopNavigation } from './rightDragZoom';
+import { applyBasemap, rememberBasemap, type MapStyle } from './basemap';
+import { MapStyleControl } from './controls/MapStyleControl';
+import { crimeLevel, CRIME_SCALES } from './layers/crimeColumns';
 import { createTransportAnimation } from './transportAnimation';
 import { placePopup, expandPlaceCluster } from './layers/placeContext';
 import { DEFAULT_EVENT_FILTERS, eventPopup, updateEventContext } from './layers/eventDetails';
@@ -17,6 +20,7 @@ import './map.css';
 // MapLibre 6 resolves its default worker beside the library module. Vite moves
 // that module during optimisation/build, so retain an explicit bundled worker URL.
 maplibregl.setWorkerUrl(workerUrl);
+maplibregl.setMaxParallelImageRequests(8);
 
 const EMPTY: FeatureCollection = { type: 'FeatureCollection', features: [] };
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
@@ -100,9 +104,9 @@ function initialiseSources(map: maplibregl.Map, props: MapProps) {
     'line-color': '#213f36', 'line-width': 3.5,
   } });
   if (map.getSource('openmaptiles')) map.addLayer({ id: 'real-buildings', type: 'fill-extrusion', source: 'openmaptiles', 'source-layer': 'building', minzoom: 14,
-    layout: { visibility: 'none' }, filter: ['all', ['!=', ['get', 'hide_3d'], true], ['>', ['coalesce', ['get', 'render_height'], 0], 0], ['<=', ['coalesce', ['get', 'render_height'], 0], 1000]],
+    layout: { visibility: 'visible' }, filter: ['all', ['!=', ['get', 'hide_3d'], true], ['>', ['coalesce', ['get', 'render_height'], 0], 0], ['<=', ['coalesce', ['get', 'render_height'], 0], 1000]],
     paint: { 'fill-extrusion-color': '#d3d1c5', 'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 0],
-      'fill-extrusion-base': ['min', ['max', 0, ['coalesce', ['get', 'render_min_height'], 0]], ['coalesce', ['get', 'render_height'], 0]], 'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0, 14.5, 0.88], 'fill-extrusion-vertical-gradient': true },
+      'fill-extrusion-base': ['min', ['max', 0, ['coalesce', ['get', 'render_min_height'], 0]], ['coalesce', ['get', 'render_height'], 0]], 'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0.35, 14.5, 0.88], 'fill-extrusion-vertical-gradient': true },
   }, before);
 }
 
@@ -110,19 +114,23 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const activePopup = useRef<maplibregl.Popup | null>(null);
+  const selectedColumn = useRef<string | null>(null);
   const latest = useRef(props); latest.current = props;
   const markers = useRef<maplibregl.Marker[]>([]);
   const loaded = useRef(new Map<string, LoadedContext>());
   const loading = useRef(new Set<string>());
   const styleGeneration = useRef(0);
   const [ready, setReady] = useState(0);
-  const [is3D, setIs3D] = useState(false);
   const [tilted, setTilted] = useState(false);
   const [terrain, setTerrain] = useState(false);
-  const terrainWanted = useRef(false);
+  const terrainWanted = useRef(true);
   const terrainGeneration = useRef(0);
   const [terrainBusy, setTerrainBusy] = useState(false);
   const [styleLoading, setStyleLoading] = useState(true);
+  const [mapStyle, setMapStyle] = useState<MapStyle>(() => { try { return localStorage.getItem('cg:map-style') === 'satellite' ? 'satellite' : 'terrain'; } catch { return 'terrain'; } });
+  const styleWanted = useRef(mapStyle); styleWanted.current = mapStyle;
+  const [imageryBusy, setImageryBusy] = useState(false), [imageryError, setImageryError] = useState('');
+  const compass = useRef<SVGSVGElement>(null);
   const [baseError, setBaseError] = useState('');
   const [layerErrors, setLayerErrors] = useState<Record<string, string>>({});
   const [zoom, setZoom] = useState(11);
@@ -131,19 +139,15 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
   const openPopup = (m:maplibregl.Map,event:maplibregl.MapMouseEvent,node:HTMLElement) => {
     activePopup.current?.remove(); activePopup.current=showPopup(m,event,node);
   };
-  function changeTilt(next: boolean) {
-    setTilted(next);
-    map.current?.easeTo({ pitch: next ? (is3D ? 50 : 52) : 0, duration: reducedMotion() ? 0 : 600 });
-  }
 
   const fit = () => {
     const m = map.current;
     if (!m) return;
     const p = latest.current;
     const bounds = new maplibregl.LngLatBounds();
-    const suitable = p.cells.features.filter((f) => p.matchingActive && p.cellResults[f.properties.h3]?.eligible);
-    const shapes = suitable.length ? suitable : p.neighbourhoods.features;
-    shapes.forEach((f) => { const b = geometryBounds(f.geometry); if (b) { bounds.extend([b[0], b[1]]); bounds.extend([b[2], b[3]]); } });
+    const suitable = p.matchingActive ? Object.values(p.cellResults).filter(result=>result.eligible) : [];
+    if(suitable.length)suitable.forEach(({cell})=>{bounds.extend([cell.check_lon-.002,cell.check_lat-.002]);bounds.extend([cell.check_lon+.002,cell.check_lat+.002]);});
+    else p.neighbourhoods.features.forEach((f) => { const b = geometryBounds(f.geometry); if (b) { bounds.extend([b[0], b[1]]); bounds.extend([b[2], b[3]]); } });
     p.workplaces.forEach((w) => bounds.extend([w.lon, w.lat]));
     p.homes?.forEach((h) => bounds.extend([h.lon, h.lat]));
     // MapLibre 6 otherwise adds fit padding to padding retained by easeTo.
@@ -162,11 +166,10 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
       });
     } catch { props.onWebGLFailure(); return; }
     map.current = m;
-    const removeRightDrag = installRightDragZoom(m);
+    const removeNavigation = installDesktopNavigation(m);
     // A scoped renderer handle lets browser audits exercise the real production
     // camera and query loaded elevation, without replacing or mocking WebGL.
     Object.defineProperty(el.current, '__commonGroundMap', { value: m, configurable: true });
-    m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
     m.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: 'Context: DataSF · San Mateo County · USGS · OSM' }), 'bottom-left');
     const onReady = () => {
       if (disposed || m.getSource('matching')) return;
@@ -174,9 +177,11 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
       loaded.current.clear(); loading.current.clear();
       terrainGeneration.current += 1;
       setTerrainBusy(false);
+      rememberBasemap(m);
       initialiseSources(m, latest.current);
+      if (m.getSource('openmaptiles')) m.setSourceTileLodParams(1, 8, 'openmaptiles');
       setTerrain(false);
-      if (m.getSource('openmaptiles')) setStyleLoading(false);
+      if (m.getSource('openmaptiles')) { setStyleLoading(false); applyBasemap(m, styleWanted.current); setImageryBusy(styleWanted.current === 'satellite'); }
       setReady((r) => r + 1);
       el.current?.setAttribute('data-map-ready', 'true');
     };
@@ -192,18 +197,23 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
         terrainGeneration.current += 1;
         setTerrainBusy(false);
         setLayerErrors((errors) => ({ ...errors, terrain: 'Terrain is temporarily unavailable. The flat map and buildings remain available.' }));
-      } else if (!sourceId?.startsWith('context-')) setBaseError('Some basemap tiles are unavailable. Your matching locations are still shown.');
+      } else if (sourceId === 'aerial') { setImageryBusy(false); setImageryError('Aerial tiles could not load. Retry or choose Terrain.'); }
+      else if (sourceId?.startsWith('context-')) setLayerErrors(e=>({...e,[sourceId.split('-')[1]]:'Map context could not load in this view. Retry the layer.'}));
+      else if (!sourceId?.startsWith('context-')) setBaseError('Some basemap tiles are unavailable. Your matching locations are still shown.');
     });
     m.on('webglcontextlost', () => { if (!disposed) latest.current.onWebGLFailure(); });
     m.on('moveend', () => {
       setZoom(m.getZoom());
+      latest.current.onViewportChange?.(m.getBounds().toArray().flat());
       if (el.current) { el.current.dataset.zoom = m.getZoom().toFixed(2); el.current.dataset.pitch = m.getPitch().toFixed(0);
         el.current.dataset.centre = m.getCenter().toArray().map(n => n.toFixed(5)).join(','); el.current.dataset.bearing = m.getBearing().toFixed(0); }
     });
+    m.on('rotate', () => { if (compass.current) compass.current.style.transform = `rotate(${-m.getBearing()}deg)`; });
     m.on('sourcedata', (event) => {
       if (!el.current) return;
       if (event.sourceId === 'openmaptiles' && event.isSourceLoaded) el.current.dataset.vectorLoaded = 'true';
       if (event.sourceId === 'terrain' && event.isSourceLoaded) el.current.dataset.terrainLoaded = 'true';
+      if (event.sourceId === 'aerial' && event.isSourceLoaded) { setImageryBusy(false); el.current.dataset.imageryLoaded = 'true'; }
     });
     m.on('idle', () => {
       if (el.current) el.current.dataset.buildingCount = String(m.getLayer('real-buildings') ? m.queryRenderedFeatures({ layers: ['real-buildings'] }).length : 0);
@@ -215,6 +225,13 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
     m.on('mousemove', (event) => {
       if (!m.getLayer('matching-fill')) return;
       if (latest.current.addingWorkplace || latest.current.pickingHome) { tooltip.remove(); return; }
+      const columnLayers=[6,7,8].map(level=>`context-crime-columns-${level}`).filter(id=>m.getLayer(id));
+      const column=columnLayers.length ? m.queryRenderedFeatures(event.point,{layers:columnLayers})[0] : undefined;
+      if(column){
+        if(hover)m.setFeatureState({source:'matching',id:hover},{hover:false});hover=null;
+        const node=document.createElement('div');node.textContent=`${column.properties.total} unique reported incidents · H3 ${column.properties.resolution} · ${column.properties.period}. Data graphic, not a building. Click for categories.`;
+        tooltip.setLngLat(event.lngLat).setDOMContent(node).addTo(m);m.getCanvas().style.cursor='pointer';return;
+      }
       const f = m.queryRenderedFeatures(event.point, { layers: ['matching-fill'] })[0];
       const id = f?.properties?.h3 as string | undefined;
       if (hover && hover !== id) m.setFeatureState({ source: 'matching', id: hover }, { hover: false });
@@ -252,10 +269,16 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
         const node = placePopup(place);
         if (node) { openPopup(m,event,node); return; }
       }
-      const eventLayers = contextLayers.filter(id => /context-(crime|collisions)-(points|point-count|clusters|cluster-count)$/.test(id));
+      const eventLayers = contextLayers.filter(id => /context-(crime|collisions)-(points|point-count|clusters|cluster-count|columns-[678](?:-count)?)$/.test(id));
       const detail = eventLayers.length ? m.queryRenderedFeatures(event.point, {layers: eventLayers})[0] : undefined;
       if (detail) {
         tooltip.remove(); const kind = detail.layer.id.startsWith('context-crime-') ? 'crime' : 'collisions';
+        if (detail.source === 'context-crime-columns') {
+          if (selectedColumn.current) m.setFeatureState({source: detail.source, id: selectedColumn.current}, {selected:false});
+          selectedColumn.current = String(detail.properties.h3);
+          m.setFeatureState({source: detail.source, id: selectedColumn.current}, {selected:true});
+          m.setFilter('context-crime-columns-selected', ['==', ['get','h3'], selectedColumn.current]);
+        }
         p.onInspectContext?.(); openPopup(m,event,eventPopup(kind, detail.properties)); return;
       }
       const pointLayers = contextLayers.filter(id => ['circle', 'symbol', 'line'].includes(m.getLayer(id)?.type ?? '') && !id.includes('context-air-'));
@@ -291,9 +314,10 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
         event.preventDefault(); const centre = m.getCenter();
         if (p.pickingHome) p.onHomePick?.(centre.lat, centre.lng); else p.onMapPick(centre.lat, centre.lng);
       }
+      if (event.key.toLowerCase() === 'n') { event.preventDefault(); m.easeTo({ bearing: 0, duration: reducedMotion() ? 0 : 300 }); }
     };
     m.getCanvas().addEventListener('keydown', onKey);
-    m.getCanvas().setAttribute('aria-label', 'Interactive map. Use arrow keys to move, plus and minus to zoom. When placing a pin, press Enter to choose the centre.');
+    m.getCanvas().setAttribute('aria-label', 'Interactive map. Arrow keys pan, plus and minus zoom. Shift and arrows rotate or tilt. N resets north. When placing a pin, Enter chooses the centre.');
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 12000);
     fetch(STYLE_URL, { signal: controller.signal }).then((r) => { if (!r.ok) throw new Error('Basemap unavailable'); return r.json() as Promise<StyleSpecification>; })
@@ -301,7 +325,7 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
         // Positron shield refs can be absent. Preserve their original exclusion
         // while avoiding a numeric-comparison warning for a null ref length.
         for (const layer of style.layers) {
-          if (layer.id !== 'highway-shield-us-interstate' && layer.id !== 'highway-shield-non-us') continue;
+          if (!layer.id.includes('shield')) continue;
           if (!('filter' in layer) || !Array.isArray(layer.filter)) continue;
           const comparison = layer.filter[1];
           if (Array.isArray(comparison) && comparison[0] === '<=' && comparison[2] === 6
@@ -323,7 +347,7 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
       m.easeTo({center:m.getCenter(),padding,duration:0});
     });
     if (app) panelChange.observe(app, {attributes:true,attributeFilter:['class']});
-    return () => { disposed = true; terrainGeneration.current += 1; controller.abort(); window.clearTimeout(timeout); resize.disconnect(); panelChange.disconnect(); removeRightDrag(); tooltip.remove(); activePopup.current?.remove(); markers.current.forEach((x) => x.remove()); markers.current = []; m.remove(); map.current = null; };
+    return () => { disposed = true; terrainGeneration.current += 1; controller.abort(); window.clearTimeout(timeout); resize.disconnect(); panelChange.disconnect(); removeNavigation(); m.getCanvas().removeEventListener('keydown', onKey); tooltip.remove(); activePopup.current?.remove(); markers.current.forEach((x) => x.remove()); markers.current = []; m.remove(); map.current = null; };
   }, []);
 
   useEffect(() => {
@@ -333,7 +357,7 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
     setGeo(m, 'neighbourhoods', neighbourhoodFeatures(props.neighbourhoods, props.results, props.matchingActive, props.selectedId));
     const fillContext = ['topography', 'crime', 'parks', 'collisions', 'air', 'nightlife'].some((id) => props.visibleLayers.has(id));
     m.setPaintProperty('matching-fill', 'fill-opacity', ['case', ['boolean', ['feature-state', 'hover'], false], 0.8, fillContext ? 0.24 : 0.48]);
-    if (el.current) { el.current.dataset.eligibleCount = String(features.features.filter((f) => f.properties?.state !== 'unknown').length);
+    if (el.current) { el.current.dataset.eligibleCount = String(props.matchingActive ? Object.values(props.cellResults).filter(result=>result.eligible).length : 0);
       el.current.dataset.visibleCellCount = String(features.features.length);
       el.current.dataset.excludedVisible = String(features.features.filter((f) => f.properties?.state === 'excluded').length); }
   }, [ready, props.cells, props.cellResults, props.results, props.matchingActive, props.selectedId, props.selectedCellId, props.visibleLayers]);
@@ -411,19 +435,30 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
   },[props.airScale]);
 
   useEffect(() => {
-    const m = map.current; if (!m) return;
-    const enabled = props.mapMode === 'explore';
-    if (props.mapMode) { setIs3D(enabled); changeTilt(enabled); }
-  }, [props.mapMode]);
+    const m = map.current; if (!m?.getSource('openmaptiles')) return;
+    applyBasemap(m, mapStyle);
+    setImageryBusy(mapStyle === 'satellite' && !m.isSourceLoaded('aerial'));
+    setImageryError('');
+    try { localStorage.setItem('cg:map-style', mapStyle); } catch { /* preferences are optional */ }
+  }, [ready, mapStyle]);
 
   useEffect(() => {
-    const m = map.current; if (!m?.getStyle()) return;
-    if (m.getLayer('real-buildings')) m.setLayoutProperty('real-buildings', 'visibility', is3D ? 'visible' : 'none');
-    // One tile zoom across this bounded, non-horizon view prevents rectangular
-    // heightless parent tiles. Normal-scale geometry; no fabricated z13 heights.
-    if (m.getSource('openmaptiles')) m.setSourceTileLodParams(is3D ? 1 : 3, is3D ? 8 : 3, 'openmaptiles');
-    m.setMaxPitch(is3D ? 50 : 60);
-  }, [ready, is3D]);
+    if (!imageryBusy) return;
+    const timeout = window.setTimeout(() => { setImageryBusy(false); setImageryError('Aerial imagery is taking too long. Retry or choose Terrain.'); }, 20000);
+    return () => window.clearTimeout(timeout);
+  }, [imageryBusy]);
+
+  const framedResults = useRef(false);
+  useEffect(() => {
+    if (!props.matchingActive) { framedResults.current = false; return; }
+    if (!ready || framedResults.current || props.areas.length !== props.workplaces.length || !Object.keys(props.cellResults).length) return;
+    const m=map.current;if(!m)return;
+    framedResults.current = true;
+    let delivered=false;
+    const finished=()=>{if(delivered)return;delivered=true;latest.current.onResultsFramed?.();};
+    m.once('moveend',finished);fit();
+    if(!m.isMoving()){m.off('moveend',finished);finished();}
+  }, [ready, props.matchingActive, props.areas, props.cellResults]);
 
   useEffect(() => {
     const m = map.current;
@@ -476,28 +511,21 @@ export function MapLibreMap(props: MapProps & { onWebGLFailure: () => void }) {
     } catch { if (generation === terrainGeneration.current) setLayerErrors((e) => ({ ...e, terrain: 'Terrain could not load. Continue with the flat map or retry.' })); }
     finally { if (generation === terrainGeneration.current) setTerrainBusy(false); }
   }
-  const toggleTerrain = () => {
-    const m = map.current; if (!m) return;
-    if (terrainWanted.current && (terrain || terrainBusy)) {
-      terrainWanted.current = false; terrainGeneration.current += 1; m.setTerrain(null); setTerrain(false); setTerrainBusy(false);
-      setLayerErrors(e => { const next = { ...e }; delete next.terrain; return next; });
-    } else { terrainWanted.current = true; changeTilt(true); void enableTerrain(); }
-  };
-
   const picking = props.addingWorkplace || props.pickingHome;
   return <>
-    <div ref={el} className={`map${picking ? ' picking' : ''}`} aria-label="Map of San Francisco and northern Peninsula matching locations"
-      data-renderer="maplibre" data-selection-id={props.selectedCellId ?? props.selectedId ?? props.selectedHomeId ?? ''} data-3d={is3D} data-terrain={terrain} data-tilted={tilted} />
+    <div ref={el} className={`map${picking ? ' picking' : ''}`} aria-label="Bay Area housing study map"
+      data-renderer="maplibre" data-selection-id={props.selectedCellId ?? props.selectedId ?? props.selectedHomeId ?? ''} data-3d="true" data-map-style={mapStyle} data-terrain={terrain} data-tilted={tilted} />
     <div className="map-navigation" aria-label="Map view controls">
-      <button className={is3D ? 'active' : ''} type="button" aria-label="3D buildings" title="Show approximate building heights" aria-pressed={is3D} onClick={() => { setIs3D(value => !value); if (!is3D) changeTilt(true); }}>3D</button>
-      <button className={terrain ? 'active' : ''} type="button" aria-label="Terrain" title="Show regional terrain at normal scale" aria-pressed={terrain} disabled={styleLoading} onClick={toggleTerrain}>{terrainBusy ? '…' : '△'}</button>
-      <button className={tilted ? 'active' : ''} type="button" aria-label="Map tilt" title="Toggle tilted or overhead view" aria-pressed={tilted} onClick={() => changeTilt(!tilted)}>Tilt</button>
-      <button type="button" aria-label="Reset north" title="Reset north" onClick={() => map.current?.easeTo({ bearing: 0, duration: reducedMotion() ? 0 : 400 })}>N ↑</button>
-      <button type="button" aria-label="Rotate map clockwise" title="Rotate clockwise by 30 degrees" onClick={() => { const m = map.current; if (m) m.easeTo({ bearing: m.getBearing() + 30, duration: reducedMotion() ? 0 : 400 }); }}>↻</button>
-      <button type="button" aria-label="Fit locations" title="Fit all matching locations and destinations" onClick={fit}>⛶</button>
+      <button className="compass-button" type="button" aria-label="Reset north" title="Compass: reset to north-up (N on map)" onClick={() => map.current?.easeTo({ bearing: 0, duration: reducedMotion() ? 0 : 400 })}>
+        <svg ref={compass} viewBox="0 0 40 40" aria-hidden="true"><text x="20" y="9" textAnchor="middle" fontSize="9" fill="currentColor">N</text><path d="M20 12 27 31 20 27Z" fill="#a44934"/><path d="M20 12 13 31 20 27Z" fill="#34685c"/><circle cx="20" cy="27" r="2" fill="#fffef8"/></svg>
+      </button>
+      <button type="button" aria-label="Zoom in" title="Zoom in (+)" onClick={()=>map.current?.zoomIn({duration:reducedMotion()?0:250})}>+</button>
+      <button type="button" aria-label="Zoom out" title="Zoom out (−)" onClick={()=>map.current?.zoomOut({duration:reducedMotion()?0:250})}>−</button>
     </div>
-    {navigationHint && <div className="map-navigation-hint"><span>Right-drag up to zoom in around your starting point. Tilt and ↻ rotate the view.</span><button type="button" aria-label="Dismiss navigation hint" onClick={() => { setNavigationHint(false); try { sessionStorage.setItem('cg:navigation-hint', 'dismissed'); } catch { /* session storage optional */ } }}>×</button></div>}
-    {(is3D || terrain) && <div className="map-3d-note">{is3D && zoom < 14.5 ? 'Buildings fade in from zoom 14. ' : ''}{is3D ? 'Approximate OSM heights · tilt limited to 50° for coherent detail. ' : ''}{terrain ? 'Regional terrain at normal scale. ' : ''}Housing analysis remains SF to SFO.</div>}
+    <MapStyleControl value={mapStyle} busy={styleLoading || imageryBusy} error={imageryError} onChange={choice => { setMapStyle(choice); setImageryError(''); if (choice === 'satellite' && map.current?.getSource('aerial')) { const source = map.current.getSource('aerial') as maplibregl.RasterTileSource; source.setTiles(source.tiles!); setImageryBusy(true); } }} />
+    {navigationHint && <div className="map-navigation-hint"><span>Left-drag pans · wheel zooms · right-drag up zooms in · middle-drag tilts and rotates.<small>Keyboard: arrows pan, +/− zoom, Shift + arrows tilt/rotate, N north.</small></span><button type="button" aria-label="Dismiss navigation hint" onClick={() => { setNavigationHint(false); try { sessionStorage.setItem('cg:navigation-hint', 'dismissed'); } catch { /* session storage optional */ } }}>×</button></div>}
+    {props.visibleLayers.has('crime') && <div className="crime-column-legend" aria-label="Reported incident column scale"><b>{zoom >= 15.2 ? 'Published approximate intersections' : `Incident columns · H3 level ${crimeLevel(zoom)}`}</b><span>Unique reported incidents · {(props.eventFilters ?? DEFAULT_EVENT_FILTERS).crime.from} to {(props.eventFilters ?? DEFAULT_EVENT_FILTERS).crime.to}</span>{zoom < 15.2 && <span>100 incidents = {100 * CRIME_SCALES[crimeLevel(zoom)]} display metres. Fixed scale. Larger cells sum more locations when zooming out; compare counts within the same level.</span>}<small>SF only. Other cities unknown. Columns are data graphics, separate from buildings. Click for counts and categories.</small></div>}
+    {(terrainBusy || zoom >= 14) && <div className="map-3d-note">{terrainBusy ? 'Loading real terrain…' : 'Terrain 1× · approximate OSM building heights. Data graphics are separate.'}</div>}
     {baseError && <div className="map-service-warning" role="status">{baseError}<button type="button" onClick={() => { setBaseError(''); map.current?.setStyle(STYLE_URL); }}>Retry tiles</button></div>}
     {Object.entries(layerErrors).filter(([id]) => id === 'terrain' || props.visibleLayers.has(id)).map(([id, message]) => <div key={id} className="map-layer-error" role="alert">{message}<button type="button" onClick={() => { setLayerErrors((errors) => { const next = { ...errors }; delete next[id]; return next; }); setLayerAttempt((n) => n + 1); if (id === 'terrain') { terrainWanted.current = true; void enableTerrain(); } }}>Retry layer</button></div>)}
   </>;

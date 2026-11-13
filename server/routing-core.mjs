@@ -1,7 +1,7 @@
 // Shared TravelTime request validation; no environment-file or filesystem access.
 const MODES = { transit: 'public_transport', walk: 'walking', bike: 'cycling', drive: 'driving' };
 // Study area (SF + northern Peninsula) with a margin; reject anything else.
-const BOUNDS = { west: -122.62, south: 37.60, east: -122.25, north: 37.9 };
+const BOUNDS = { west: -123, south: 37.1, east: -121.5, north: 38.1 };
 
 export function isAreaGeometry(value) {
   if (!value || !['Polygon', 'MultiPolygon'].includes(value.type)) return false;
@@ -68,7 +68,9 @@ export function createRoutingService({ env = process.env, cache, fetchImpl = fet
   const cacheAllowed = env.ROUTING_CACHE_ALLOWED === '1';
   const inflight = new Map();
   let liveToday = { day: new Date().toISOString().slice(0, 10), count: 0 };
-  const health = () => ({ configured: Boolean(appId && apiKey), liveToday: liveToday.count,
+  const health = () => ({ configured: Boolean(appId && apiKey), applicationIdPresent: Boolean(appId), apiKeyPresent: Boolean(apiKey),
+    status: !appId || !apiKey ? 'missing server credentials' : dryRun ? 'dry run; live requests disabled' : 'ready for live evaluation',
+    provider: 'traveltime', direction: 'home-to-work', timezone: 'America/Los_Angeles', supportedModes: Object.keys(MODES), liveToday: liveToday.count,
     dailyCap, dryRun, cacheAllowed, capScope: 'per running instance; provider account limits still apply' });
   const reply = (status, body) => ({ status, body });
 
@@ -131,7 +133,7 @@ export function createRoutingService({ env = process.env, cache, fetchImpl = fet
   async function runJourneys(body) {
     const home = { lat: numberField(body?.home?.lat), lon: numberField(body?.home?.lon) };
     if (!Number.isFinite(home.lat) || !Number.isFinite(home.lon) || home.lat < BOUNDS.south || home.lat > BOUNDS.north || home.lon < BOUNDS.west || home.lon > BOUNDS.east) {
-      return reply(400, { error: 'home must be a valid coordinate inside SF to SFO coverage' });
+      return reply(400, { error: 'home must be a valid coordinate inside the Bay Area routing envelope; housing coverage is checked separately' });
     }
     if (!Array.isArray(body?.destinations) || !body.destinations.length || body.destinations.length > 8) return reply(400, { error: 'provide 1 to 8 destinations' });
     const ids = new Set();

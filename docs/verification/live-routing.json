@@ -1,0 +1,133 @@
+[
+  {
+    "health": {
+      "configured": true,
+      "applicationIdPresent": true,
+      "apiKeyPresent": true,
+      "dryRun": false,
+      "cacheAllowed": false,
+      "timezone": "America/Los_Angeles"
+    },
+    "customDestination": {
+      "name": "Berkeley Civic Centre area",
+      "lat": 37.8715,
+      "lon": -122.273,
+      "offlineFixture": false
+    },
+    "request": {
+      "lat": 37.8715,
+      "lon": -122.273,
+      "mode": "transit",
+      "minutes": 45,
+      "direction": "to_workplace",
+      "arrive_by": "08:45"
+    },
+    "response": {
+      "status": 200,
+      "source": "traveltime",
+      "geometryType": "MultiPolygon",
+      "polygonCount": 7,
+      "arrivalDate": "2026-11-16",
+      "label": "TravelTime routing estimate · arrive by 08:45 on 2026-11-16"
+    },
+    "results": "547 matching locations · 8 areas",
+    "visibleRoutingLabel": [
+      "TravelTime routing estimate · arrive by 08:45 on 2026-11-16"
+    ]
+  },
+  {
+    "jointDestination": "San Mateo",
+    "status": 200,
+    "source": "traveltime",
+    "results": "0 matching locations · 0 areas"
+  },
+  {
+    "jointLimitsMinutes": [
+      120,
+      120
+    ],
+    "results": "3617 matching locations · 76 areas",
+    "areaIds": [
+      "bernal-heights",
+      "broadmoor",
+      "burlingame",
+      "castro-upper-market",
+      "chinatown",
+      "unincorporated-colma",
+      "country-club-park",
+      "census-0622594",
+      "excelsior",
+      "glen-park",
+      "haight-ashbury",
+      "hayes-valley",
+      "inner-richmond",
+      "inner-sunset",
+      "japantown",
+      "lone-mountain-usf",
+      "mclaren-park",
+      "mission",
+      "nob-hill",
+      "noe-valley",
+      "north-beach",
+      "oceanview-merced-ingleside",
+      "outer-mission",
+      "pacific-heights",
+      "portola",
+      "presidio",
+      "presidio-heights",
+      "seacliff",
+      "south-of-market",
+      "sunset-parkside",
+      "tenderloin",
+      "twin-peaks",
+      "visitacion-valley",
+      "west-of-twin-peaks",
+      "western-addition",
+      "mission-bay",
+      "russian-hill",
+      "outer-richmond",
+      "financial-district-south-beach",
+      "lincoln-park",
+      "potrero-hill",
+      "marina",
+      "golden-gate-park",
+      "south-san-francisco",
+      "daly-city",
+      "san-bruno",
+      "bayview-hunters-point",
+      "lakeshore",
+      "treasure-island",
+      "colma",
+      "pacifica",
+      "census-0609066",
+      "census-0606000",
+      "millbrae",
+      "census-0668252",
+      "brisbane",
+      "census-0600562",
+      "census-0653000",
+      "census-0605108",
+      "census-0625338",
+      "census-0665070",
+      "census-0681204",
+      "census-0647486",
+      "census-0602980",
+      "census-0660102",
+      "northern-peninsula-unincorporated-areas",
+      "census-0668084",
+      "census-0626000",
+      "census-0650916",
+      "census-0669084",
+      "census-0646870",
+      "census-0655282",
+      "census-0677000",
+      "census-0633000",
+      "census-0633798",
+      "census-0603092"
+    ],
+    "viewportIndependent": true
+  },
+  {
+    "success": true
+  }
+]

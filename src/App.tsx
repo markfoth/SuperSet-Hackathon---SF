@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataNotice } from './components/DataNotice';
 import { CommutePanel } from './features/commute/CommutePanel';
-import { cellCommutes, commonReachableGeometry } from './features/commute/eligibility';
 import { DEFAULT_WORKPLACES, commuteRequestKey, getCommuteProvider, type CommuteResult } from './features/commute/provider';
 import { PreferencePanel } from './features/filters/PreferencePanel';
 import { TradeoffPanel } from './features/filters/TradeoffPanel';
-import { evaluate, summarize, nearMisses, ranked as rankResults, type EvaluateInput } from './features/filters/ranking';
+import { nearMisses, ranked as rankResults, type EvaluateInput } from './features/filters/ranking';
 import { DEFAULT_PRIORITY } from './features/filters/preferences';
 import { NeighbourhoodDetail } from './features/neighbourhoods/NeighbourhoodDetail';
 import { ResultsList } from './features/neighbourhoods/ResultsList';
@@ -16,6 +15,7 @@ import { Dialog } from './features/scenarios/Dialog';
 import { createHome, createBookmark, validateSnapshot, loadWorkspace, saveWorkspace, readSharedScenario, settingsFingerprint, type ScenarioSnapshot, type Home, type LocationBookmark } from './features/scenarios/model';
 import { HomePanel } from './features/homes/HomePanel';
 import { loadData } from './lib/data';
+import { loadCandidates, evaluateRegion, partitionsForBounds, type CandidateIndex, type RegionalEvaluation } from './lib/candidates';
 import { readStored, writeStored } from './lib/storage';
 import { LayerPanel } from './map/controls/LayerPanel';
 import { MapView } from './map/MapView';
@@ -43,6 +43,10 @@ export default function App() {
   const [initial] = useState(initialWorkspace), [shared, setShared] = useState(sharedWorkspace);
   const [data, setData] = useState<AppData | null>(null), [loadError, setLoadError] = useState<string | null>(null);
   const [analysisReady, setAnalysisReady] = useState(false), [analysisError, setAnalysisError] = useState<string | null>(null), [analysisRetry, setAnalysisRetry] = useState(0);
+  const [viewportBounds, setViewportBounds] = useState<number[]>([-122.55,37.6,-122.3,37.85]);
+  const [geometryError, setGeometryError] = useState(false);
+  const [mapAvailable,setMapAvailable] = useState(true);
+  const [resultsFramed,setResultsFramed] = useState(false);
   const [workplaces, setWorkplaces] = useState<Workplace[]>(() => initial.value?.workplaces ?? []);
   const [prefs, setPrefs] = useState<Record<string, PreferenceLevel>>(() => initial.value?.prefs ?? {});
   const [priorityOrder, setPriorityOrder] = useState<string[]>(() => initial.value?.priorityOrder ?? DEFAULT_PRIORITY);
@@ -81,7 +85,6 @@ export default function App() {
   },[selectedId]);
   const [undoSettings, setUndoSettings] = useState<{prefs:Record<string,PreferenceLevel>; priorityOrder:string[]; workplaces:Workplace[]}|null>(null);
   const [sheet, setSheet] = useState<'compact'|'half'|'full'>('half');
-  const [mapMode, setMapMode] = useState<'find' | 'explore' | 'compare'>('find');
   useEffect(() => { const update = () => setShared(sharedWorkspace()); window.addEventListener('hashchange', update); return () => window.removeEventListener('hashchange', update); }, []);
 
   useEffect(() => {
@@ -106,14 +109,23 @@ export default function App() {
     if (!overviewReady || !analysisNeeded || analysisReady) return;
     let cancelled = false;
     setAnalysisError(null);
-    Promise.all([loadData<AreaCellCollection>('area_cells.geojson'), loadData<AreaCellDisplayCollection>('area_cell_display.geojson')])
-      .then(([cells, displayCells]) => {
+    loadCandidates()
+      .then(cells => {
         if (cancelled) return;
-        setData(previous => previous ? { ...previous, cells, displayCells } : previous);
+        setData(previous => previous ? { ...previous, cells } : previous);
         setAnalysisReady(true);
       }).catch((error: unknown) => { if (!cancelled) setAnalysisError(error instanceof Error ? error.message : 'Local measurements could not load.'); });
     return () => { cancelled = true; };
   }, [overviewReady, analysisNeeded, analysisReady, analysisRetry]);
+  useEffect(() => {
+    if (!analysisReady || !resultsFramed || !mapAvailable) return;
+    let cancelled = false;
+    setGeometryError(false);
+    loadData<CandidateIndex>('candidate_index.json').then(index => Promise.all(partitionsForBounds(index.partitions, viewportBounds).map(part => loadData<AreaCellDisplayCollection>(`cells/${part.id}.geojson`))))
+      .then(parts => { if (!cancelled) setData(previous => previous ? { ...previous, displayCells: {type:'FeatureCollection',features:parts.flatMap(part=>part.features)} } : previous); })
+      .catch(() => { if (!cancelled) setGeometryError(true); });
+    return () => { cancelled = true; };
+  }, [analysisReady, viewportBounds, analysisRetry, resultsFramed, mapAvailable]);
   const snapshot = useMemo<ScenarioSnapshot>(() => ({ workplaces, prefs, priorityOrder, shortlist, homes, bookmarks }), [workplaces, prefs, priorityOrder, shortlist, homes, bookmarks]);
   useEffect(() => {
     if (!autosave) return;
@@ -127,23 +139,34 @@ export default function App() {
     let cancelled = false;
     workplaces.forEach(w => {
       const key = `${w.id}|${commuteRequestKey(w)}`;
+      if (commuteCache[key]) return;
       provider.getArea(w).catch((): CommuteResult => ({ ok: false, reason: 'Routing request failed. Retry or try the example.' }))
-        .then(res => { if (!cancelled) setCommuteCache(c => ({ ...c, [key]: res })); });
+        .then(res => { if (!cancelled) setCommuteCache(c => Object.fromEntries([...Object.entries(c),[key,res]].slice(-24))); });
     });
     return () => { cancelled = true; };
   }, [keys, retry]);
   const commute = useMemo(() => Object.fromEntries(workplaces.map(w => [w.id, commuteCache[`${w.id}|${commuteRequestKey(w)}`]])), [keys, commuteCache]);
   const areas = useMemo(() => workplaces.flatMap(w => { const r = commute[w.id]; return r?.ok ? [r.area] : []; }), [commute, workplaces]);
-  const pending = workplaces.some(w => commute[w.id] === undefined) || (analysisNeeded && !analysisReady && !analysisError);
   const failed = workplaces.map(w => [w, commute[w.id]] as const).find(([, r]) => r && !r.ok);
   const blocked = analysisError || (failed ? `${failed[0].name}: ${(failed[1] as { reason: string }).reason}` : null);
-  const candidateCells = useMemo(() => { if (!data) return null; const footprints = new Set(data.displayCells.features.map(f => f.properties.h3)); return { ...data.cells, features: data.cells.features.filter(f => footprints.has(f.properties.h3)) }; }, [data]);
-  const cellCoverage = useMemo(() => candidateCells ? cellCommutes(candidateCells, workplaces, commute) : {}, [candidateCells, keys, commute]);
-  const overlap = useMemo(() => !pending && !blocked ? commonReachableGeometry(areas, workplaces.length) : null, [areas, workplaces.length, pending, blocked]);
+  const candidateCells = data?.cells;
+  const regionalRequest = useMemo(() => ({workplaces,commute,metrics:data?.metrics ?? {},prefs,priorityOrder}), [keys, commute, data?.metrics, prefs, priorityOrder]);
+  const [evaluation, setEvaluation] = useState<{request: typeof regionalRequest; value:RegionalEvaluation} | null>(null);
+  useEffect(() => {
+    if (!analysisReady) return;
+    let cancelled = false;
+    evaluateRegion(regionalRequest).then(value => { if (!cancelled) {setEvaluation({request:regionalRequest,value});setAnalysisError(null);} })
+      .catch(() => { if (!cancelled) setAnalysisError('Regional analysis could not finish. Retry local data.'); });
+    return () => { cancelled = true; };
+  }, [analysisReady, regionalRequest, analysisRetry]);
+  const currentEvaluation = evaluation?.request === regionalRequest ? evaluation.value : null;
+  const pending = workplaces.some(w => commute[w.id] === undefined) || (analysisNeeded && !analysisError && (!analysisReady || !currentEvaluation));
+  const cellCoverage = currentEvaluation?.commutes ?? {};
+  const overlap = !pending && !blocked ? currentEvaluation?.overlap ?? null : null;
   const input = useMemo<EvaluateInput | null>(() => data && candidateCells ? { cells: candidateCells, metrics: data.metrics, commutes: cellCoverage, prefs, priorityOrder } : null, [data, candidateCells, cellCoverage, prefs, priorityOrder]);
-  const cellResults = useMemo(() => input ? evaluate(input) : [], [input]);
+  const cellResults = currentEvaluation?.results ?? [];
   const cellById = useMemo(() => Object.fromEntries(cellResults.map(r => [r.id, r])), [cellResults]);
-  const results = useMemo(() => input ? summarize(input, cellResults) : [], [input, cellResults]);
+  const results = currentEvaluation?.areas ?? [];
   const byId = useMemo(() => Object.fromEntries(results.map(r => [r.id, r])), [results]);
   const rankedList = useMemo(() => rankResults(results), [results]);
   const excluded = useMemo(() => results.filter(r => !r.eligible).sort((a, b) => a.name.localeCompare(b.name)), [results]);
@@ -151,7 +174,7 @@ export default function App() {
 
   if (loadError) return <main className="fatal"><h1>We couldn’t load the local data.</h1><p>{loadError}</p><button className="btn primary" onClick={() => window.location.reload()}>Try again</button></main>;
   if (!data || !input) return <main className="fatal" role="status"><span className="brand">Common Ground</span><p>Getting the lay of the land…</p></main>;
-  const updateWorkplace = (id: string, patch: Partial<Workplace>) => { setUndoSettings(null); setAutosave(true); setWorkplaces(ws => ws.map(w => w.id === id ? { ...w, ...patch } : w)); };
+  const updateWorkplace = (id: string, patch: Partial<Workplace>) => { setUndoSettings(null); setAutosave(true); setWorkplaces(ws => ws.map(w => w.id === id ? { ...w, ...patch, ...((patch.lat != null || patch.lon != null) ? {offlineExample:false} : {}) } : w)); };
   const toggleShortlist = (id: string) => {
     setAutosave(true);
     if (shortlist.includes(id)) { setShortlist(s => s.filter(x => x !== id)); setBookmarks(bs => bs.filter(b => b.kind !== 'neighbourhood' || b.neighbourhoodId !== id)); }
@@ -179,23 +202,24 @@ export default function App() {
       <button className="brand" onClick={() => { setPanel('search'); setLeftCollapsed(false); setFocusedMap(false); }} aria-label="Common Ground home"><svg className="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 25V11L16 4l12 7v14H4Z" fill="none" stroke="currentColor" strokeWidth="2"/><path d="M16 4v21M4 18h24" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg><span>Common Ground<small>Find a place that works for everyone.</small></span></button>
       <nav className="topbar-right" aria-label="Your household">
         <button className="btn link homes-nav" onClick={() => setHomesOpen(true)}>Homes{homes.length ? ` (${homes.length})` : ''}</button>
-        <button className="btn link shortlist-count" onClick={() => { setMapMode('compare'); setCompareSaved(true); }}>Shortlist <span className="count">{shortlist.length + bookmarks.filter(b => b.kind === 'cell').length + homes.length}</span></button>
+        <button className="btn link shortlist-count" onClick={() => setCompareSaved(true)}>Compare saved places <span className="count">{shortlist.length + bookmarks.filter(b => b.kind === 'cell').length + homes.length}</span></button>
         <button className="btn scenarios-nav" onClick={() => setScenariosOpen(true)}>Scenarios <span aria-hidden="true">↗</span></button>
         <button className="icon-btn about-nav" onClick={() => setAbout(true)} aria-label="About the data">i</button>
       </nav>
     </header>
     <main className="layout">
-      <section className="map-wrap" aria-label="San Francisco and northern Peninsula map">
-        <MapView neighbourhoods={data.neighbourhoods} results={byId} selectedId={selectedId} cells={data.displayCells} cellResults={cellById} selectedCellId={selectedCellId} onSelectCell={selectCell} matchingActive={matchingActive} overlap={overlap} onSelect={selectNeighbourhood}
-          areas={areas} workplaces={workplaces} addingWorkplace={adding} onMoveWorkplace={(id, lat, lon) => updateWorkplace(id, { lat, lon, placeName: 'Pinned location' })} onMapPick={(lat, lon) => addDestination('Pinned location', lat, lon)} visibleLayers={layers} onInspectContext={() => setLayersOpen(false)} transportAnimation={transportAnimation} airScale={airScale} eventFilters={eventFilters} hoveredNeighbourhoodId={hoveredId} onHoverNeighbourhood={setHoveredId} mapMode={mapMode} focusWorkplaceId={focusedWorkplaceId}
+      <section className="map-wrap" aria-label="Bay Area map">
+        <MapView onResultsFramed={()=>setResultsFramed(true)} onAvailabilityChange={available=>{setMapAvailable(available);if(!available)setFocusedMap(false);}} neighbourhoods={data.neighbourhoods} results={byId} selectedId={selectedId} cells={data.displayCells} cellResults={cellById} selectedCellId={selectedCellId} onSelectCell={selectCell} matchingActive={matchingActive} overlap={overlap} onSelect={selectNeighbourhood}
+          areas={areas} workplaces={workplaces} addingWorkplace={adding} onMoveWorkplace={(id, lat, lon) => updateWorkplace(id, { lat, lon, placeName: 'Pinned location', offlineExample: false })} onMapPick={(lat, lon) => addDestination('Pinned location', lat, lon)} visibleLayers={layers} onInspectContext={() => setLayersOpen(false)} onViewportChange={setViewportBounds} transportAnimation={transportAnimation} airScale={airScale} eventFilters={eventFilters} hoveredNeighbourhoodId={hoveredId} onHoverNeighbourhood={setHoveredId} focusWorkplaceId={focusedWorkplaceId}
           homes={homes} selectedHomeId={selectedHomeId} onSelectHome={id => { setSelectedHomeId(id); setHomesOpen(true); }} pickingHome={pickingHome} onHomePick={(lat, lon) => { const home = createHome(lat, lon); setHomes(hs => [...hs, home]); setSelectedHomeId(home.id); setPickingHome(false); setFocusedMap(false); setHomesOpen(true); }} onMoveHome={(id, lat, lon) => setHomes(hs => hs.map(h => h.id === id ? { ...h, lat, lon } : h))} />
-        <div className="map-topline"><div className="map-modes" role="group" aria-label="Map mode">{(['find', 'explore', 'compare'] as const).map(mode => <button key={mode} aria-pressed={mapMode === mode} onClick={() => { setMapMode(mode); if (mode === 'compare') setCompareSaved(true); }}>{mode === 'find' ? 'Find' : mode === 'explore' ? 'Explore' : 'Compare'}</button>)}</div><button className="btn map-focus" onClick={() => setFocusedMap(v => !v)}>{focusedMap ? '← Back to search' : 'Focus on map'} <span aria-hidden="true">⛶</span></button></div>
-        <div className="context-control"><button className="btn layers-toggle" aria-expanded={layersOpen} onClick={() => setLayersOpen(v => !v)}><span aria-hidden="true">▱</span> Map layers{layers.size ? ` · ${layers.size}` : ''}</button>{layersOpen && <div className="floating-layers"><LayerPanel visible={layers} airScale={airScale} onAirScaleChange={setAirScale} transportAnimation={transportAnimation} onTransportAnimationChange={setTransportAnimation} eventFilters={eventFilters} onEventFiltersChange={(kind, value) => setEventFilters(current => ({ ...current, [kind]: value }))} onToggle={id => setLayers(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; })} /><button className="btn link" onClick={() => setLayersOpen(false)}>Done</button></div>}</div>
+        <div className="map-topline"><button className="btn map-focus" onClick={() => setFocusedMap(v => !v)}>{focusedMap ? '← Back to search' : 'Focus on map'} <span aria-hidden="true">⛶</span></button></div>
+        <div className="context-control"><button className="btn layers-toggle" disabled={!mapAvailable} aria-expanded={layersOpen} onClick={() => setLayersOpen(v => !v)}><span aria-hidden="true">▱</span> Map layers{layers.size ? ` · ${layers.size}` : ''}</button>{layersOpen && <div className="floating-layers"><LayerPanel visible={layers} airScale={airScale} onAirScaleChange={setAirScale} transportAnimation={transportAnimation} onTransportAnimationChange={setTransportAnimation} eventFilters={eventFilters} onEventFiltersChange={(kind, value) => setEventFilters(current => ({ ...current, [kind]: value }))} onToggle={id => setLayers(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; })} /><button className="btn link" onClick={() => setLayersOpen(false)}>Done</button></div>}</div>
         {(adding || pickingHome) && <div className="pick-instruction" role="status">{pickingHome ? 'Choose the home’s position on the map.' : 'Choose a destination on the map. Drag its pin to refine it.'}<button className="btn" onClick={() => { setAdding(false); setPickingHome(false); setFocusedMap(false); }}>Cancel</button></div>}
         {pending && matchingActive && <div className="map-badge" role="status">{analysisReady ? 'Checking every commute…' : 'Loading local measurements…'}</div>}
         {!pending && blocked && <div className="map-badge error" role="status">Commute unavailable · matching paused</div>}
-        {matchingActive && <div className="match-legend" aria-label="Cell matching legend"><b>{eligibleCells} matching locations · {rankedList.length} neighbourhoods</b><div><span className="match-dot strong" />{preferenceCount ? 'Meets targets' : 'Commute match'}<span className="match-dot partial" />Compromise<span className="match-dot unknown" />Unknown</div><small>Representative points, not every address · ~0.1 km² cells<br />{areas.some(a => a.source === 'fixture') ? 'Approximate offline example · some timetables out of date' : 'Routing estimates, not journey guarantees'}</small>{selected?.eligible && <small>Gold outlines: matches in {selected.name}.</small>}</div>}
-        <div className="coverage-caption"><span className="coverage-dot" /> San Francisco → SFO <span>Open local data · coverage varies</span></div>
+        {geometryError && <div className="map-badge error" role="alert">Map detail could not load. Region-wide matching is unchanged.<button onClick={() => setAnalysisRetry(n=>n+1)}>Retry map detail</button></div>}
+        {matchingActive && <div className="match-legend" aria-label="Cell matching legend"><b>{eligibleCells} matching locations · {rankedList.length} areas</b><div><span className="match-dot strong" />{preferenceCount ? 'Meets targets' : 'Commute match'}<span className="match-dot partial" />Compromise<span className="match-dot unknown" />Unknown</div><small>Representative points, not every address · ~0.1 km² cells<br />{areas.some(a => a.source === 'fixture') ? 'Approximate offline example · some timetables out of date' : 'Routing estimates, not journey guarantees'}</small>{selected?.eligible && <small>Gold outlines: matches in {selected.name}.</small>}</div>}
+        <div className="coverage-caption"><span className="coverage-dot" /> SF · Peninsula · East Bay <span>Coverage varies by source</span></div>
       </section>
       <div className="decision-panel" hidden={focusedMap}>
         <div className="sheet-controls" role="group" aria-label="Panel size">{(['compact','half','full'] as const).map(size=><button key={size} aria-pressed={sheet===size} onClick={()=>setSheet(size)}>{size==='compact'?'More map':size==='half'?'Split view':'More list'}</button>)}</div>
@@ -204,9 +228,9 @@ export default function App() {
         <div className="desktop-panel-heading"><button className="panel-title" onClick={() => setPanel('search')}>Your search</button><button className="icon-btn" aria-label="Collapse your search" aria-controls="criteria-content" onClick={() => setLeftCollapsed(true)}>‹</button></div>
         {matchingActive && <div className="persistent-summary"><span>{workplaces.length} destinations · {preferenceCount} priorities</span><button className="btn link" onClick={()=>setCompareSaved(true)}>Compare saved</button></div>}
         <aside id="criteria-content" className="sidebar" hidden={panel !== 'search'} aria-label="Your search">
-          {!matchingActive && <div className="opening-intro"><span className="eyebrow">A PLACE FOR YOUR LIVES TO MEET.</span><p>San Francisco and the northern Peninsula.</p></div>}
-          <CommutePanel workplaces={workplaces} results={commute} onChange={updateWorkplace} adding={adding} onRemove={id => { setAutosave(true); setUndoSettings(null); setWorkplaces(ws => ws.filter(w => w.id !== id)); }} onAdd={() => { setAdding(v => !v); setPickingHome(false); if (window.innerWidth <= 700) setFocusedMap(true); }} onAddPlace={place => addDestination(place.name, place.lat, place.lon)} onFocus={id => { setFocusedWorkplaceId(null); requestAnimationFrame(() => setFocusedWorkplaceId(id)); }} onRetry={() => { setCommuteCache({}); setRetry(n => n + 1); setAnalysisRetry(n => n + 1); }} onReset={() => { setUndoSettings(null); setAutosave(true); setWorkplaces(DEFAULT_WORKPLACES.map((w, i) => ({ ...w, personName: ['Alex', 'Sam'][i], officeDays: 3, placeName: w.name }))); setAdding(false); setFocusedMap(false); }} />
-          {matchingActive && <><div className="preferences-reveal panel-section"><button className="preferences-toggle" aria-expanded={preferencesOpen} onClick={() => setPreferencesOpen(v => !v)}><span><b>Make it feel like home</b><small>{preferenceCount ? `${preferenceCount} priorities active` : 'Parks, flatter streets, everyday essentials'}</small></span><span aria-hidden="true">{preferencesOpen ? '−' : '+'}</span></button></div>{preferencesOpen && <PreferencePanel input={input} onChange={(id, level) => { setUndoSettings(null); setAutosave(true); setPrefs(p => ({ ...p, [id]: level })); }} onOrderChange={order => { setUndoSettings(null); setAutosave(true); setPriorityOrder(order); }} />}<TradeoffPanel key={String(pending) + blocked + areas.map(a => a.fetchedAt || a.label).join(';') + JSON.stringify(workplaces) + JSON.stringify(prefs) + priorityOrder.join(',')} input={input} workplaces={workplaces} commute={commute} onUndo={undoSettings ? () => { setPrefs(undoSettings.prefs); setPriorityOrder(undoSettings.priorityOrder); setWorkplaces(undoSettings.workplaces); setUndoSettings(null); } : undefined} onApply={(p, order, ws) => { setUndoSettings({prefs,priorityOrder,workplaces}); setPrefs(p); setPriorityOrder(order); if (ws) setWorkplaces(ws); }} /><div className="search-summary panel-section"><p>{blocked ? 'A required commute needs attention.' : pending ? 'Checking all destinations together.' : <><b>{rankedList.length} neighbourhoods</b> have matching locations.</>}</p><button className="btn primary wide" onClick={() => setPanel('results')}>{blocked ? 'Review matching status' : 'Explore your matches'} <span aria-hidden="true">→</span></button><p className="hint">{preferenceCount ? 'Your priorities guide the order. Must-haves stay required.' : 'Commute feasibility first. Add preferences to personalise the order.'}</p></div></>}
+          {!matchingActive && <div className="opening-intro"><span className="eyebrow">A PLACE FOR YOUR LIVES TO MEET.</span><p>San Francisco, the Peninsula to Santa Clara and the East Bay.</p></div>}
+          <CommutePanel mapAvailable={mapAvailable} workplaces={workplaces} results={commute} onChange={updateWorkplace} adding={adding} onRemove={id => { setAutosave(true); setUndoSettings(null); setWorkplaces(ws => ws.filter(w => w.id !== id)); }} onAdd={() => { setAdding(v => !v); setPickingHome(false); if (window.innerWidth <= 700) setFocusedMap(true); }} onAddPlace={place => addDestination(place.name, place.lat, place.lon)} onFocus={id => { setFocusedWorkplaceId(null); requestAnimationFrame(() => setFocusedWorkplaceId(id)); }} onRetry={() => { setCommuteCache({}); setRetry(n => n + 1); setAnalysisRetry(n => n + 1); }} onReset={() => { setUndoSettings(null); setAutosave(true); setWorkplaces(DEFAULT_WORKPLACES.map((w, i) => ({ ...w, personName: ['Alex', 'Sam'][i], officeDays: 3, placeName: w.name, offlineExample: true }))); setAdding(false); setFocusedMap(false); }} />
+          {matchingActive && <><div className="preferences-reveal panel-section"><button className="preferences-toggle" aria-expanded={preferencesOpen} onClick={() => setPreferencesOpen(v => !v)}><span><b>Make it feel like home</b><small>{preferenceCount ? `${preferenceCount} priorities active` : 'Parks, flatter streets, everyday essentials'}</small></span><span aria-hidden="true">{preferencesOpen ? '−' : '+'}</span></button></div>{preferencesOpen && <PreferencePanel input={input} onChange={(id, level) => { setUndoSettings(null); setAutosave(true); setPrefs(p => ({ ...p, [id]: level })); }} onOrderChange={order => { setUndoSettings(null); setAutosave(true); setPriorityOrder(order); }} />}<TradeoffPanel current={currentEvaluation} busy={pending || !!blocked} key={areas.map(a => a.fetchedAt || a.label).join(';') + JSON.stringify(workplaces) + JSON.stringify(prefs) + priorityOrder.join(',')} input={input} workplaces={workplaces} commute={commute} onUndo={undoSettings ? () => { setPrefs(undoSettings.prefs); setPriorityOrder(undoSettings.priorityOrder); setWorkplaces(undoSettings.workplaces); setUndoSettings(null); } : undefined} onApply={(p, order, ws) => { setUndoSettings({prefs,priorityOrder,workplaces}); setPrefs(p); setPriorityOrder(order); if (ws) setWorkplaces(ws); }} /><div className="search-summary panel-section"><p>{blocked ? 'A required commute needs attention.' : pending ? 'Checking all destinations together.' : <><b>{rankedList.length} areas</b> have matching locations.</>}</p><button className="btn primary wide" onClick={() => setPanel('results')}>{blocked ? 'Review matching status' : 'Explore your matches'} <span aria-hidden="true">→</span></button><p className="hint">{preferenceCount ? 'Your priorities guide the order. Must-haves stay required.' : 'Commute feasibility first. Add preferences to personalise the order.'}</p></div></>}
           <div className="search-footer">A home decision, made together.<button className="btn link" onClick={() => setAbout(true)}>Sources & confidence ↗</button></div>
         </aside>
         </section>
@@ -226,7 +250,7 @@ export default function App() {
     {(homesOpen || compareSaved) && !analysisReady && <Dialog title="Loading local evidence" onClose={() => { setHomesOpen(false); setCompareSaved(false); }}><p role="status">{analysisError || 'Loading the matching cells needed for this comparison...'}</p>{analysisError && <button className="btn primary" onClick={() => setAnalysisRetry(n => n + 1)}>Retry local data</button>}</Dialog>}
     {about && <DataNotice onClose={() => setAbout(false)} />}
     {scenariosOpen && <ScenarioPanel snapshot={snapshot} onLoad={loadSnapshot} onClose={() => setScenariosOpen(false)} />}
-    {homesOpen && analysisReady && <HomePanel homes={homes} onChange={next => { setAutosave(true); setHomes(next); }} workplaces={workplaces} commute={commute} cells={data.cells} metrics={data.metrics} prefs={prefs} priorityOrder={priorityOrder} onPick={() => { setHomesOpen(false); setPickingHome(true); setAdding(false); setFocusedMap(true); }} selectedId={selectedHomeId} onSelect={setSelectedHomeId} onClose={() => setHomesOpen(false)} />}
+    {homesOpen && analysisReady && <HomePanel mapAvailable={mapAvailable} homes={homes} onChange={next => { setAutosave(true); setHomes(next); }} workplaces={workplaces} commute={commute} cells={data.cells} metrics={data.metrics} prefs={prefs} priorityOrder={priorityOrder} onPick={() => { setHomesOpen(false); setPickingHome(true); setAdding(false); setFocusedMap(true); }} selectedId={selectedHomeId} onSelect={setSelectedHomeId} onClose={() => setHomesOpen(false)} />}
     {compareSaved && analysisReady && <ShortlistComparison areas={results.filter(r => shortlist.includes(r.id))} cells={cellById} metrics={data.metrics} priorityOrder={priorityOrder} homes={homes} workplaces={workplaces} commute={commute} analysisCells={data.cells} prefs={prefs} bookmarks={bookmarks} onBookmarksChange={next => { setAutosave(true); const kept = new Set(next.map(b => b.id)); const removed = bookmarks.filter(b => b.kind === 'neighbourhood' && !kept.has(b.id)).map(b => b.neighbourhoodId); setShortlist(s => s.filter(id => !removed.includes(id))); setBookmarks(next); }} fingerprint={settingsFingerprint(snapshot)} onClose={() => setCompareSaved(false)} onSelect={id => { setCompareSaved(false); selectNeighbourhood(id); }} onSelectCell={id => { setCompareSaved(false); selectCell(id); }} onHomes={id => { if (id) setSelectedHomeId(id); setCompareSaved(false); setHomesOpen(true); }} />}
   </div>;
 }

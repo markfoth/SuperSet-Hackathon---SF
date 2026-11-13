@@ -19,7 +19,7 @@ def test_city_centres_have_groupings_and_fine_cells_through_sfo():
     for name, xy in known.items():
         assert any(f["properties"]["id"] == name and shape(f["geometry"]).covers(Point(*xy)) for f in groups), name
         assert any(f["properties"]["nhood_id"] == name and shape(f["geometry"]).covers(Point(*xy)) for f in cells), name
-    assert all(shape(f["geometry"]).bounds[1] >= STUDY_BBOX[1] - 1e-6 for f in cells)
+    assert all(shape(f["geometry"]).bounds[1] >= STUDY_BBOX[1] - 1e-6 for f in cells if not f['properties']['nhood_id'].startswith('census-'))
 
 
 def test_peninsula_coverage_is_local_and_absent_incidents_are_not_zero():

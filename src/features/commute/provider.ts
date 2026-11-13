@@ -20,7 +20,7 @@ export interface CommuteArea {
 
 export type CommuteResult = { ok: true; area: CommuteArea } | { ok: false; reason: string };
 
-/** Reject empty, nonfinite or malformed provider polygons before Leaflet sees them. */
+/** Reject empty, nonfinite or malformed provider polygons before they reach matching or map rendering. */
 export function isAreaGeometry(value: unknown): value is AreaGeometry {
   if (!value || typeof value !== 'object') return false;
   const g = value as { type?: string; coordinates?: unknown };
@@ -45,7 +45,7 @@ export const DEFAULT_WORKPLACES: Workplace[] = [
 ];
 
 /** Labels, colours and office days do not change reachable geometry. Arrival time does. */
-export const commuteRequestKey = (w: Workplace): string => `${w.lat.toFixed(5)},${w.lon.toFixed(5)},${w.mode},${w.maxMinutes},${w.arrivalTime || '08:45'}`;
+export const commuteRequestKey = (w: Workplace): string => `${w.lat.toFixed(5)},${w.lon.toFixed(5)},${w.mode},${w.maxMinutes},${w.arrivalTime || '08:45'},${Boolean(w.offlineExample)},${new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Los_Angeles'}).format(new Date())}`;
 
 function fixtureKey(wp: Workplace): string | null {
   // A workplace matches a fixture only if it is still at the default location (±50 m).
@@ -130,11 +130,9 @@ export function getCommuteProvider(): CommuteProvider {
     return {
       id: 'proxy+fixture',
       async getArea(wp) {
+        if (wp.offlineExample) return fixtureProvider.getArea(wp);
         const res = await live.getArea(wp);
-        if (res.ok) return res;
-        const fallback = await fixtureProvider.getArea(wp);
-        return fallback.ok ? { ok: true, area: { ...fallback.area, label: `Live routing unavailable · ${fallback.area.label}` } }
-          : { ok: false, reason: `${res.reason} ${fallback.reason}` };
+        return res;
       },
     };
   }

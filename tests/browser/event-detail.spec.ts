@@ -24,10 +24,10 @@ test.describe('desktop published event detail', () => {
   async function snapshot(page: Page, kind: Kind) {
     return page.evaluate(async kind => {
       const map = (document.querySelector('.map') as MapElement).__commonGroundMap;
-      const overview = map.getSource(`context-${kind}-overview`) as GeoJSONSource | undefined;
+      const overview = map.getSource(kind === 'crime' ? 'context-crime-columns' : 'context-collisions-overview') as GeoJSONSource | undefined;
       const points = map.getSource(`context-${kind}-details`) as GeoJSONSource | undefined;
       if (!overview || !points) return null;
-      const grid = await overview.getData() as FeatureCollection;
+      const allGrid = await overview.getData() as FeatureCollection; const grid = kind === 'crime' ? {...allGrid,features:allGrid.features.filter(f=>f.properties?.resolution===8)} : allGrid;
       const detail = await points.getData() as FeatureCollection;
       return { gridTotal: grid.features.reduce((n, f) => n + Number(f.properties?.total ?? 0), 0),
         pointTotal: detail.features.reduce((n, f) => n + Number(f.properties?.total ?? 0), 0),
@@ -48,7 +48,7 @@ test.describe('desktop published event detail', () => {
     const all = await snapshot(page, 'crime');
     expect(all?.gridTotal).toBe(all?.pointTotal);
     expect(all?.pointCount).toBe(5457);
-    expect(all?.detailVisibility).toBe('none');
+    expect(all?.detailVisibility).toBe('visible');
     await page.getByRole('combobox', { name: /Incident category/ }).selectOption('property');
     await page.getByLabel('Incident from month', { exact: true }).fill('2026-07');
     const raw = await (await page.request.get('/data/incident_details.json')).json();
@@ -58,7 +58,6 @@ test.describe('desktop published event detail', () => {
     const filtered = await snapshot(page, 'crime');
     expect(filtered?.gridTotal).toBe(expected);
     expect(filtered?.period).toMatch(/^Jul 2026 to Sept? 2026 \(inclusive\)$/);
-    await page.getByRole('checkbox', { name: 'Show published intersection detail', exact: true }).check();
     await page.getByRole('button', { name: 'Done', exact: true }).click();
 
     const features = await page.evaluate(async () => {
@@ -89,7 +88,7 @@ test.describe('desktop published event detail', () => {
     await expect(page.locator('.event-popup')).toContainText(/Jul 2026 to Sept? 2026/);
     await expect(page.locator('.event-popup')).toContainText('category totals can overlap');
     await expect(page.locator('.map')).toHaveAttribute('data-selection-id', selection ?? '');
-    await page.screenshot({ path: 'docs/audit/event-detail-browser/incident-priority.png' });
+    await page.screenshot({ path: 'test-results/screenshots/event-detail-browser/incident-priority.png' });
     // A newly selected period must never leave the previous period's static
     // popup counts on screen beside updated markers and overview totals.
     await page.locator('.layers-toggle').click();
@@ -144,7 +143,7 @@ test.describe('desktop published event detail', () => {
     await expect(popup).toContainText(/fatalit(?:y|ies)/);
     await expect(popup).toContainText('Pedestrian and cyclist involvement can overlap');
     await expect(popup.getByRole('link')).toHaveAttribute('href', 'https://data.sf.gov/d/ubvf-ztfx');
-    await page.screenshot({ path: 'docs/audit/event-detail-browser/crash-casualties.png' });
+    await page.screenshot({ path: 'test-results/screenshots/event-detail-browser/crash-casualties.png' });
   });
 
   test('delayed load, rapid toggles and an actual style reload retain one source pair and five layers', async ({ page }) => {
@@ -161,14 +160,13 @@ test.describe('desktop published event detail', () => {
     await expect.poll(() => requested).toBe(true);
     await toggle.uncheck();
     release();
-    await expect.poll(async () => (await snapshot(page, 'crime'))?.layerCount).toBe(5);
+    await expect.poll(async () => (await snapshot(page, 'crime'))?.layerCount).toBe(9);
     await expect.poll(() => page.evaluate(() => {
       const map = (document.querySelector('.map') as MapElement).__commonGroundMap;
       return map.getStyle().layers.filter(l => l.id.startsWith('context-crime-')).every(l => map.getLayoutProperty(l.id, 'visibility') === 'none');
     })).toBe(true);
     for (let i = 0; i < 3; i++) { await toggle.check(); await toggle.uncheck(); }
     await toggle.check();
-    await page.getByRole('checkbox', { name: 'Show published intersection detail', exact: true }).check();
     await expect.poll(async () => (await snapshot(page, 'crime'))?.pointTotal).toBe(47808);
     await page.evaluate(async () => {
       const map = (document.querySelector('.map') as MapElement).__commonGroundMap;
@@ -177,7 +175,7 @@ test.describe('desktop published event detail', () => {
     });
     await expect.poll(async () => (await snapshot(page, 'crime'))?.pointTotal).toBe(47808);
     const after = await snapshot(page, 'crime');
-    expect(after?.layerCount).toBe(5);
+    expect(after?.layerCount).toBe(9);
     expect(after?.sourceCount).toBe(2);
     expect(after?.detailVisibility).toBe('visible');
     expect(errors).toEqual([]);
@@ -195,15 +193,15 @@ test.describe('desktop published event detail', () => {
       await expect.poll(async () => (await snapshot(page, kind))?.gridTotal).toBe(kind === 'crime' ? 47808 : 8888);
       const coordinates = await page.evaluate(async kind => {
         const map = (document.querySelector('.map') as MapElement).__commonGroundMap;
-        const data = await (map.getSource(`context-${kind}-overview`) as GeoJSONSource).getData() as FeatureCollection<Polygon>;
-        const ring = data.features[0].geometry.coordinates[0];
+        const data = await (map.getSource(kind === 'crime' ? 'context-crime-columns' : 'context-collisions-overview') as GeoJSONSource).getData() as FeatureCollection<Polygon>;
+        const ring = data.features.find(f=>kind!=='crime'||f.properties?.resolution===8)!.geometry.coordinates[0];
         const point: [number, number] = [ring.reduce((n, p) => n + p[0], 0) / ring.length, ring.reduce((n, p) => n + p[1], 0) / ring.length];
         map.jumpTo({ center: point, zoom: 12.8, pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 } });
         return point;
       }, kind);
       await expect.poll(() => page.evaluate(({ coordinates, kind }) => {
         const map = (document.querySelector('.map') as MapElement).__commonGroundMap;
-        return map.queryRenderedFeatures(map.project(coordinates), { layers: [`context-${kind}-overview-fill`] }).length;
+        return map.queryRenderedFeatures(map.project(coordinates), { layers: [kind==='crime'?'context-crime-columns-8':'context-collisions-overview-fill'] }).length;
       }, { coordinates, kind })).toBeGreaterThan(0);
       const point = await page.evaluate(coordinates => {
         const map = (document.querySelector('.map') as MapElement).__commonGroundMap;
@@ -213,10 +211,10 @@ test.describe('desktop published event detail', () => {
       await page.mouse.click(point.x, point.y);
       const popup = page.locator('.event-popup');
       await expect(popup).toContainText(kind === 'crime' ? 'Reported incidents in this hexagon' : 'Injury crashes in this hexagon');
-      await expect(popup).toContainText('H3 resolution 8, approximately 0.74 km²');
+      await expect(popup).toContainText('H3 resolution 8');
       await expect(popup).toContainText('aggregate area, not one intersection');
       await expect(popup).not.toContainText('Reported near this intersection');
-      await page.screenshot({ path: `docs/audit/event-detail-browser/overview-${kind}.png` });
+      await page.screenshot({ path: `test-results/screenshots/event-detail-browser/overview-${kind}.png` });
     }
   });
 });

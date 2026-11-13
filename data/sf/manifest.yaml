@@ -16,7 +16,7 @@ acs_tracts:
   downloaded_at: '2026-10-21'
   measurement_period: 2020-2024 (5-year estimates)
   resolution: Census tract (2020 boundaries); neighbourhood totals by land-area apportionment
-  feature_count: 308
+  feature_count: 1152
   raw_path: data/sf/raw/acs5y2024_b01003.dat, acs5y2024_b25064.dat, census_tracts_2020.geojson
   processed_path:
   - data/sf/processed/census_tracts.geojson
@@ -27,6 +27,8 @@ acs_tracts:
     tenants (incl. long-standing rent-controlled leases), not asking rent. The Census API needs a key;
     these official bulk files do not.
   status: processed
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 area_cell_display:
   source: Canonical H3 cells minus SF / San Mateo County / OpenStreetMap mapped parks and open space
   source_url: https://data.sf.gov/d/gtr9-ntp6
@@ -34,7 +36,7 @@ area_cell_display:
   downloaded_at: '2026-10-22'
   measurement_period: Per input dataset
   resolution: H3 resolution 9 display footprints cut to mapped park boundaries
-  feature_count: 2229
+  feature_count: 11415
   raw_path: Processed area_cells.geojson and parks.geojson
   processed_path:
   - data/sf/processed/area_cell_display.geojson
@@ -43,6 +45,8 @@ area_cell_display:
   limitations: Display footprint only, not verified housing parcels. Does not alter representative-point
     matching or source-resolution indicators.
   status: processed
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 area_cells:
   source: H3 + DataSF SF neighbourhoods + San Mateo County land jurisdictions; contextual inputs recorded
     separately
@@ -51,7 +55,7 @@ area_cells:
   downloaded_at: '2026-10-22'
   measurement_period: Per input dataset
   resolution: H3 resolution 9 (~0.105 km²); coarser indicators retain original source ids
-  feature_count: 2408
+  feature_count: 11782
   raw_path: See individual source entries
   processed_path:
   - data/sf/processed/area_cells.geojson
@@ -60,6 +64,8 @@ area_cells:
   limitations: Centre-based access and commute checks describe a representative location, not every address.
     Parent assignment is approximate along neighbourhood borders. Land use is incomplete.
   status: processed
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 calenviroscreen5:
   source: OEHHA CalEnviroScreen 5.0 (final), California Open Data Portal
   source_url: https://data.ca.gov/dataset/calenviroscreen-5-0
@@ -68,7 +74,7 @@ calenviroscreen5:
   downloaded_at: '2026-10-21'
   measurement_period: Indicator-specific (mostly 2019-2024); release dated 2026-07-01
   resolution: Census tract (2020 boundaries; outlines clipped to the study area, values whole-tract)
-  feature_count: 308
+  feature_count: 1152
   raw_path: data/sf/raw/calenviroscreen50_070126.csv, calenviroscreen50_data_dictionary.pdf
   processed_path:
   - data/sf/processed/census_tracts.geojson
@@ -79,6 +85,8 @@ calenviroscreen5:
     band for some (ozone). Neighbourhood values are population-weighted tract means. Never combined with
     population vulnerability into a single score.
   status: processed
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 commute_fixtures:
   source: Derived — Common Ground commute fixtures (GTFS schedule model + synthetic speed models)
   source_url: n/a (derived from the available gtfs_* feeds, including SamTrans when present)
@@ -97,6 +105,8 @@ commute_fixtures:
     assumed 10 min AirTrain link from SFO BART. Walk/bike/drive are SYNTHETIC straight-line models and
     must be labelled as such in the UI.'
   status: processed
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 cycling_network:
   source: SFMTA bike network + San Mateo County GIS existing bikeways
   source_url: https://data.sf.gov/d/ygmz-vaxd; https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/17
@@ -115,6 +125,8 @@ cycling_network:
     totals count each side. Category counts: lane 1757, neighborway 121, path 378, protected 678, route
     2611. grade_pct is a terrain estimate, not a surveyed street grade.'
   status: processed
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 daily_essentials:
   source: OpenStreetMap contributors
   source_url: https://overpass-api.de/api/interpreter
@@ -152,6 +164,8 @@ elevation:
     valid street length or 75% coverage. Median may hide a steep street: p90 and steep-length share are
     retained. No neighbourhood terrain mean used.'
   status: processed
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 flood_context:
   source: FEMA National Flood Hazard Layer
   source_url: https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28
@@ -176,7 +190,7 @@ food_drink_pois:
   downloaded_at: '2026-10-22'
   measurement_period: OSM snapshot at download date
   resolution: Point (way/relation centroids)
-  feature_count: 3550
+  feature_count: 893
   raw_path: data/sf/raw/osm_food_drink.json
   processed_path:
   - data/sf/processed/cafes.geojson
@@ -193,6 +207,8 @@ food_drink_pois:
   contact_metadata_sources:
   - data/sf/content/poi_verified_websites.json
   - scripts/poi_metadata.py
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 groceries:
   source: OpenStreetMap contributors via Overpass API (shop=supermarket|greengrocer)
   source_url: https://overpass-api.de/api/interpreter
@@ -214,6 +230,8 @@ groceries:
   contact_metadata_sources:
   - data/sf/content/poi_verified_websites.json
   - scripts/poi_metadata.py
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 gtfs_bart:
   source: BART GTFS (bart.gov developer data)
   source_url: https://www.bart.gov/sites/default/files/2026-08/google_transit_20260810-20270108_v02.zip
@@ -222,7 +240,7 @@ gtfs_bart:
   downloaded_at: '2026-10-21'
   measurement_period: Timetable valid 2026-08-10 to 2027-01-10; COVERS target 2026-10-22 (1021 trips)
   resolution: Stop/station points and route shapes
-  feature_count: null
+  feature_count: 6382
   raw_path: data/sf/raw/gtfs_bart.zip
   processed_path:
   - data/sf/processed/transit_stops.geojson
@@ -232,6 +250,8 @@ gtfs_bart:
   limitations: Scheduled, not real-time.
   status: processed
   covers_target_date: true
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 gtfs_caltrain:
   source: Caltrain GTFS (Trillium-hosted official feed)
   source_url: https://data.trilliumtransit.com/gtfs/caltrain-ca-us/caltrain-ca-us.zip
@@ -239,7 +259,7 @@ gtfs_caltrain:
   downloaded_at: '2026-10-21'
   measurement_period: Timetable valid 2026-01-31 to 2027-01-31; COVERS target 2026-10-22 (112 trips)
   resolution: Stop/station points and route shapes
-  feature_count: null
+  feature_count: 6382
   raw_path: data/sf/raw/gtfs_caltrain.zip
   processed_path:
   - data/sf/processed/transit_stops.geojson
@@ -249,6 +269,8 @@ gtfs_caltrain:
   limitations: Scheduled, not real-time.
   status: processed
   covers_target_date: true
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 gtfs_muni:
   source: SFMTA Muni GTFS
   source_url: https://muni-gtfs.apps.sfmta.com/data/muni_gtfs-current.zip
@@ -258,7 +280,7 @@ gtfs_muni:
   measurement_period: Timetable valid 2026-07-23 to 2026-08-28; EXPIRED for target 2026-10-22 — fallback
     weekday 2026-08-26 used
   resolution: Stop/station points and route shapes
-  feature_count: null
+  feature_count: 6382
   raw_path: data/sf/raw/gtfs_muni.zip
   processed_path:
   - data/sf/processed/transit_stops.geojson
@@ -270,6 +292,8 @@ gtfs_muni:
     current Muni timetable needs the 511.org feed (API_511_KEY -> gtfs_muni_511). Scheduled, not real-time.'
   status: processed
   covers_target_date: false
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 gtfs_muni_511:
   source: SFMTA Muni GTFS via 511.org Open Data
   source_url: https://api.511.org/transit/datafeeds?operator_id=SF
@@ -293,7 +317,7 @@ gtfs_samtrans:
   downloaded_at: '2026-10-22'
   measurement_period: Timetable valid 2026-09-20 to 2026-11-14; COVERS target 2026-10-22 (1788 trips)
   resolution: Stop/station points and route shapes
-  feature_count: null
+  feature_count: 6382
   raw_path: data/sf/raw/gtfs_samtrans_public.zip
   processed_path:
   - data/sf/processed/transit_stops.geojson
@@ -303,6 +327,25 @@ gtfs_samtrans:
   limitations: Scheduled, not real-time.
   status: processed
   covers_target_date: true
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
+incident_columns:
+  source: Deduplicated SFPD published incident bundles; stable H3 geographic aggregation
+  source_url: https://data.sf.gov/d/wg3w-h783
+  licence: DataSF ODC PDDL; H3 Apache-2.0
+  downloaded_at: '2026-11-13'
+  measurement_period: 2025-10 to 2026-09; selected complete months, inclusive
+  resolution: H3 6, 7 and 8; published intersection precision at close zoom
+  feature_count: 211
+  raw_path: data/sf/processed/incident_details.json
+  processed_path:
+  - data/sf/processed/incident_columns.json
+  script: scripts/build_crime_columns.mjs
+  refresh: After rebuilding deduplicated incident details; run node scripts/build_crime_columns.mjs
+  limitations: 'Columns are narrow data graphics centred on cells. Fixed metres per incident: level 6
+    0.1; level 7 0.4; level 8 1. These are not building heights or comparable heights across aggregation
+    levels. SF only.'
+  status: processed
 injury_collisions:
   source: DataSF — Traffic Crashes Resulting in Injury (SFPD/SFDPH TransBASE)
   source_url: https://data.sf.gov/d/ubvf-ztfx
@@ -322,6 +365,8 @@ injury_collisions:
     pedestrian/cyclist flags can overlap. Unknown groups are not vehicle-only. Number injured excludes
     fatalities. Recent reporting is incomplete.
   status: processed
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 injury_crash_details:
   source: TransBASE.sfgov.org / SFDPH and SFPD injury crashes
   source_url: https://data.sf.gov/d/ubvf-ztfx
@@ -384,6 +429,8 @@ neighbourhood_character:
     safety inference, resident labels or ranking influence. Anchors do not assert boundaries; unsupported
     areas remain in research_queue.
   status: processed
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 neighbourhood_content:
   source: Common Ground editorial drafts (data/sf/content/neighbourhoods.yaml) + Wikimedia Commons photos
   source_url: https://commons.wikimedia.org
@@ -428,7 +475,7 @@ neighbourhoods:
   downloaded_at: '2026-10-21'
   measurement_period: Boundaries as published (last updated 2023-10)
   resolution: 41 SF analysis neighbourhoods + 17 Peninsula city/unincorporated groups
-  feature_count: 58
+  feature_count: 89
   raw_path: data/sf/raw/neighbourhoods.geojson; peninsula_jurisdictions.geojson; peninsula_water.geojson;
     peninsula_lakes.geojson
   processed_path:
@@ -441,6 +488,8 @@ neighbourhoods:
     simplified at 5 m. `id` is a slug of the name and is the stable key used by every other dataset; renaming
     a neighbourhood changes it.
   status: processed
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 nightlife:
   source: OpenStreetMap mapped bars, pubs and nightclubs via Overpass API
   source_url: https://overpass-api.de/api/interpreter
@@ -468,6 +517,8 @@ nightlife:
   contact_metadata_sources:
   - data/sf/content/poi_verified_websites.json
   - scripts/poi_metadata.py
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 parks:
   source: SF Rec & Park + San Mateo County GIS parks; supplemented by OpenStreetMap
   source_url: https://data.sf.gov/d/gtr9-ntp6; https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/37;
@@ -476,7 +527,7 @@ parks:
   downloaded_at: '2026-10-21'
   measurement_period: Properties as of download date
   resolution: Park polygons; neighbourhood access shares from H3 res-9 sample points
-  feature_count: 376
+  feature_count: 1514
   raw_path: data/sf/raw/parks_rpd.geojson; data/sf/raw/peninsula_parks.geojson; data/sf/raw/osm_parks.json
   processed_path:
   - data/sf/processed/parks.geojson
@@ -488,6 +539,8 @@ parks:
     Non-park RPD property types (libraries, concessions, Camp Mather, Sharp Park outside SF) are excluded.
     Access uses straight-line distance, not walking routes.
   status: processed
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 peninsula_cycling:
   source: San Mateo County GIS — County bikeways (existing status only in processed output)
   source_url: https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/17
@@ -665,6 +718,212 @@ police_intersection_details:
     conflicting_published_locations: 0
     missing_or_outside_coordinates: 1503
     missing_category_only_incidents_excluded: 204
+regional_context:
+  source: OpenStreetMap and individual published agency GTFS
+  source_url: https://www.openstreetmap.org/copyright
+  licence: OSM ODbL 1.0; GTFS agency licences linked individually in regional_coverage.json
+  downloaded_at: '2026-11-13'
+  measurement_period: OSM retrieval date and per-feed calendar dates in regional_coverage.json
+  resolution: Mapped features and stops; straight-line representative-point access
+  feature_count: null
+  raw_path: data/sf/raw/region
+  processed_path:
+  - data/sf/processed/regional_coverage.json
+  script: scripts/build_regional_context.py
+  refresh: Explicitly refresh cached OSM/GTFS files, run this script then pack_region.py
+  limitations: Mapped access is straight-line context. Regional frequent-service and street gradients
+    unmeasured. Municipal police/crashes outside SF unknown.
+  status: processed
+  source_status:
+    osm:
+      amenities.json:
+        status: blocked
+        reason: 'Bounded OSM query unavailable: HTTPError'
+      parks.json:
+        status: blocked
+        reason: 'Bounded OSM query unavailable: HTTPError'
+      cycling.json:
+        status: blocked
+        reason: 'Bounded OSM query unavailable: HTTPError'
+    gtfs:
+      BART:
+        status: current
+        start: '20260810'
+        end: '20270110'
+        licence: https://www.bart.gov/schedules/developers/gtfs
+        url: https://www.bart.gov/dev/schedules/google_transit.zip
+        stops_in_region: 217
+      Caltrain:
+        status: current
+        start: '20260131'
+        end: '20270131'
+        licence: https://www.caltrain.com/developer-resources
+        url: https://data.trilliumtransit.com/gtfs/caltrain-ca-us/caltrain-ca-us.zip
+        stops_in_region: 78
+      SamTrans:
+        status: current
+        start: '20260920'
+        end: '20261114'
+        licence: https://www.samtrans.com/developer
+        url: https://www.samtrans.com/media/37770/download
+        stops_in_region: 1690
+      AC Transit:
+        status: blocked
+        reason: HTTPError
+        url: https://api.actransit.org/transit/gtfs/current
+        licence: https://www.actransit.org/data-api-resource-center
+      VTA:
+        status: current
+        start: '20261026'
+        end: '20270110'
+        licence: https://www.vta.org/go/developer-resources
+        url: https://gtfs.vta.org/gtfs_vta.zip
+        stops_in_region: 1159
+      Muni:
+        status: out-of-date
+        source: Existing licensed SFMTA feed retained; see manifest transit entry for dates
+        licence: https://www.sfmta.com/reports/gtfs-transit-data
+    retrieved: '2026-11-13'
+    limitations: Mapped access is straight-line context. Regional frequent-service and street gradients
+      unmeasured. Municipal police/crashes outside SF unknown.
+regional_public_parks:
+  source: California Protected Areas Database 2026a / GreenInfo Network
+  source_url: https://data.ca.gov/@california-natural-resources-agency/california-protected-areas-database
+  licence: Creative Commons Attribution; no restrictions on public use (CNRA catalogue)
+  downloaded_at: '2026-11-13'
+  measurement_period: CPAD 2026a; service copyright June 2026
+  resolution: Public-access park/open-space ownership polygons clipped to new urban study groups; 1 m
+    coordinate rounding
+  feature_count: 1514
+  raw_path: data/sf/raw/region
+  processed_path:
+  - data/sf/processed/parks.geojson
+  script: scripts/build_regional_parks.py
+  refresh: Semiannual CPAD release; refresh cached ID and page files, rebuild parks then pack_region.py
+    and pack_context.py
+  limitations: Open Access only. Ownership does not establish an entrance, route, operating hours or barrier-free
+    access. Excludes easements and private/restricted holdings.
+  status: processed
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
+regional_study:
+  source: US Census cartographic places / urban areas / 2025 area water; original DataSF and SMC boundaries
+    retained; CES 5.0 and historical ZORI
+  source_url: https://www.census.gov/geographies/mapping-files/time-series/geo/cartographic-boundary.html
+  licence: US Census public domain; CES portal licence unresolved (OEHHA attribution retained); Zillow
+    terms and inherited source licences retained
+  downloaded_at: '2026-11-13'
+  measurement_period: 2025 places; 2020 urban footprint and tracts; CES 5.0; historical ZORI dates per
+    ZIP
+  resolution: H3-9 representative points; city/community groups; tract pollution; ZIP rent
+  feature_count: 11782
+  raw_path: data/sf/raw/region
+  processed_path:
+  - data/sf/processed/neighbourhoods.geojson
+  - data/sf/processed/study_boundary.geojson
+  - data/sf/processed/area_cells.geojson
+  - data/sf/processed/area_cell_display.geojson
+  - data/sf/processed/candidate_index.json
+  - data/sf/processed/census_tracts.geojson
+  - data/sf/processed/rents_zori_zip.json
+  - data/sf/processed/neighbourhood_metrics.json
+  - data/sf/processed/neighbourhood_content.json
+  - data/sf/processed/cells/85283083fffffff.geojson
+  - data/sf/processed/cells/85283087fffffff.geojson
+  - data/sf/processed/cells/8528308bfffffff.geojson
+  - data/sf/processed/cells/8528308ffffffff.geojson
+  - data/sf/processed/cells/85283093fffffff.geojson
+  - data/sf/processed/cells/85283097fffffff.geojson
+  - data/sf/processed/cells/8528309bfffffff.geojson
+  - data/sf/processed/cells/852830d7fffffff.geojson
+  - data/sf/processed/cells/8528340ffffffff.geojson
+  - data/sf/processed/cells/8528342bfffffff.geojson
+  - data/sf/processed/cells/8528342ffffffff.geojson
+  - data/sf/processed/cells/85283463fffffff.geojson
+  - data/sf/processed/cells/85283467fffffff.geojson
+  - data/sf/processed/cells/8528346ffffffff.geojson
+  - data/sf/processed/cells/85283473fffffff.geojson
+  - data/sf/processed/cells/85283477fffffff.geojson
+  - data/sf/processed/cells/8528347bfffffff.geojson
+  script: scripts/build_region.py
+  refresh: Explicitly refresh cached regional inputs, then run build_region.py and build_regional_context.py;
+    never in request/build
+  limitations: New groups use Census urban land clipped to shoreline-generalised places minus TIGER area
+    hydrography, not residential parcels. Unmapped water can remain. Richmond excluded. Non-SF police
+    and crashes unknown. Regional street gradients not measured. Original fine boundaries and IDs retained.
+  status: processed
+  geography:
+  - Millbrae
+  - Burlingame
+  - Hillsborough
+  - San Mateo
+  - Foster City
+  - Belmont
+  - San Carlos
+  - Redwood City
+  - Atherton
+  - Menlo Park
+  - East Palo Alto
+  - Palo Alto
+  - Mountain View
+  - Los Altos
+  - Los Altos Hills
+  - Sunnyvale
+  - Cupertino
+  - Santa Clara
+  - Berkeley
+  - Emeryville
+  - Oakland
+  - Alameda
+  - San Leandro
+  - San Lorenzo
+  - Ashland
+  - Cherryland
+  - Castro Valley
+  - Hayward
+  - Union City
+  - Newark
+  - Fremont
+  downloads:
+    places.zip:
+      url: https://www2.census.gov/geo/tiger/GENZ2025/shp/cb_2025_06_place_500k.zip
+      bytes: 1404825
+      retrieved: '2026-11-13'
+      verified: '2026-11-13'
+    urban.geojson:
+      url: https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Urban/MapServer/0/query
+      bytes: 426474
+      retrieved: '2026-11-13'
+      verified: '2026-11-13'
+    tracts.geojson:
+      url: https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Tracts_Blocks/MapServer/0/query
+      bytes: 1784513
+      retrieved: '2026-11-13'
+      verified: '2026-11-13'
+    zcta.geojson:
+      url: https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/PUMA_TAD_TAZ_UGA_ZCTA/MapServer/1/query
+      bytes: 1802396
+      retrieved: '2026-11-13'
+      verified: '2026-11-13'
+    water-06001.zip:
+      url: https://www2.census.gov/geo/tiger/TIGER2025/AREAWATER/tl_2025_06001_areawater.zip
+      bytes: 211734
+      retrieved: '2026-11-13'
+      verified: '2026-11-13'
+    water-06081.zip:
+      url: https://www2.census.gov/geo/tiger/TIGER2025/AREAWATER/tl_2025_06081_areawater.zip
+      bytes: 190463
+      retrieved: '2026-11-13'
+      verified: '2026-11-13'
+    water-06085.zip:
+      url: https://www2.census.gov/geo/tiger/TIGER2025/AREAWATER/tl_2025_06085_areawater.zip
+      bytes: 143422
+      retrieved: '2026-11-13'
+      verified: '2026-11-13'
+  counts:
+    candidates: 11782
+    display_cells: 11415
+    partitions: 17
 regional_terrain:
   source: Mapterhorn, USGS 3DEP and global context contributors
   source_url: https://tiles.mapterhorn.com/tilejson.json
@@ -703,6 +962,25 @@ rents_zori:
     boundaries; the neighbourhood figure is a blend and must be labelled as ZIP-level. ZIPs with too few
     listings have no ZORI series.
   status: processed
+satellite_imagery:
+  source: USDA NAIP / USGS The National Map USGSImageryOnly
+  source_url: https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer
+  licence: Public domain CONUS imagery; USGS map services have no use restrictions. Attribution retained.
+    Alaska licensed SPOT is excluded by source bounds.
+  downloaded_at: '2026-11-13'
+  measurement_period: Service says CONUS 2017-2021; cache refresh June 2024 is not acquisition date
+  resolution: Web Mercator XYZ raster tiles 256 px; native zoom 0-16; mostly 1 m source orthoimagery,
+    varies locally
+  feature_count: null
+  raw_path: null
+  processed_path: []
+  script: src/map/basemap.ts
+  refresh: Hosted best-effort viewport tile service; recheck service metadata and terms before changing
+    source
+  limitations: Not current imagery. No guaranteed service-level agreement or published per-client rate
+    allowance found. No regional mosaic or bulk downloads; normal visible tiles only. CORS and Bay Area
+    coverage verified in browser. Terrain and application overlays retain alignment.
+  status: processed
 street_gradients:
   source: USGS 3DEP bare-earth DEM + official SF DPW and San Mateo County street centrelines
   source_url: https://data.sf.gov/d/3psu-pn9h; https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/26;
@@ -723,6 +1001,8 @@ street_gradients:
     valid street length or 75% coverage. Median may hide a steep street: p90 and steep-length share are
     retained. No neighbourhood terrain mean used.'
   status: processed
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 street_gradients_peninsula:
   source: USGS 3DEP bare-earth DEM + official SF DPW and San Mateo County street centrelines
   source_url: https://data.sf.gov/d/3psu-pn9h; https://gis.smcgov.org/maps/rest/services/Common/SanMateoCounty_Basemap/MapServer/26;
@@ -742,87 +1022,8 @@ street_gradients_peninsula:
     valid street length or 75% coverage. Median may hide a steep street: p90 and steep-length share are
     retained. No neighbourhood terrain mean used.'
   status: processed
-terrain:
-  source: USGS 3DEP cached bare-earth elevation
-  source_url: https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer
-  licence: US public domain (USGS)
-  downloaded_at: '2026-10-21'
-  measurement_period: Composite DEM; source acquisition dates vary
-  resolution: Approximately 10 m source, XYZ tiles at zoom 8 to 13; 256 pixels per tile
-  feature_count: null
-  raw_path: data/sf/raw/elevation_3dep_10m.tif
-  processed_path:
-  - data/sf/processed/terrain.json
-  - data/sf/processed/terrain/8/40/98.png
-  - data/sf/processed/terrain/8/40/99.png
-  - data/sf/processed/terrain/9/81/197.png
-  - data/sf/processed/terrain/9/81/198.png
-  - data/sf/processed/terrain/10/163/395.png
-  - data/sf/processed/terrain/10/163/396.png
-  - data/sf/processed/terrain/11/326/791.png
-  - data/sf/processed/terrain/11/326/792.png
-  - data/sf/processed/terrain/11/327/791.png
-  - data/sf/processed/terrain/11/327/792.png
-  - data/sf/processed/terrain/12/653/1582.png
-  - data/sf/processed/terrain/12/653/1583.png
-  - data/sf/processed/terrain/12/653/1584.png
-  - data/sf/processed/terrain/12/653/1585.png
-  - data/sf/processed/terrain/12/654/1582.png
-  - data/sf/processed/terrain/12/654/1583.png
-  - data/sf/processed/terrain/12/654/1584.png
-  - data/sf/processed/terrain/12/654/1585.png
-  - data/sf/processed/terrain/12/655/1582.png
-  - data/sf/processed/terrain/12/655/1583.png
-  - data/sf/processed/terrain/12/655/1584.png
-  - data/sf/processed/terrain/12/655/1585.png
-  - data/sf/processed/terrain/13/1307/3164.png
-  - data/sf/processed/terrain/13/1307/3165.png
-  - data/sf/processed/terrain/13/1307/3166.png
-  - data/sf/processed/terrain/13/1307/3167.png
-  - data/sf/processed/terrain/13/1307/3168.png
-  - data/sf/processed/terrain/13/1307/3169.png
-  - data/sf/processed/terrain/13/1307/3170.png
-  - data/sf/processed/terrain/13/1307/3171.png
-  - data/sf/processed/terrain/13/1308/3164.png
-  - data/sf/processed/terrain/13/1308/3165.png
-  - data/sf/processed/terrain/13/1308/3166.png
-  - data/sf/processed/terrain/13/1308/3167.png
-  - data/sf/processed/terrain/13/1308/3168.png
-  - data/sf/processed/terrain/13/1308/3169.png
-  - data/sf/processed/terrain/13/1308/3170.png
-  - data/sf/processed/terrain/13/1308/3171.png
-  - data/sf/processed/terrain/13/1309/3164.png
-  - data/sf/processed/terrain/13/1309/3165.png
-  - data/sf/processed/terrain/13/1309/3166.png
-  - data/sf/processed/terrain/13/1309/3167.png
-  - data/sf/processed/terrain/13/1309/3168.png
-  - data/sf/processed/terrain/13/1309/3169.png
-  - data/sf/processed/terrain/13/1309/3170.png
-  - data/sf/processed/terrain/13/1309/3171.png
-  - data/sf/processed/terrain/13/1310/3164.png
-  - data/sf/processed/terrain/13/1310/3165.png
-  - data/sf/processed/terrain/13/1310/3166.png
-  - data/sf/processed/terrain/13/1310/3167.png
-  - data/sf/processed/terrain/13/1310/3168.png
-  - data/sf/processed/terrain/13/1310/3169.png
-  - data/sf/processed/terrain/13/1310/3170.png
-  - data/sf/processed/terrain/13/1310/3171.png
-  - data/sf/processed/terrain/13/1311/3164.png
-  - data/sf/processed/terrain/13/1311/3165.png
-  - data/sf/processed/terrain/13/1311/3166.png
-  - data/sf/processed/terrain/13/1311/3167.png
-  - data/sf/processed/terrain/13/1311/3168.png
-  - data/sf/processed/terrain/13/1311/3169.png
-  - data/sf/processed/terrain/13/1311/3170.png
-  - data/sf/processed/terrain/13/1311/3171.png
-  script: scripts/build_terrain.py
-  refresh: after source DEM changes
-  limitations: Bare earth, not building heights or surveyed street grades. Outside the measured extract
-    is flat sea-level padding. Raster DEM clients may ignore transparency. Boundary artefacts and varying
-    source vintage remain. No terrain-based ranking.
-  status: processed
-  processed_at: '2026-11-12'
-  asset_bytes: 2234702
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
 topography:
   source: USGS 3DEP bare-earth elevation; study land from SF and San Mateo County boundaries
   source_url: https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer
@@ -849,7 +1050,7 @@ transit:
   downloaded_at: '2026-10-22'
   measurement_period: Representative weekday per feed
   resolution: Stops (rail rolled up to parent stations) and one representative shape per route
-  feature_count: 3981
+  feature_count: 6382
   raw_path: data/sf/raw/gtfs_*.zip
   processed_path:
   - data/sf/processed/transit_stops.geojson
@@ -861,3 +1062,107 @@ transit:
     its official public feed. Not a routing engine.
   status: processed
   route_count: 112
+  regional_extension: See regional_study; build_region.py and regional context builders extend coverage
+    without extrapolating municipal measurements
+viewport_context:
+  source: Processed OSM, agency GTFS and CES layers; licences and dates inherited from owning manifest
+    entries
+  source_url: https://www.openstreetmap.org/copyright
+  licence: Inherits each source; ODbL, agency developer terms; CES portal rights remain unresolved
+  downloaded_at: '2026-11-13'
+  measurement_period: Per source; see regional_coverage.json and manifest
+  resolution: H3-5 partitions for display only; original feature resolution and candidate precision unchanged
+  feature_count: null
+  raw_path: Processed context layers
+  processed_path:
+  - data/sf/processed/context_index.json
+  - data/sf/processed/place_index.json
+  - data/sf/processed/transport_examples.geojson
+  - data/sf/processed/context/cafes/85283083fffffff.geojson
+  - data/sf/processed/context/cafes/85283087fffffff.geojson
+  - data/sf/processed/context/cafes/85283093fffffff.geojson
+  - data/sf/processed/context/cafes/85283097fffffff.geojson
+  - data/sf/processed/context/cafes/8528342ffffffff.geojson
+  - data/sf/processed/context/census_tracts/85283083fffffff.geojson
+  - data/sf/processed/context/census_tracts/85283087fffffff.geojson
+  - data/sf/processed/context/census_tracts/8528308bfffffff.geojson
+  - data/sf/processed/context/census_tracts/8528308ffffffff.geojson
+  - data/sf/processed/context/census_tracts/85283093fffffff.geojson
+  - data/sf/processed/context/census_tracts/85283097fffffff.geojson
+  - data/sf/processed/context/census_tracts/8528309bfffffff.geojson
+  - data/sf/processed/context/census_tracts/852830d7fffffff.geojson
+  - data/sf/processed/context/census_tracts/8528340ffffffff.geojson
+  - data/sf/processed/context/census_tracts/8528342bfffffff.geojson
+  - data/sf/processed/context/census_tracts/8528342ffffffff.geojson
+  - data/sf/processed/context/census_tracts/85283463fffffff.geojson
+  - data/sf/processed/context/census_tracts/85283467fffffff.geojson
+  - data/sf/processed/context/census_tracts/8528346ffffffff.geojson
+  - data/sf/processed/context/census_tracts/85283473fffffff.geojson
+  - data/sf/processed/context/census_tracts/85283477fffffff.geojson
+  - data/sf/processed/context/census_tracts/8528347bfffffff.geojson
+  - data/sf/processed/context/cycling_network/85283083fffffff.geojson
+  - data/sf/processed/context/cycling_network/85283087fffffff.geojson
+  - data/sf/processed/context/cycling_network/85283097fffffff.geojson
+  - data/sf/processed/context/groceries/85283083fffffff.geojson
+  - data/sf/processed/context/groceries/85283087fffffff.geojson
+  - data/sf/processed/context/groceries/85283093fffffff.geojson
+  - data/sf/processed/context/groceries/85283097fffffff.geojson
+  - data/sf/processed/context/groceries/8528342ffffffff.geojson
+  - data/sf/processed/context/nightlife_venues/85283083fffffff.geojson
+  - data/sf/processed/context/nightlife_venues/85283087fffffff.geojson
+  - data/sf/processed/context/nightlife_venues/85283093fffffff.geojson
+  - data/sf/processed/context/nightlife_venues/85283097fffffff.geojson
+  - data/sf/processed/context/nightlife_venues/8528342ffffffff.geojson
+  - data/sf/processed/context/parks/85283083fffffff.geojson
+  - data/sf/processed/context/parks/85283087fffffff.geojson
+  - data/sf/processed/context/parks/8528308bfffffff.geojson
+  - data/sf/processed/context/parks/8528308ffffffff.geojson
+  - data/sf/processed/context/parks/85283093fffffff.geojson
+  - data/sf/processed/context/parks/85283097fffffff.geojson
+  - data/sf/processed/context/parks/8528309bfffffff.geojson
+  - data/sf/processed/context/parks/852830d7fffffff.geojson
+  - data/sf/processed/context/parks/8528340ffffffff.geojson
+  - data/sf/processed/context/parks/8528342bfffffff.geojson
+  - data/sf/processed/context/parks/8528342ffffffff.geojson
+  - data/sf/processed/context/parks/85283463fffffff.geojson
+  - data/sf/processed/context/parks/85283467fffffff.geojson
+  - data/sf/processed/context/parks/8528346ffffffff.geojson
+  - data/sf/processed/context/parks/85283473fffffff.geojson
+  - data/sf/processed/context/parks/85283477fffffff.geojson
+  - data/sf/processed/context/restaurants/85283083fffffff.geojson
+  - data/sf/processed/context/restaurants/85283087fffffff.geojson
+  - data/sf/processed/context/restaurants/85283093fffffff.geojson
+  - data/sf/processed/context/restaurants/85283097fffffff.geojson
+  - data/sf/processed/context/restaurants/8528342ffffffff.geojson
+  - data/sf/processed/context/transit_routes/85283083fffffff.geojson
+  - data/sf/processed/context/transit_routes/85283087fffffff.geojson
+  - data/sf/processed/context/transit_routes/8528308bfffffff.geojson
+  - data/sf/processed/context/transit_routes/8528308ffffffff.geojson
+  - data/sf/processed/context/transit_routes/85283093fffffff.geojson
+  - data/sf/processed/context/transit_routes/85283097fffffff.geojson
+  - data/sf/processed/context/transit_routes/8528309bfffffff.geojson
+  - data/sf/processed/context/transit_routes/8528342bfffffff.geojson
+  - data/sf/processed/context/transit_routes/8528342ffffffff.geojson
+  - data/sf/processed/context/transit_routes/85283463fffffff.geojson
+  - data/sf/processed/context/transit_routes/85283467fffffff.geojson
+  - data/sf/processed/context/transit_routes/8528346ffffffff.geojson
+  - data/sf/processed/context/transit_routes/85283473fffffff.geojson
+  - data/sf/processed/context/transit_routes/85283477fffffff.geojson
+  - data/sf/processed/context/transit_stops/85283083fffffff.geojson
+  - data/sf/processed/context/transit_stops/85283087fffffff.geojson
+  - data/sf/processed/context/transit_stops/8528308bfffffff.geojson
+  - data/sf/processed/context/transit_stops/85283093fffffff.geojson
+  - data/sf/processed/context/transit_stops/85283097fffffff.geojson
+  - data/sf/processed/context/transit_stops/8528309bfffffff.geojson
+  - data/sf/processed/context/transit_stops/8528342bfffffff.geojson
+  - data/sf/processed/context/transit_stops/8528342ffffffff.geojson
+  - data/sf/processed/context/transit_stops/85283463fffffff.geojson
+  - data/sf/processed/context/transit_stops/85283467fffffff.geojson
+  - data/sf/processed/context/transit_stops/8528346ffffffff.geojson
+  - data/sf/processed/context/transit_stops/85283473fffffff.geojson
+  - data/sf/processed/context/transit_stops/85283477fffffff.geojson
+  script: scripts/pack_context.py
+  refresh: After any context source changes
+  limitations: Viewport geometry never gates matching. Shared polygon/line boundaries are clipped for
+    display only. Named place search is not a complete address geocoder.
+  status: processed

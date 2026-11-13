@@ -1,0 +1,170 @@
+{
+  "beforeCommit": "ecfd5ae9eafd499f8137ea1aa40dffc7eae41fc9",
+  "before": {
+    "dataBytes": 20941085,
+    "dataFiles": 37,
+    "assets": [
+      {
+        "file": "assets\\index-BzB0M2UZ.css",
+        "bytes": 128454,
+        "gzipBytes": 22606
+      },
+      {
+        "file": "assets\\index-CcjfzTHm.js",
+        "bytes": 1549978,
+        "gzipBytes": 439068
+      },
+      {
+        "file": "assets\\leaflet-src-CpierIKu.js",
+        "bytes": 148623,
+        "gzipBytes": 43019
+      },
+      {
+        "file": "assets\\LeafletMap-Cbq_A4N7.js",
+        "bytes": 11043,
+        "gzipBytes": 4105
+      },
+      {
+        "file": "assets\\LeafletMap-vh-t_kPv.css",
+        "bytes": 15095,
+        "gzipBytes": 6371
+      },
+      {
+        "file": "assets\\maplibre-gl-worker-Boc9pDRP.mjs",
+        "bytes": 519547,
+        "gzipBytes": 148193
+      },
+      {
+        "file": "assets\\rolldown-runtime-WkwZ5CU-.js",
+        "bytes": 599,
+        "gzipBytes": 368
+      }
+    ],
+    "largestData": [
+      {
+        "file": "data\\street_gradients.geojson",
+        "bytes": 2839058
+      },
+      {
+        "file": "data\\muni_service.json",
+        "bytes": 2588718
+      },
+      {
+        "file": "data\\area_cells.geojson",
+        "bytes": 2495915
+      },
+      {
+        "file": "data\\cycling_network.geojson",
+        "bytes": 1878658
+      },
+      {
+        "file": "data\\incident_details.json",
+        "bytes": 1381497
+      },
+      {
+        "file": "data\\street_gradients_peninsula.geojson",
+        "bytes": 1324452
+      },
+      {
+        "file": "data\\hills_grid.geojson",
+        "bytes": 1156870
+      },
+      {
+        "file": "data\\restaurants.geojson",
+        "bytes": 1083982
+      },
+      {
+        "file": "data\\transit_stops.geojson",
+        "bytes": 934856
+      },
+      {
+        "file": "data\\area_cell_display.geojson",
+        "bytes": 860130
+      },
+      {
+        "file": "data\\flood_context.json",
+        "bytes": 657191
+      },
+      {
+        "file": "data\\crash_details.json",
+        "bytes": 552673
+      }
+    ]
+  },
+  "after": {
+    "dataBytes": 26682408,
+    "dataFiles": 125,
+    "assets": [
+      {
+        "file": "assets\\analysis.worker-Bm5-bWYg.js",
+        "bytes": 258642,
+        "gzipBytes": 82027
+      },
+      {
+        "file": "assets\\index-CmTOdhfM.js",
+        "bytes": 1504220,
+        "gzipBytes": 423046
+      },
+      {
+        "file": "assets\\index-DQiBI0eZ.css",
+        "bytes": 130032,
+        "gzipBytes": 23002
+      },
+      {
+        "file": "assets\\maplibre-gl-worker-Boc9pDRP.mjs",
+        "bytes": 519547,
+        "gzipBytes": 148193
+      }
+    ],
+    "largestData": [
+      {
+        "file": "data\\candidate_index.json",
+        "bytes": 4250422
+      },
+      {
+        "file": "data\\muni_service.json",
+        "bytes": 2588718
+      },
+      {
+        "file": "data\\place_index.json",
+        "bytes": 1538125
+      },
+      {
+        "file": "data\\incident_details.json",
+        "bytes": 1381497
+      },
+      {
+        "file": "data\\context\\cycling_network\\85283083fffffff.geojson",
+        "bytes": 972269
+      },
+      {
+        "file": "data\\context\\restaurants\\85283083fffffff.geojson",
+        "bytes": 754678
+      },
+      {
+        "file": "data\\context\\cycling_network\\85283097fffffff.geojson",
+        "bytes": 703061
+      },
+      {
+        "file": "data\\flood_context.json",
+        "bytes": 657191
+      },
+      {
+        "file": "data\\neighbourhoods.geojson",
+        "bytes": 621433
+      },
+      {
+        "file": "data\\crash_details.json",
+        "bytes": 552673
+      },
+      {
+        "file": "data\\context\\transit_stops\\85283097fffffff.geojson",
+        "bytes": 500139
+      },
+      {
+        "file": "data\\cells\\85283083fffffff.geojson",
+        "bytes": 499727
+      }
+    ]
+  }
+}

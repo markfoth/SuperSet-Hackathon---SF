@@ -37,7 +37,7 @@ export function evaluateHome(home: Pick<Home, 'lat' | 'lon'>, workplaces: Workpl
     const reasons = workplaces.filter((w) => byWorkplace[w.id] === false).map((w) => `${w.name}: the home pin is outside the selected ${w.maxMinutes}-minute catchment.`);
     return { eligible: false, state: reasons.length ? 'excluded' : 'unknown', commute, cell: null, neighbourhoodId: null, reasons,
       unchecked: ['Local measurements are unavailable at this pin.', ...workplaces.filter((w) => byWorkplace[w.id] == null).map((w) => `${w.name}: commute unavailable.`)],
-      warnings: ['Data coverage runs from San Francisco to the southern edge of SFO (37.60° N), over mapped land.'], criteria: [] };
+      warnings: ['Housing coverage is limited to the documented SF, Peninsula and East Bay urban study boundary. Navigation and commute destinations have wider coverage.'], criteria: [] };
   }
   const evaluated = evaluate({ cells: { type: 'FeatureCollection', features: [containing] }, metrics, commutes: { [containing.properties.h3]: commute }, prefs, priorityOrder })[0];
   return { eligible: evaluated.eligible, state: evaluated.state, commute, cell: containing.properties, neighbourhoodId: containing.properties.nhood_id,

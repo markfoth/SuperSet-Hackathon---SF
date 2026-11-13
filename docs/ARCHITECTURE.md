@@ -1,181 +1,42 @@
 # Architecture
 
-```
- open data sources ──► scripts/download_datasets.py ──► data/sf/raw/          (gitignored, ~90 MB)
-                                                              │
-                        scripts/process_datasets.py  ◄────────┘
-                        scripts/build_area_cells.py
-                        scripts/build_cell_display.py
-                        scripts/build_commute_fixtures.py
-                        scripts/build_content.py  ◄── data/sf/content/neighbourhoods.yaml
-                                   │
-                                   ▼
-                        data/sf/processed/  + data/sf/manifest.yaml           (committed, ~9 MB)
-                                   │  scripts/sync_public_data.mjs (predev / prebuild)
-                                   ▼
-                        public/data/  ──► Vite static build ──► browser (React + MapLibre; lazy Leaflet fallback)
-                                                                   │
-                                     CommuteProvider ──► fixtures (offline) │ proxy → routing API (later)
-```
+React 19, TypeScript and Vite provide one desktop workspace. App.tsx owns destinations, preferences, saved places, homes, selection and independent panel collapse. MapLibre is the only map renderer. The WebGL failure state preserves the analytical workflow and offers a map retry.
 
-No household database is required. Committed open-data inputs are precomputed; matching,
-local scenarios, home evidence, portable sharing and monthly costs run in the browser.
-Optional evaluation routing is served by the existing Vercel functions or the small Node
-proxy, with private server-only credentials. The upgrade does not migrate production
-infrastructure or add a collaboration service.
+## Analytical path
 
-## Product upgrade
+1. The opening page loads boundaries, lightweight area summaries, source-aware content and ZIP rent context. It does not load the complete candidate index or detailed context features.
+2. The first search/home/comparison loads candidate_index.json. Its columnar rows contain every H3-9 candidate. Only clipped analytical boundary rings are stored; the worker reconstructs ordinary H3 rings. Source IDs, measured values, nulls and nullable residential booleans are preserved.
+3. The shared analysis worker tests the same representative point against every required inbound catchment, evaluates all Must-haves, applies lexicographic measurement bands and summarises by area. Exact shared polygon intersection also runs there. Required route failures/pending states cannot disappear from the gate.
+4. Every evaluation has a request revision. App.tsx presents only the response belonging to current inputs. Out-of-date responses cannot replace current results. Current-route result storage is bounded and in-flight provider calls are deduplicated server-side. Persistent provider caching is off by default.
+5. Detailed park-cut cell geometry is partitioned by H3 parent 5. The map requests intersecting partitions. Those requests affect display only, never candidate eligibility, precision, counts or ranking. Geometry failures are separate recoverable display errors.
+6. Optional parks, POIs, cycling, transit and pollution use context_index.json and viewport partitions. Responses from old viewports/styles are ignored. Spatial JSON caching is bounded to 48 entries. Listeners are deduplicated by source and cleaned up on style reload.
 
-`App.tsx` owns the shared household, confirmed destinations, current routing identities,
-preferences, selection, map modes, homes and bookmarks. Versioned, validated local snapshots
-replace session-only workplace persistence while preserving valid legacy settings.
-Named scenarios and share/import logic live in `features/scenarios`; precise coordinates
-are excluded from links unless the user opts in. `features/homes` tests actual pins against
-commute polygons and keeps inherited local measurements distinct.
+Area summaries use the leading eligible cell, not a neighbourhood majority. Homes check their actual coordinate against catchments and their containing analytical cell for contextual measurements. A neighbourhood can be shown when any candidate qualifies. No exact route duration is inferred from an isochrone.
 
-`MapLibreMap` renders OpenFreeMap vector tiles and renderer-neutral GeoJSON derived by
-`mapData.ts`. Unknown and excluded states are preserved; excluded cells never enter the
-visible matching source. `LeafletMap` and Leaflet itself are loaded only when needed for
-WebGL compatibility. Context builders fetch only on explicit toggles. Buildings use the
-viewport basemap source, not a startup city GeoJSON. `scripts/build_regional_terrain.py` records the continuous Mapterhorn Terrarium descriptor and attribution. Display terrain is lazy and separate from the USGS analysis raster. `scripts/build_decision_context.py` builds bounded OSM essentials, date-aware Muni context and FEMA zones. These assets load only for a selected location or home. Independent source failures preserve successful context.
+## Map lifecycle
 
-`commuteRequestKey` includes the confirmed coordinate, mode, limit and supported arrival
- time. Request generations prevent stale responses satisfying new constraints. Exact
-journey checks are explicit, bounded home-to-destination requests through `/api/journeys`;
-they do not change the hard eligibility gate. Provider failures return unknown evidence.
+MapLibre loads OpenFreeMap vectors. Application sources are initialised once per style generation. Terrain uses continuous 512 px Terrarium tiles at normal vertical scale. Buildings use actual OpenMapTiles height fields at source zoom 14 and above, including approximate storey inference. Bounded tile level-of-detail settings avoid mixed parent/child tiles in pitched views.
 
-Detailed current contracts: [maps](MAP_UPGRADE.md), [routing/search](SEARCH_ROUTING.md)
-and [households/homes](HOUSEHOLD_SCENARIOS.md). The original data pipeline and ranking
-contracts below remain applicable.
+Terrain/Satellite selection changes presentation of provider layers and one attributed raster source. It does not recreate the map or replace application sources. Labels use a suitable halo over imagery. Explicit loading/failure states and retry are provided. Full provider-style reloads still rebuild overlays with generation guards, retaining DOM pins and state.
 
-## Data pipeline (`scripts/`)
+rightDragZoom.ts owns both non-standard mouse gestures. It captures an initial geographical and screen anchor, disables conflicting rotation, suppresses map-only context menus/autoscroll, and uses MapLibre's terrain-aware anchored-camera solver. Middle drag changes orientation before re-solving the same anchor. Right drag preserves orientation. Pointer capture, outside release, cancellation, lost capture and window blur terminate gestures. Pitch is clamped to 0-60 degrees; invalid/unstable anchor picks are rejected. The compass follows rotate events, including animations, and has a keyboard-accessible north reset.
 
-| Script | Does |
-|---|---|
-| `_common.py` | Paths, study box, metric CRS (EPSG:26943), manifest writer, `.env` reader |
-| `download_datasets.py` | Source registry with verified endpoints; idempotent; validates each download (min counts, zip/TIFF checks) before replacing; parallel except Overpass; records url/date/sha256 in `raw/_downloads.json`; records blocked sources in the manifest |
-| `process_datasets.py` | One `step_*` per dataset; each writes its own processed files and manifest entry; a failure in one step never stops the others; final merge writes `neighbourhood_metrics.json` |
-| `build_commute_fixtures.py` | Commute polygons for the default workplaces (see below) |
-| `build_content.py` | Editorial YAML + one freely-licensed Wikimedia Commons photo per neighbourhood (cached) |
-| `street_gradients.py` | Hills step: official streets + bilinear DEM sampling; 40 m windows and length-weighted cell median/p90/steep share/coverage |
-| `build_area_cells.py` | 2,408 H3-9 cells through SFO; clipped land polygons, SF neighbourhood / county jurisdiction parents, local distances and original coarse source ids |
-| `build_cell_display.py` | Display-only H3 footprints minus mapped parks/open space; polygons retain cut-out holes and H3 ids; fully masked cells omitted |
-| `peninsula.py` | County jurisdiction/water masks, streets, existing bikeways and park adapters; explicit local incident/crash gaps |
-| `build_topography.py` | USGS elevation colour raster in Web Mercator, masked to study land minus water; manifest and Leaflet image bounds |
-| `build_nightlife.py` | OSM bar/pub/nightclub points, same-name duplicate checks, fixed 300 m ground-distance Gaussian density; pink Web Mercator heatmap |
-| `validate_datasets.py` | Structural + semantic checks; also run by `pytest` |
-| `rebuild_all.py` | Orchestrates the above in order; `--offline`, `--refresh`, `--from`, `--dataset` |
+Initial results are framed once. Routine preference, layer, style and viewport updates do not refit a camera the user chose. Explicit selected-place/destination actions may focus that location. Panel changes adjust unobscured map padding without resetting zoom/bearing.
 
-### The hybrid model
+## Incident graphics
 
-* **Fine layers for the map**: bike segments (with terrain grade), park polygons, stops and route
-  shapes, census tracts (ACS population and rent paid, CalEnviroScreen pollution indicators), cafe /
-  restaurant / bar points (zoom >= 15), H3 res-8 crime/collision cells (≈0.74 km² — deliberately coarse so anonymised SFPD
-  points are never shown as addresses), H3 res-9 hill cells (≈0.1 km²).
-* **Canonical matching dataset**: `area_cells.geojson` (~2.50 MB). H3-9 cells, local street
-  gradients/access distances, explicit nulls and coarse-source identifiers. Only this fine
-  dataset enters matching and preference ranking. The map's optional topographic overlay loads
-  a local elevation PNG; street gradients remain measured ranking inputs, not a displayed layer.
-* **Display footprints**: `area_cell_display.geojson` (~827 KB), 2,229 park-cut polygons.
-  Original measurements and representative points remain in the canonical matching dataset.
-  Cells with no remaining display footprint are removed from suggestion candidates, including
-  four fully park-covered cells with supporting street evidence; they cannot inflate counts.
-  A fresh session has no workplaces and no matching overlay; Reset to demo loads the two
-  example workplaces. District selection draws only its eligible cells in a separate SVG
-  pane above all context layers, independently of layer toggles. Blue-purple topography
-  remains distinct from green/yellow matches; individual commute borders have 0.2 opacity.
-  Selected district matches now use gold outlines; green/yellow fills still indicate match state.
-* **Dataset information**: native modal dialogs behind each section's (i) button explain
-  sources and measures. Normal panels retain legends and critical coverage/timetable warnings.
-  Dialogs use browser focus containment, Escape dismissal and focus return, and are portalled
-  outside scrolling panels. Source links are shared in `datasetSources.ts`.
-* **Nightlife context**: lazily loaded `nightlife.json` and a ~56 KB PNG, generated from
-  570 mapped land bars/pubs/nightclubs. The Gaussian bandwidth is 300 m in local ground metres;
-  scale is fixed in mapped venues/km² across zooms. Venue density never enters ranking.
-  Original venue points are retained in `nightlife_venues.geojson` for reproducibility.
-  Readable county labels come from editorial display names while retaining stable ids/source
-  names. Nearby photos carry explicit captions; see [label and photo provenance](AREA_LABELS_AND_PHOTOS.md).
-* **Neighbourhood summaries for context cards**: `neighbourhood_metrics.json` — one object per
-  neighbourhood, one block per dataset, explicit `null` when not measured. Neighbourhood-wide
-  measurements never fill missing cell measurements.
+incident_details.json contains monthly/category bundles built from incidents deduplicated by source incident ID. The builder preserves official approximate coordinates. Both graphics and close-up points derive from exactly the same filtered bundles.
 
-Access metrics ("share of the area within 400 m of a park") are computed over **H3 res-9 sample
-points** inside 41 SF neighbourhoods and 17 Peninsula jurisdiction groups (`neighbourhood_samples.json`),
-using straight-line distance. Browser commute coverage uses the canonical cell representative
-points; source-summary samples never replace those matching points. See [Peninsula coverage](PENINSULA_COVERAGE.md).
+Stable H3 columns use levels 6 below zoom 10.5, 7 below 12.5 and 8 above that. All levels use 0.05 display metres per unique incident, keeping the strongest close-view column below 260 display metres for this extract. The legend names the current level and fixed scale. Larger cells sum more locations; counts across different aggregation areas are not comparable rates. No viewport maximum normalisation or screen-cluster crime rates are used. Narrow column footprints, translucency, counts, hover/click details and selection distinguish data graphics from real buildings. Columns fade into published intersection points from zoom 14.2 to 15.2. Crash and nightlife presentations retain their separate semantics.
 
-## Commute model
+## Routing and state
 
-`CommuteProvider.getArea(workplace)` returns *the area from which that workplace can be reached
-within N minutes*. Two implementations:
+The browser selects the configured proxy for custom destinations. The explicit offline example marks its destinations as fixtures. Moving an example pin leaves fixture mode. Failed live routing never silently becomes an offline success.
 
-* **Fixture** (default, offline): `commute_fixtures.geojson`, one polygon per
-  workplace × mode × {15, 30, 45, 60} min, only for the two default workplaces (±50 m).
-  * *Transit* — **approximate GTFS schedule model**: BART + Muni + Caltrain weekday AM peak
-    (07:00–10:00); route-stop graph with median in-vehicle times, boarding wait = half headway
-    (cap 10 min), walking transfers ≤ 400 m (+1 min), walk access/egress ≤ 1 km at 4.8 km/h ×1.25
-    detour; solved by Dijkstra **backwards from the workplace** (home → work). SFO terminals are
-    linked to SFO BART by an assumed 10-min AirTrain hop. Spot checks: 24th St Mission → SFO 39 min,
-    Outer Sunset → FiDi 53 min, Millbrae → SFO 24 min.
-  * *Walk / cycle / drive* — **synthetic** straight-line speed models, labelled "Synthetic" in the UI.
-* **Proxy** (`VITE_COMMUTE_PROVIDER=proxy`, `VITE_ROUTING_PROXY_URL=/api`): POSTs
-  `{lat, lon, mode, minutes, direction: "to_workplace", arrive_by}` to `server/routing-proxy.mjs`
-  (`npm run proxy`, port 8787; Vite proxies `/api` to it). The proxy calls TravelTime
-  `/v4/time-map` with `arrival_searches` and GeoJSON output, caches results on disk
-  (`data/cache/isochrones.json`), dedupes in-flight requests, caps live calls per day and returns
-  `503` when keys are missing. The client falls back to fixtures; if neither works for a custom
-  workplace, results are blocked and both reasons are shown.
+The local Node proxy and Vercel functions share validation, home-to-work arrival searches, Pacific next-weekday dates, mode mapping, request deduplication, limits and sanitised errors. Health reports provider/configuration booleans. The routing destination envelope is wider than housing coverage. Weekly cost illustrations require requested measured journeys; return-time symmetry is explicitly an assumption.
 
-```
-browser --/api/isochrone--> Vite dev proxy --> routing-proxy.mjs --> TravelTime (keys server-side)
-   ^                                                 | cache hit / 503 / 4xx
-   +-------------- fixture fallback <----------------+
-```
+Workspace/scenario version 1 remains readable. Old extra mode fields are ignored by validation; no destructive migration is needed. Homes and bookmarks retain coordinates and identifiers. Sharing uses validated portable fragments and omits precise locations unless explicitly included. Shared copies are not synchronised. There is no household database or new infrastructure.
 
-Timetable coverage: every GTFS feed is checked against `TARGET_SERVICE_DATE` (2026-10-22). The
-fixture model uses that day where the feed covers it; otherwise a weekday in the feed's own period,
-and the feature label says "out-of-date timetable: <agency>".
+## Build and data ownership
 
-Eligibility (`eligibility.ts`): a cell's representative point must be inside **every** workplace's
-area. Missing/failed/pending routes stay unknown. `commonReachableGeometry` intersects the real
-polygons for display. A neighbourhood remains discoverable with any eligible candidate cell;
-there is no 50% majority threshold. Counts and shares distinguish cells from neighbourhoods.
-
-## Frontend (`src/`)
-
-```
-App.tsx                       state: workplaces (sessionStorage), prefs/layers/shortlist (localStorage)
-features/commute/             provider.ts (adapter), eligibility.ts, CommutePanel.tsx
-features/filters/             preferences.ts (definitions), ranking.ts (+ test), PreferencePanel.tsx
-features/neighbourhoods/      ResultsList.tsx, NeighbourhoodDetail.tsx, reasons.ts
-map/MapView.tsx               MapLibre selection and context; lazy Leaflet compatibility fallback
-map/layers/contextLayers.ts   9 independent, lazily-loaded overlays (crime, hills, cycling, transit, parks,
-                              supermarkets, crashes, air pollution, food & drink); each built exactly once
-components/NeighbourhoodPhoto local image -> Commons thumbnail -> placeholder (never a broken image)
-map/controls/LayerPanel.tsx   toggles + legends
-components/DataNotice.tsx     sources + required SFMTA notice
-lib/                          data loader (cached fetch), storage (guarded), formatting
-```
-
-### Ranking (`ranking.ts`)
-
-1. Per-cell exclusions: conservative park evidence, every workplace, every failed Must. Missing
-   hard information means unknown and prevents a confirmed match. All known failures are listed.
-2. Active preferences compare absolute measurement bands in saved explicit order. Earlier bands
-   dominate; Important uses finer bands than Nice. No combined numeric score. Missing soft values
-   are a disclosed evidence category after measured values, never zero.
-3. Neighbourhoods group/rank by their leading eligible cell; ties prefer suitable candidate-land
-   share, then name/id. Photos, descriptions, rents and shortlist retain parent ids.
-4. `previewMustHave` reports cells excluded, cells becoming unknown, and neighbourhoods losing
-   all eligible cells. Near misses remain excluded until the user changes the single failed Must.
-
-See `RANKING_METHOD.md` and `STREET_GRADIENT_METHOD.md` for thresholds and limitations.
-Route responses are keyed by active location/mode/time, preventing stale successes from gating
-new settings. Proxy cache keys include the Pacific arrival date/time and expire after 24 hours.
-Client polygons are structurally validated before matching or rendering.
-
-### Base map
-
-Stadia Maps *Alidade Smooth* (keyless on localhost; production needs a free Stadia account with
-domain authentication). Override with `VITE_BASEMAP_URL`. CARTO basemaps now return "API key
-required" tiles and the public OSM tile server is not for production traffic.
+Canonical outputs and licences live under data/sf. Raw downloads and local tool caches are ignored. scripts/sync_public_data.mjs copies runtime assets only. Full analytical geometries, duplicate context extracts, street-analysis inputs and retired DEM tiles are not deployed. Frontend builds never download or preprocess source data. The Python pipeline is an explicit operator action. See DATA_SOURCES.md for refresh order and source gaps.

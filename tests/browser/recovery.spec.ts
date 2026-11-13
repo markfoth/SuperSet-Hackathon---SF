@@ -4,14 +4,14 @@ import { makeScenario, makeShareLink } from '../../src/features/scenarios/model'
 test('opening defers matching geometry and failed analysis never confirms locations', async ({ page }) => {
   const analysisRequests: string[] = [];
   page.on('request', request => { if (/area_cell(s|_display)\.geojson/.test(request.url())) analysisRequests.push(request.url()); });
-  await page.route('**/data/area_cells.geojson', route => route.abort());
+  await page.route('**/data/candidate_index.json', route => route.abort());
   await page.goto('/');
   await expect(page.locator('.map')).toHaveAttribute('data-map-ready', 'true');
   expect(analysisRequests).toEqual([]);
   await page.getByRole('button', { name: /Try the SF/ }).click();
   await expect(page.getByRole('alert')).toContainText('Local measurements could not load');
   await expect(page.locator('.match-legend b')).toContainText('0 matching locations');
-  await page.unroute('**/data/area_cells.geojson');
+  await page.unroute('**/data/candidate_index.json');
   await page.getByRole('button', { name: 'Retry local data', exact: true }).click();
   await expect(page.locator('.match-legend b')).toContainText('494 matching locations');
 });

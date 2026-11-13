@@ -32,7 +32,7 @@ export function routePosition(points: Position[], distance: number) {
 }
 
 export async function createTransportAnimation(map: GLMap, isCurrent: () => boolean) {
-  const routes = await loadData<FeatureCollection>('transit_routes.geojson');
+  const routes = await loadData<FeatureCollection>('transport_examples.geojson');
   if (!isCurrent()) return () => {};
   const vehicles: { marker: Marker; points: Position[]; length: number; distance: number; speed: number }[] = [];
   for (const kind of ['bus', 'rail']) {

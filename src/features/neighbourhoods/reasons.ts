@@ -13,11 +13,11 @@ export function reasonText(r: ExclusionReason, workplaces: Workplace[]): string 
   return `${p.label}: ${p.format(r.value)} (needs ${p.mustHave.describe})`;
 }
 
-export function rentalSearchLinks(name: string, region: 'sf' | 'peninsula' = 'sf') {
-  const q = encodeURIComponent(`${name}, ${region === 'peninsula' ? 'San Mateo County' : 'San Francisco'}, CA`);
+export function rentalSearchLinks(name: string, region: 'sf' | 'peninsula' | 'east_bay' = 'sf') {
+  const q = encodeURIComponent(`${name}${region === 'sf' ? ', San Francisco' : ''}, CA`);
   return [
     { label: 'Zillow', url: `https://www.zillow.com/homes/for_rent/${q}_rb/` },
-    { label: 'Craigslist', url: `https://sfbay.craigslist.org/search/${region === 'peninsula' ? 'pen' : 'sfc'}/apa?query=${encodeURIComponent(name)}` },
+    { label: 'Craigslist', url: `https://sfbay.craigslist.org/search/${region === 'sf' ? 'sfc/' : ''}apa?query=${encodeURIComponent(name)}` },
     { label: 'Apartments.com', url: `https://www.apartments.com/search/?q=${q}` },
   ];
 }

@@ -19,9 +19,8 @@ export function EventFilters({ kind, value, onChange }: Props) {
       <label>To month<input aria-label={`${label} to month`} type="month" min={value.from} max={defaults.to} value={value.to}
         onChange={(event) => { if (event.target.value && event.target.value >= value.from) onChange({ ...value, to: event.target.value }); }} /></label>
     </div>
-    <label><input type="checkbox" checked={value.detail} onChange={(event) => onChange({ ...value, detail: event.target.checked })} />
-      {kind === 'crime' ? 'Show published intersection detail' : 'Show published crash-location detail'}</label>
-    <p className="hint">Detail appears at neighbourhood zoom. Hexagons and markers use the same unique {kind === 'crime' ? 'incident' : 'crash'} counts and month filter.</p>
+    {kind === 'collisions' && <label><input type="checkbox" checked={value.detail} onChange={(event) => onChange({ ...value, detail: event.target.checked })} />Show published crash-location detail</label>}
+    <p className="hint">{kind === 'crime' ? 'Stable H3 columns use unique incident counts. Level 6 below zoom 10.5, level 7 to 12.5, then level 8. Fixed height scale. At zoom 14.2–15.2 columns fade into published approximate intersections. Larger cells sum more locations; compare counts within the same level.' : 'Detail appears at neighbourhood zoom. Hexagons and markers use the same unique crash counts and month filter.'}</p>
     <p className="hint">{kind === 'crime' ? 'Published location is approximate. Offence categories can overlap. Only counted initial criminal reports; records without an offence category are excluded.' : 'Pedestrian and cyclist involvement overlap. People injured and fatalities are separate from crash counts.'} SF only; Peninsula data unavailable.</p>
   </div>;
 }

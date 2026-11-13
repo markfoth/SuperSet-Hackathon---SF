@@ -124,6 +124,7 @@ export function validateWorkplace(value: unknown): Workplace {
     mode: w.mode as TravelMode, maxMinutes: num(w.maxMinutes, 'Commute limit', 1, 180),
   };
   for (const key of ['personId', 'personName', 'placeName']) if (w[key] != null) result[key] = str(w[key], key, 250);
+  if (typeof w.offlineExample === 'boolean') result.offlineExample = w.offlineExample;
   if (w.colour != null) {
     const colour = str(w.colour, 'Person colour', 20);
     if (!/^#[0-9a-f]{6}$/i.test(colour)) throw new Error('Person colour must be a six-digit hex colour.');

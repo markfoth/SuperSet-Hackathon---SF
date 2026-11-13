@@ -1,15 +1,12 @@
-import { lazy, Suspense, useState } from 'react';
+import { useState } from 'react';
 import type { MapProps } from './mapTypes';
 import { MapLibreMap } from './MapLibreMap';
 export { MATCH_COLORS, WORKPLACE_COLORS } from './mapData';
 
-const CompatibilityMap = lazy(() => import('./LeafletMap').then((module) => ({ default: module.MapView })));
-
 export function MapView(props: MapProps) {
-  const [fallback, setFallback] = useState(false);
-  if (fallback) return <Suspense fallback={<div className="map" role="status">Opening the 2D map…</div>}>
-    <CompatibilityMap {...props} />
-    <div className="map-fallback-notice" role="status">Your browser could not start 3D. All matching and pin placement remain available on this 2D map.</div>
-  </Suspense>;
-  return <MapLibreMap {...props} onWebGLFailure={() => setFallback(true)} />;
+  const [failed, setFailed] = useState(false), [attempt, setAttempt] = useState(0);
+  if (failed) return <div className="map map-unavailable" data-renderer="unavailable" data-eligible-count={props.matchingActive ? Object.values(props.cellResults).filter(r=>r.eligible).length : 0}>
+    <section role="status"><h2>Map display unavailable</h2><p>This browser could not run WebGL. Your destinations, results and saved places are kept.</p><p>Use named places or precise coordinates in Your search. Results, home checks and comparison still work. Mouse pin placement, map layers and 3D navigation need WebGL.</p><button className="btn" onClick={()=>{setAttempt(n=>n+1);setFailed(false);props.onAvailabilityChange?.(true);}}>Retry map display</button></section>
+  </div>;
+  return <MapLibreMap key={attempt} {...props} onWebGLFailure={() => {setFailed(true);props.onAvailabilityChange?.(false);}} />;
 }

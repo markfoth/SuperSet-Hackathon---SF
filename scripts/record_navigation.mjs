@@ -1,0 +1,14 @@
+import {chromium} from '@playwright/test';
+import {rename} from 'node:fs/promises';
+const browser=await chromium.launch({channel:'chrome',headless:true});
+const context=await browser.newContext({viewport:{width:1440,height:900},recordVideo:{dir:'test-results/video',size:{width:1440,height:900}}});
+const page=await context.newPage();await page.goto(process.env.CG_BASE_URL||'http://localhost:5196/');
+await page.locator('.map[data-vector-loaded="true"][data-terrain-loaded="true"]').waitFor();
+await page.getByRole('button',{name:/Try the SF/}).click();await page.locator('.cards>.card').first().waitFor();
+await page.getByRole('button',{name:/Focus on map/}).click();
+await page.evaluate(()=>document.querySelector('.map').__commonGroundMap.jumpTo({center:[-122.416,37.775],zoom:15,pitch:20,bearing:0,padding:{top:0,bottom:0,left:0,right:0}}));await page.waitForTimeout(800);
+await page.mouse.move(650,520);await page.mouse.down({button:'middle'});await page.mouse.move(760,410,{steps:40});await page.mouse.up({button:'middle'});await page.waitForTimeout(600);
+await page.mouse.move(650,520);await page.mouse.down({button:'right'});await page.mouse.move(650,450,{steps:35});await page.mouse.up({button:'right'});await page.waitForTimeout(600);
+await page.getByRole('button',{name:'Reset north',exact:true}).click();await page.waitForTimeout(700);
+await page.getByRole('button',{name:/Choose map style/}).click();await page.getByRole('button',{name:'Satellite',exact:true}).click();await page.locator('.map[data-imagery-loaded="true"]').waitFor();await page.keyboard.press('Escape');await page.waitForTimeout(1500);
+const video=page.video();await context.close();await rename(await video.path(),'docs/verification/navigation-chrome.webm');await browser.close();

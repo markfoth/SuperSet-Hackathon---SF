@@ -44,7 +44,10 @@ def test_nightlife_overlay_has_all_types_real_density_and_transparent_water():
 def test_residential_area_cards_have_local_credited_photos_and_names_keep_source_ids():
     from pathlib import Path
     content=json.loads((PROCESSED_DIR/'neighbourhood_content.json').read_text(encoding='utf-8'))['neighbourhoods']
-    for value in content.values():
+    for key,value in content.items():
+        if key.startswith('census-'):
+            assert value['photos']==[]  # New city groups do not invent a local photograph.
+            continue
         if value['residential']:
             photo=value['photos'][0]
             assert photo['credit'] and photo['licence'] and photo['page']

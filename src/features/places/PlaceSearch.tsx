@@ -38,7 +38,7 @@ export function PlaceSearch({ onSelect, actionLabel = 'Search places', placehold
         <button className="btn primary" type="submit" disabled={loading}>{loading ? 'Searching…' : actionLabel}</button>
       </div>
     </form>
-    <p className="hint search-coverage">Local named places from SF to SFO. For an exact address, place or drag a pin.</p>
+    <p className="hint search-coverage">Named places across the study region. For an exact address, place or drag a pin.</p>
     {results && <div className="place-search-results" aria-live="polite">
       {results.length === 0 && <p className="hint">No named place found. Try a nearby station or use a precise map pin.</p>}
       {results.map((place) => <button className="place-search-result" type="button" key={place.id} onClick={() => choose(place)}>
@@ -50,7 +50,7 @@ export function PlaceSearch({ onSelect, actionLabel = 'Search places', placehold
     {coordinates && <form className="coordinate-form" onSubmit={(event) => {
       event.preventDefault();
       const y = lat.trim() ? Number(lat) : NaN, x = lon.trim() ? Number(lon) : NaN;
-      if (!isCoveredLocation(y, x)) { setError('Use coordinates within SF to SFO: 37.60–37.90° N, 122.62–122.25° W.'); return; }
+      if (!isCoveredLocation(y, x)) { setError('Use Bay Area coordinates: 37.1–38.1° N, 123–121.5° W. Housing coverage follows a separate study boundary.'); return; }
       choose({ id: `pin:${y},${x}`, name: 'Pinned location', lat: y, lon: x, kind: 'Exact coordinate', source: 'Your pin' });
     }}>
       <label>Latitude<input value={lat} onChange={(event) => setLat(event.target.value)} inputMode="decimal" placeholder="37.7946" aria-label="Latitude" /></label>

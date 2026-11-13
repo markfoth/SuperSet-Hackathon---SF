@@ -42,7 +42,7 @@ export function NeighbourhoodDetail({ result, metrics: m, content: c, rents, wor
         </figure>
       )}
       <h2>{m.name}</h2>
-      {m.region === 'peninsula' && <p className="hint">Peninsula {m.boundary_kind === 'unincorporated area' ? 'county community' : m.boundary_kind ?? 'area'} grouping, limited to land north of SFO’s southern edge. Local incident and injury-crash data are unavailable here.</p>}
+      {m.region !== 'sf' && <p className="hint">{m.boundary_kind ?? 'City/community'} grouping. {result.id.startsWith('census-') ? 'Census urban footprint, not neighbourhood subdivisions or verified residential parcels.' : 'Original northern Peninsula land boundary.'} Local incident and injury-crash data are unavailable here.</p>}
       <p className="suitability"><b>{result.eligibleCount} matching location{result.eligibleCount === 1 ? '' : 's'}.</b> {result.unknownCount > 0 ? `${result.unknownCount} locations have insufficient information.` : ''}</p>
       {cellResult && <details className="detail-group" open><summary>Selected location</summary><CellDetail result={cellResult} workplaces={workplaces} /></details>}
       {!cellResult && result.eligible && <div className="local-choices"><p className="hint">Choose a map cell for local evidence, or explore one of these leading matching locations:</p>

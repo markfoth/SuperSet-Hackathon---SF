@@ -13,6 +13,7 @@ import { usd } from '../../lib/format';
 import '../scenarios/scenarios.css';
 
 export interface HomePanelProps {
+  mapAvailable?: boolean;
   homes: Home[];
   onChange: (homes: Home[]) => void;
   workplaces: Workplace[];
@@ -60,7 +61,7 @@ export function HomePanel(props: HomePanelProps) {
     <p className="hint">Add a home yourself, without connecting a property site. Commutes use its exact pin; local context keeps its original geographical precision.</p>
     <div className="home-layout"><section className="home-list" aria-label="Saved homes">
       <PlaceSearch onSelect={(place) => add(place.lat, place.lon, place.name)} placeholder="Find a nearby named place" ariaLabel="Search for a place near a home" actionLabel="Find places" />
-      <div className="decision-actions"><button className="btn primary" disabled={homes.length >= 30} onClick={onPick}>Place home on map</button><button className="btn link" onClick={() => setAddByCoordinates((show) => !show)}>Enter coordinates</button></div>
+      <div className="decision-actions"><button className="btn primary" disabled={props.mapAvailable===false || homes.length >= 30} onClick={onPick}>Place home on map</button><button className="btn link" onClick={() => setAddByCoordinates((show) => !show)}>Enter coordinates</button></div>
       {addByCoordinates && <form className="home-form" onSubmit={(event) => { event.preventDefault(); add(Number(newLat), Number(newLon)); }}><div className="home-fields"><label>Latitude<input type="number" required min={-90} max={90} step="any" value={newLat} onChange={(event) => setNewLat(event.target.value)} /></label><label>Longitude<input type="number" required min={-180} max={180} step="any" value={newLon} onChange={(event) => setNewLon(event.target.value)} /></label></div><button className="btn" type="submit">Add home pin</button></form>}
       <p className="hint">The search covers named places, not every street address. Place a pin precisely on your prospective home.</p>
       {!homes.length && <p className="hint">Your homes will appear here. Add at least two to compare costs and local evidence.</p>}
@@ -89,7 +90,7 @@ export function HomePanel(props: HomePanelProps) {
           <LocationExplorer lat={selected.lat} lon={selected.lon} />
           <HomeJourneyCheck home={selected} workplaces={workplaces} onEvidence={(key, evidence) => setJourneys((current) => ({ ...current, [selected.id]: { key, evidence } }))} />
         </section>}
-      </> : <div className="home-empty"><h3>Put a possibility on the map</h3><p className="hint">Start with a pin, then add the rent, a listing link and anything your household wants to remember.</p><button className="btn primary" disabled={homes.length >= 30} onClick={onPick}>Place home on map</button></div>}
+      </> : <div className="home-empty"><h3>Keep a prospective home</h3><p className="hint">Start with a map pin or the coordinate form above, then add rent, a listing link and household notes.</p><button className="btn primary" disabled={props.mapAvailable===false || homes.length >= 30} onClick={onPick}>Place home on map</button></div>}
     </section></div>
     {error && <p role="alert" className="card-warn">{error}</p>}{status && <p role="status" className="scenario-message">{status}</p>}
     {homes.length > 0 && <section className="home-comparison" aria-label="Compare home costs"><h3>Compare your homes</h3><p className="hint">Actual entered rents and transparent transport assumptions. Missing costs stay unknown. Check journey times for each home to compare travel burdens.</p><label className="results-sort">Comparison view<select aria-label="Home comparison view" value={canCompareTravel ? comparisonView : 'saved'} onChange={event => setComparisonView(event.target.value as typeof comparisonView)}><option value="saved">Saved order</option><option value="travel" disabled={!canCompareTravel}>Shortest measured household travel</option><option value="balance" disabled={!canCompareTravel}>Most balanced measured commutes</option></select></label>

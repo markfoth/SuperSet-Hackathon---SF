@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _common import PROCESSED_DIR, REPO_ROOT, REQUIRED_FIELDS, STUDY_BBOX, load_manifest  # noqa: E402
+from _common import PROCESSED_DIR, REPO_ROOT, REQUIRED_FIELDS, REGIONAL_ENVELOPE, load_manifest  # noqa: E402
 
 MAX_FILE_BYTES = 3_000_000
 VALID_STATUS = {"processed", "downloaded", "blocked", "deferred"}
@@ -61,11 +61,12 @@ def check_manifest() -> list[str]:
 
 def check_geojson_files() -> list[str]:
     errors = []
-    w, s, e, n = STUDY_BBOX
+    w, s, e, n = REGIONAL_ENVELOPE
     t = BBOX_TOLERANCE
     for path in sorted(PROCESSED_DIR.glob("*.geojson")):
-        if path.stat().st_size > MAX_FILE_BYTES:
-            errors.append(f"{path.name} is {path.stat().st_size / 1e6:.1f} MB (> {MAX_FILE_BYTES / 1e6:.0f} MB)")
+        budget = {'area_cells.geojson':15_000_000,'area_cell_display.geojson':6_000_000}.get(path.name,MAX_FILE_BYTES)
+        if path.stat().st_size > budget:
+            errors.append(f"{path.name} is {path.stat().st_size / 1e6:.1f} MB (> {budget / 1e6:.0f} MB)")
         fc = json.loads(path.read_text(encoding="utf-8"))
         if fc.get("type") != "FeatureCollection" or not isinstance(fc.get("features"), list):
             errors.append(f"{path.name} is not a FeatureCollection")

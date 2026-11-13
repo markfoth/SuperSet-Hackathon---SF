@@ -13,7 +13,7 @@ def test_area_cells_have_unique_h3_9_ids_and_valid_parents():
     cells = json.loads((PROCESSED_DIR / "area_cells.geojson").read_text(encoding="utf-8"))["features"]
     parents = {f["properties"]["id"] for f in json.loads((PROCESSED_DIR / "neighbourhoods.geojson").read_text(encoding="utf-8"))["features"]}
     ids = [f["properties"]["h3"] for f in cells]
-    assert 1000 < len(ids) < 2500
+    assert 10_000 < len(ids) < 20_000
     assert len(ids) == len(set(ids))
     assert {f["properties"]["nhood_id"] for f in cells} == parents
     for f in cells:
@@ -22,8 +22,8 @@ def test_area_cells_have_unique_h3_9_ids_and_valid_parents():
         assert shape(f["geometry"]).is_valid
         assert p["area_m2"] >= 1000
         assert p["residential"] in (True, False, None)
-        assert 37.60 <= p["check_lat"] < 37.84
-        assert -122.53 < p["check_lon"] < -122.35
+        assert 37.1 <= p["check_lat"] < 38.1
+        assert -122.65 < p["check_lon"] < -121.5
 
 
 def test_flat_road_across_a_hillside_is_flat():
@@ -64,10 +64,10 @@ def test_coarse_indicators_retain_their_source_resolution():
     assert fc["meta"]["sources"]["pm25_percentile"]["resolution"] == "census tract"
     for f in fc["features"]:
         p = f["properties"]
-        assert h3.cell_to_parent(p["h3"], 8) == p["crime_source_h3"]
-        assert p["incidents_per_km2"] == (None if p["region"] == "peninsula" else crimes.get(p["crime_source_h3"]))
+        if p['region']=='sf':assert h3.cell_to_parent(p["h3"], 8) == p["crime_source_h3"]
+        assert p["incidents_per_km2"] == (None if p["region"] != 'sf' else crimes.get(p["crime_source_h3"]))
         if p["street_grade_pct"] is None:
-            assert p["measured_street_m"] < 100 or (p["grade_coverage"] or 0) < 0.75
+            assert (p["measured_street_m"] or 0) < 100 or (p["grade_coverage"] or 0) < 0.75
 
 
 def test_dem_sampler_interpolates_pixel_centres_and_preserves_nodata(tmp_path, monkeypatch):

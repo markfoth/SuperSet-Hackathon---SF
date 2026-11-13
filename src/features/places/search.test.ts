@@ -19,7 +19,10 @@ describe('bounded local search', () => {
   });
   it('rejects nonfinite and out-of-coverage coordinates', () => {
     expect(isCoveredLocation(37.6213, -122.379)).toBe(true);
-    expect(isCoveredLocation(37.5, -122.4)).toBe(false);
+    expect(isCoveredLocation(37.5, -122.4)).toBe(true);
+    expect(isCoveredLocation(37.87, -122.27)).toBe(true);
+    expect(isCoveredLocation(37.35, -121.95)).toBe(true);
+    expect(isCoveredLocation(34.4, -118.5)).toBe(false);
     expect(isCoveredLocation(NaN, -122.4)).toBe(false);
     expect(isCoveredLocation(37.8, 122.4)).toBe(false);
   });

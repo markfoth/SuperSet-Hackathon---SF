@@ -24,6 +24,8 @@ export interface Workplace {
   officeDays?: number;
   /** Pacific arrival time, only used by providers that support arrive-by searches. */
   arrivalTime?: string;
+  /** Explicit account-free example. Moved pins leave fixture mode. */
+  offlineExample?: boolean;
 }
 
 export type PreferenceLevel = 'off' | 'nice' | 'important' | 'must';
@@ -31,7 +33,7 @@ export type PreferenceLevel = 'off' | 'nice' | 'important' | 'must';
 /** One neighbourhood's row in neighbourhood_metrics.json. A null block = not measured. */
 export interface NeighbourhoodMetrics {
   name: string;
-  region?: 'sf' | 'peninsula';
+  region?: 'sf' | 'peninsula' | 'east_bay';
   boundary_kind?: string;
   area_km2: number;
   crime: {
@@ -107,7 +109,7 @@ export interface ZipRent {
 export interface NeighbourhoodProps {
   id: string;
   name: string;
-  region?: 'sf' | 'peninsula';
+  region?: 'sf' | 'peninsula' | 'east_bay';
   boundary_kind?: string;
   area_km2: number;
   label_lat: number;

@@ -26,7 +26,7 @@ test('a household searches two destinations, compares three areas and retains co
  await page.getByRole('button',{name:/^Matches/}).click();
  await expect(page.locator('.cards>.card').first()).toBeVisible();
  for(let i=0;i<3;i++)await page.getByRole('button',{name:'Save to shortlist',exact:true}).first().click();
- await page.getByRole('button',{name:'Shortlist 3',exact:true}).click();
+ await page.getByRole('button',{name:'Compare saved places 3',exact:true}).click();
  await expect(page.getByRole('dialog',{name:'Compare your shortlist'}).getByRole('columnheader')).toHaveCount(4);
  await page.keyboard.press('Escape');
  await page.locator('.cards>.card .card-title').first().click();
@@ -41,7 +41,7 @@ test('a household searches two destinations, compares three areas and retains co
  await expect(dialog.getByRole('region',{name:'Home matching evidence'})).toContainText('actual home pin');
  await page.keyboard.press('Escape');await page.reload();
  await expect(page.locator('.persistent-summary')).toContainText('2 destinations');
- await expect(page.getByRole('button',{name:'Shortlist 4',exact:true})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Compare saved places 4',exact:true})).toBeVisible();
 });
 
 test('a partial daily-life source failure preserves other evidence and retries without changing matching',async({page})=>{
@@ -80,6 +80,7 @@ test('applied trade-off can be undone without silently relaxing a constraint',as
  await page.getByRole('button',{name:/Make it feel like home/}).click();
  const flat=page.locator('.pref').filter({hasText:'Flatter streets'});
  await flat.getByRole('radio',{name:'Must',exact:true}).click();
+ await expect(page.locator('.map-badge[role="status"]')).toHaveCount(0);
  const before=await page.locator('.match-legend b').textContent();
  await page.locator('.tradeoff-panel summary').click();
  await page.getByRole('button',{name:'Relax Flatter streets',exact:true}).click();
@@ -97,20 +98,21 @@ test('identical priorities reached through different edit histories produce iden
  const flat=page.locator('.pref').filter({hasText:'Flatter streets'}),parks=page.locator('.pref').filter({hasText:'Parks nearby'});
  await flat.getByRole('radio',{name:'Must',exact:true}).click();await parks.getByRole('radio',{name:'Important',exact:true}).click();
  await page.getByRole('button',{name:/^Matches/}).click();
+ await expect(page.locator('.cards>.card[data-area-id]').first()).toBeVisible();
  const before=await page.locator('.cards>.card[data-area-id]').evaluateAll(nodes=>nodes.map(node=>node.getAttribute('data-area-id')));
  const count=await page.locator('.map').getAttribute('data-eligible-count');
  await page.getByRole('button',{name:'Your search',exact:true}).click();
  await flat.getByRole('radio',{name:'Off',exact:true}).click();await parks.getByRole('radio',{name:'Off',exact:true}).click();
  await parks.getByRole('radio',{name:'Important',exact:true}).click();await flat.getByRole('radio',{name:'Must',exact:true}).click();
  await page.getByRole('button',{name:/^Matches/}).click();
- expect(await page.locator('.cards>.card[data-area-id]').evaluateAll(nodes=>nodes.map(node=>node.getAttribute('data-area-id')))).toEqual(before);
+ await expect.poll(()=>page.locator('.cards>.card[data-area-id]').evaluateAll(nodes=>nodes.map(node=>node.getAttribute('data-area-id')))).toEqual(before);
  await expect(page.locator('.map')).toHaveAttribute('data-eligible-count',count!);
 });
 
 test('short desktop reflow keeps every map control unobscured',async({page})=>{
  await page.setViewportSize({width:720,height:450});await page.goto('/');
  await expect(page.locator('.map')).toHaveAttribute('data-map-ready','true');
- for(const name of ['3D buildings','Terrain','Map tilt','Reset north','Fit locations','Zoom in','Zoom out']) {
+ for(const name of ['Reset north','Zoom in','Zoom out']) {
    const hit=await page.getByRole('button',{name,exact:true}).evaluate(node=>{
      const box=node.getBoundingClientRect(),target=document.elementFromPoint(box.x+box.width/2,box.y+box.height/2);
      return node===target||node.contains(target);

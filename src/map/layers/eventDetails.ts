@@ -1,7 +1,7 @@
 import type { Map as GLMap, GeoJSONSource, ExpressionSpecification } from 'maplibre-gl';
 import type { FeatureCollection, Feature, Point } from 'geojson';
-import type L from 'leaflet';
 import { loadData } from '../../lib/data';
+import { addCrimeColumns, updateCrimeColumns } from './crimeColumns';
 
 export type EventKind = 'crime' | 'collisions';
 export interface EventFilterState {
@@ -11,7 +11,7 @@ export interface EventFilterState {
   detail: boolean;
 }
 export const DEFAULT_EVENT_FILTERS: Record<EventKind, EventFilterState> = {
-  crime: { from: '2025-10', to: '2026-09', category: 'all', detail: false },
+  crime: { from: '2025-10', to: '2026-09', category: 'all', detail: true },
   collisions: { from: '2023-10', to: '2026-09', category: 'all', detail: false },
 };
 export interface EventData {
@@ -79,6 +79,22 @@ export async function addEventContext(map: GLMap, kind: EventKind, filters = DEF
   dataCache.set(kind, data); gridCache.set(kind, grid);
   if (!isCurrent() || !map.getLayer('matching-fill')) return { sources: [], layers: [] };
   const prefix = `context-${kind}`;
+  if (kind === 'crime') {
+    const added = await addCrimeColumns(map, isCurrent);
+    if (!isCurrent()) return added;
+    const points = `${prefix}-details`;
+    map.addSource(points, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+    map.addLayer({ id: `${prefix}-points`, type: 'circle', source: points, minzoom: 14.2,
+      paint: { 'circle-color': '#b14b32', 'circle-stroke-color': '#fff9e8', 'circle-stroke-width': 1,
+        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 14.2, 0, 15.2, .85],
+        'circle-radius': ['interpolate', ['linear'], ['sqrt', ['get', 'total']], 1, 3, 12, 10, 40, 15] } });
+    map.addLayer({ id: `${prefix}-point-count`, type: 'symbol', source: points, minzoom: 15,
+      filter: ['>=', ['get', 'total'], 5], layout: { 'text-field': ['to-string', ['get', 'total']], 'text-font': ['Noto Sans Regular'], 'text-size': 10 },
+      paint: { 'text-color': '#ffffff', 'text-halo-color': '#773c29', 'text-halo-width': 1 } });
+    added.sources.push(points); added.layers.push(`${prefix}-points`, `${prefix}-point-count`);
+    updateEventContext(map, kind, filters);
+    return added;
+  }
   const source = `${prefix}-overview`, detailSource = `${prefix}-details`;
   const layers = [`${prefix}-overview-fill`, `${prefix}-clusters`, `${prefix}-cluster-count`, `${prefix}-points`, `${prefix}-point-count`];
   const sources = [source, detailSource];
@@ -87,9 +103,7 @@ export async function addEventContext(map: GLMap, kind: EventKind, filters = DEF
     map.addSource(detailSource, { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, cluster: true, clusterMaxZoom: 14, clusterRadius: 38,
       clusterProperties: { total: ['+', ['get', 'total']], injured: ['+', ['coalesce', ['get', 'injured'], 0]], fatalities: ['+', ['coalesce', ['get', 'fatalities'], 0]] } });
     map.addLayer({ id: layers[0], source, type: 'fill', paint: {
-      'fill-color': kind === 'crime'
-        ? ['step', ['get', 'per_km2'], '#fde7d9', 100, '#f9b98f', 300, '#ee8551', 700, '#cf5226', 1500, '#8f2d10']
-        : ['step', ['get', 'total'], '#fde7d9', 5, '#f9b98f', 20, '#ee8551', 50, '#cf5226', 100, '#8f2d10'],
+      'fill-color': ['step', ['get', 'total'], '#fde7d9', 5, '#f9b98f', 20, '#ee8551', 50, '#cf5226', 100, '#8f2d10'],
       'fill-opacity': 0.5, 'fill-outline-color': '#fff',
     } }, 'matching-fill');
     map.addLayer({ id: layers[1], source: detailSource, type: 'circle', minzoom: 13.5, filter: ['has', 'point_count'], paint: {
@@ -100,7 +114,7 @@ export async function addEventContext(map: GLMap, kind: EventKind, filters = DEF
       'text-field': ['to-string', ['get', 'total']], 'text-size': 11, 'text-font': ['Noto Sans Regular'], 'text-allow-overlap': true,
     }, paint: { 'text-color': '#fff' } });
     map.addLayer({ id: layers[3], source: detailSource, type: 'circle', minzoom: 13.5, filter: ['!', ['has', 'point_count']], paint: {
-      'circle-color': kind === 'crime' ? '#a64934' : '#b45b27', 'circle-opacity': 0.82, 'circle-stroke-color': '#fff', 'circle-stroke-width': 1.2,
+      'circle-color': '#b45b27', 'circle-opacity': 0.82, 'circle-stroke-color': '#fff', 'circle-stroke-width': 1.2,
       'circle-radius': ['interpolate', ['linear'], ['sqrt', ['get', 'total']], 1, 5, 10, 16, 40, 27],
     } }, 'selection-outline');
     map.addLayer({ id: layers[4], source: detailSource, type: 'symbol', minzoom: 13.5, filter: ['all', ['!', ['has', 'point_count']], ['>=', ['get', 'total'], 4]], layout: {
@@ -119,6 +133,7 @@ export function updateEventContext(map: GLMap, kind: EventKind, filters: EventFi
   const data = dataCache.get(kind), grid = gridCache.get(kind);
   if (!data || !grid) return;
   const aggregated = aggregateEvents(data, filters);
+  if (kind === 'crime') updateCrimeColumns(map, aggregated.cells, (aggregate, h3, level) => ({ ...properties(kind, data, filters, { ...emptyAggregate(), ...aggregate }), h3, resolution: level }));
   const featureProperties = (a: Aggregate) => properties(kind, data, filters, a);
   const points: Feature<Point>[] = [...aggregated.locations].map(([index, a]) => ({ type: 'Feature', id: `${kind}:${data.locations[index][0]}:${data.locations[index][1]}`,
     geometry: { type: 'Point', coordinates: [data.locations[index][0], data.locations[index][1]] }, properties: featureProperties(a) }));
@@ -132,7 +147,7 @@ export function updateEventContext(map: GLMap, kind: EventKind, filters: EventFi
   const opacity: number | ExpressionSpecification = filters.detail ? ['interpolate', ['linear'], ['zoom'], 13, 0.5, 14.5, 0.08] : 0.5;
   if (map.getLayer(`context-${kind}-overview-fill`)) map.setPaintProperty(`context-${kind}-overview-fill`, 'fill-opacity', opacity);
   for (const suffix of ['clusters', 'cluster-count', 'points', 'point-count']) {
-    if (map.getLayer(`context-${kind}-${suffix}`)) map.setLayoutProperty(`context-${kind}-${suffix}`, 'visibility', filters.detail ? 'visible' : 'none');
+    if (map.getLayer(`context-${kind}-${suffix}`)) map.setLayoutProperty(`context-${kind}-${suffix}`, 'visibility', kind === 'crime' || filters.detail ? 'visible' : 'none');
   }
   return aggregated.total;
 }
@@ -149,7 +164,8 @@ export function eventPopup(kind: EventKind, p: Record<string, unknown>): HTMLEle
   }
   line(p.h3 ? (kind === 'crime' ? 'Reported incidents in this hexagon' : 'Injury crashes in this hexagon')
     : (kind === 'crime' ? 'Reported near this intersection' : 'Published injury-crash location'), 'strong');
-  if(p.h3) line('H3 resolution 8, approximately 0.74 km². This is an aggregate area, not one intersection.');
+  if(p.h3) line(`H3 resolution ${p.resolution ?? 8}. This is an aggregate area, not one intersection.`);
+  if(p.graphic_height_m != null) line(`Column height ${Math.round(Number(p.graphic_height_m))} display metres. A data graphic, not a building or surveyed elevation.`);
   const count = Number(p.total);
   line(`${count.toLocaleString('en-GB')} unique ${count === 1 ? (kind === 'crime' ? 'reported incident' : 'injury crash') : names[kind]}`);
   line(String(p.period));
@@ -169,51 +185,11 @@ export function eventPopup(kind: EventKind, p: Record<string, unknown>): HTMLEle
   });
   node.append(list);
   line(kind === 'crime' ? 'An incident can have several offence categories, so category totals can overlap. Reported incidents are incomplete and are not a safety score.' : 'Pedestrian and cyclist involvement can overlap. Unknown involvement is excluded from motor-vehicle-only. Not every fall or unreported crash is included; highways are excluded by the source.');
-  line('SF coverage only. Missing Peninsula records do not mean zero.');
+  line('SF coverage only. Records outside SF are unknown, never zero.');
   line(`Source retrieved ${String(p.downloaded_at).slice(0, 10)}.`);
   const link = document.createElement('a');
   link.href = kind === 'crime' ? 'https://data.sf.gov/d/wg3w-h783' : 'https://data.sf.gov/d/ubvf-ztfx';
   link.textContent = kind === 'crime' ? 'SFPD source and precision' : 'TransBASE / SFDPH source and limitations';
   link.target = '_blank'; link.rel = 'noopener noreferrer'; node.append(link);
   return node;
-}
-
-/** Compatibility renderer shares deduplication, filters, periods and precision. */
-export async function buildLeafletEvents(map: L.Map, kind: EventKind, filters = DEFAULT_EVENT_FILTERS[kind]): Promise<L.Layer> {
-  const [{ default: leaflet }, data, grid] = await Promise.all([
-    import('leaflet'), loadData<EventData>(dataFiles[kind]),
-    loadData<FeatureCollection>(kind === 'crime' ? 'crime_grid.geojson' : 'collisions_grid.geojson'),
-  ]);
-  const aggregate = aggregateEvents(data, filters), renderer = leaflet.canvas({ padding: 0.3, pane: 'context-points' });
-  const colours = ['#fde7d9', '#f9b98f', '#ee8551', '#cf5226', '#8f2d10'];
-  const cells: FeatureCollection = { type: 'FeatureCollection', features: grid.features.flatMap((feature) => {
-    const a = aggregate.cells.get(String(feature.properties?.h3));
-    return a ? [{ ...feature, properties: { ...properties(kind, data, filters, a), h3: feature.properties?.h3,
-      per_km2: a.total / (data.cell_areas_km2?.[String(feature.properties?.h3)] ?? 0.74) } }] : [];
-  }) };
-  const overview = leaflet.geoJSON(cells, { pane: 'context-fill',
-    style: (feature) => {
-      const value = Number(feature?.properties?.[kind === 'crime' ? 'per_km2' : 'total']);
-      const breaks = kind === 'crime' ? [100, 300, 700, 1500] : [5, 20, 50, 100];
-      return { fillColor: colours[breaks.filter((n) => value >= n).length], fillOpacity: 0.5, color: '#fff', weight: 0.5 };
-    }, onEachFeature: (feature, layer) => layer.bindPopup(eventPopup(kind, feature.properties ?? {})),
-  });
-  const points = leaflet.layerGroup(), group = leaflet.layerGroup([overview, points]);
-  const redraw = () => {
-    const detailed = filters.detail && map.getZoom() >= 14;
-    overview.setStyle({ fillOpacity: detailed ? 0.08 : 0.5 });
-    points.clearLayers();
-    if (!detailed) return;
-    const bounds = map.getBounds().pad(0.1);
-    aggregate.locations.forEach((a, index) => {
-      const [lon, lat] = data.locations[index];
-      if (!bounds.contains([lat, lon])) return;
-      leaflet.circleMarker([lat, lon], { renderer, pane: 'context-points', radius: Math.min(22, 4 + Math.sqrt(a.total)),
-        fillColor: '#a64934', fillOpacity: 0.82, color: '#fff', weight: 1.2,
-      }).bindPopup(eventPopup(kind, properties(kind, data, filters, a)), { maxWidth: 290 }).addTo(points);
-    });
-  };
-  group.on('add', () => { redraw(); map.on('zoomend moveend', redraw); });
-  group.on('remove', () => { map.off('zoomend moveend', redraw); points.clearLayers(); });
-  return group;
 }

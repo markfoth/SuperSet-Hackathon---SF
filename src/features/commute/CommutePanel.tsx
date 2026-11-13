@@ -6,6 +6,7 @@ import { DEFAULT_WORKPLACES, type CommuteResult } from './provider';
 const COLOURS = ['#e8590c', '#7048e8', '#0c8599', '#c2255c'];
 
 interface Props {
+  mapAvailable?: boolean;
   workplaces: Workplace[];
   results: Record<string, CommuteResult | undefined>;
   onChange: (id: string, patch: Partial<Workplace>) => void;
@@ -24,7 +25,7 @@ function selectedPlace(w: Workplace): string {
   return example?.name ?? 'Pinned location';
 }
 
-export function CommutePanel({ workplaces, results, onChange, onRemove, onAdd, adding, onReset, onAddPlace, onFocus, onRetry }: Props) {
+export function CommutePanel({ workplaces, results, onChange, onRemove, onAdd, adding, onReset, onAddPlace, onFocus, onRetry, mapAvailable=true }: Props) {
   const [editingPlace, setEditingPlace] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [started, setStarted] = useState(false);
@@ -60,7 +61,7 @@ export function CommutePanel({ workplaces, results, onChange, onRemove, onAdd, a
               {TRAVEL_MODES.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
             </select></label>
             <label>One-way limit<select value={w.maxMinutes} onChange={(e) => onChange(w.id, { maxMinutes: Number(e.target.value) })} aria-label="Maximum commute">
-              {[...new Set([...COMMUTE_MINUTES,w.maxMinutes])].sort((a,b)=>a-b).map((m) => <option key={m} value={m}>Max {m} min</option>)}
+              {[...new Set([...COMMUTE_MINUTES,...(liveEnabled && !w.offlineExample ? [90,120] : []),w.maxMinutes])].sort((a,b)=>a-b).map((m) => <option key={m} value={m}>Max {m} min</option>)}
             </select></label>
           </div>
           <details className="journey-settings"><summary>Person, days &amp; arrival time</summary>
@@ -88,7 +89,7 @@ export function CommutePanel({ workplaces, results, onChange, onRemove, onAdd, a
       {((!workplaces.length && started) || showAdd) && onAddPlace && workplaces.length < 8 && <PlaceSearch onSelect={(place) => { onAddPlace(place); setShowAdd(false); }} />}
       <div className="commute-add-actions" hidden={!workplaces.length && !started}>
         {!!workplaces.length && !showAdd && <button className="btn" onClick={() => setShowAdd(true)} disabled={workplaces.length >= 8}>+ Add destination</button>}
-        <button className={`btn ${adding ? 'primary' : ''}`} onClick={onAdd} disabled={workplaces.length >= 8} aria-pressed={adding}>
+        <button className={`btn ${adding ? 'primary' : ''}`} onClick={onAdd} disabled={!mapAvailable || workplaces.length >= 8} aria-pressed={adding}>
           {adding ? 'Cancel pin placement' : 'Place a pin on the map'}
         </button>
       </div>

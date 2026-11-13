@@ -1,112 +1,66 @@
 # Common Ground
 
-A location decision tool for people finding a home together from San Francisco to SFO. Start with **Where do you need to get to?**, add destinations and commute limits, then explore the locations that satisfy every required commute and Must-have.
+A desktop workspace for finding a home together across San Francisco, the Peninsula through Santa Clara, and the East Bay through Berkeley. Every confirmed location must satisfy every required home-to-work commute and measured Must-have. Unknown evidence stays unknown.
 
-The map is the workspace. Search, results and details share one collapsible panel. Find keeps matching legible in 2D; Explore adds optional neutral 3D buildings and real terrain; Compare brings saved neighbourhoods, precise bookmarks and prospective homes together. Mobile uses a map above one scrollable bottom panel, with an unrestricted Focus on map view.
+## Run
 
-## Run locally
-
-Requires Node 24. Committed analysis data and photos are sufficient for the account-free offline example.
+Node 24 is required. Preserve existing private environment files.
 
 ```powershell
 npm.cmd ci
-npm.cmd run dev -- --host localhost --port 5188 --strictPort
+npm.cmd run dev -- --host localhost --port 5196 --strictPort
 ```
 
-Open <http://localhost:5188>. Choose **Try the SF + SFO example**. It uses labelled, approximate offline commute data for SFO Airport and the Financial District. Other offline modes are synthetic and labelled as such. The transit fixture includes an expired Muni timetable; it is not a current journey planner.
+Open <http://localhost:5196>. **Try the SF + SFO example** explicitly uses labelled historical offline estimates. Its transit fixture includes an expired Muni timetable. It is not a current journey planner.
 
-The map needs public OpenFreeMap tiles for its street background. No account, card or key is needed. Local boundaries, matching cells and pins remain available during tile failures. WebGL failures open a lazy 2D Leaflet compatibility map.
-
-For a production-build review:
+For live evaluation, the existing private configuration uses `VITE_COMMUTE_PROVIDER=proxy`, `VITE_ROUTING_PROXY_URL=/api`, server-only `TRAVELTIME_APP_ID` and `TRAVELTIME_API_KEY`, and `ROUTING_DRY_RUN=0`. Start the proxy in another terminal:
 
 ```powershell
-npm.cmd run build
-npm.cmd run preview -- --host localhost --port 4173 --strictPort
+npm.cmd run proxy
 ```
 
-The static preview does not execute Vercel API functions. Optional live evaluation routing uses the local proxy or the Vercel functions described below. Do not run a data rebuild while a browser suite is reading its outputs.
+Vite forwards `/api` to `ROUTING_PROXY_PORT` from the existing configuration, default 8787. `/api/health` exposes configuration booleans and actionable status without credentials. Do not prefix private credentials with `VITE_`. Live failures block matching; the offline example is a deliberate separate choice. TravelTime Basic is for research, development and evaluation; successful access does not grant commercial production rights. Persistent caching stays disabled unless storage rights are verified.
 
-## What works
+## Desktop map
 
-- Separate person and destination labels, confirmed selected places, coordinates and draggable map pins. Typing a label or search query never silently moves a location.
-- Bounded local search over real named stations, neighbourhoods and mapped places. It is not a complete address geocoder. Use a precise pin or coordinates for an address.
-- Multiple destinations per person, colours, office days, travel modes and commute limits. Live evaluation routing supports Pacific arrival times.
-- Joint H3-9 representative-point commute gates, hard Must-haves, ordered measurement bands, source-aware missing values and deliberate trade-off previews.
-- Compact, photographed neighbourhood results with reasons, compromises, per-person catchment evidence and explicitly ZIP-level rent context.
-- Saved neighbourhoods and exact map-cell bookmarks, notes, re-evaluation after settings change, and comparison of three or more possibilities.
-- Prospective homes with actual-coordinate commute checks, manual rent, bedrooms, listing links and notes. Cell, ZIP, tract and incident-grid measurements keep their original precision.
-- Monthly rent plus transparent user-entered transport assumptions. Explicit route-time checks support illustrative weekly totals, longest one-way commute and balance when all relevant journeys are measured.
-- Named local scenarios, reload persistence, validated JSON export/import and privacy-first share fragments. Precise destinations and homes are omitted from links unless explicitly included.
+- Left drag pans; the wheel zooms towards the pointer.
+- Right drag up zooms in around the original geographical and screen anchor, preserving pitch and bearing.
+- Middle drag up increases pitch; horizontal movement changes bearing around the original anchor. Pitch is clamped to 0-60 degrees. Autoscroll is suppressed inside the map.
+- The compass reflects bearing and resets north. Arrows pan, + and - zoom, Shift + arrows tilt/rotate, and N resets north. The mouse hint is dismissible.
+- The corner thumbnail selects Terrain or Satellite. Terrain includes continuous terrain at normal scale and available buildings by default. Satellite uses real attributed USGS/USDA aerial imagery; the service lists CONUS acquisition years 2017-2021, varying locally. It is not current imagery.
+- Both side panels collapse independently. There is one map journey. Save places, then use **Compare saved places** to compare neighbourhoods, exact bookmarks and prospective homes.
 
-There is no synchronised household server. Shared scenarios are portable copies; later edits stay on each device. Anyone with a precise-location link can read it. Links have no sign-in, revocation or expiry.
+Buildings need actual source tiles, not just a lower style zoom. OpenFreeMap provides usable height data from source zoom 14. They appear overhead and remain available when tilting. Data gaps and approximate inferred heights remain. No fabricated lower-zoom buildings are added.
 
-## Matching and evidence
+If WebGL fails, a clear recovery state keeps coordinate search, matching, home checks and comparison available. Map layers, mouse pin placement and 3D navigation require WebGL. The duplicate Leaflet renderer has been removed after testing this experience.
 
-Every confirmed matching cell must satisfy **all** destination catchments and every measured Must-have at its representative point. Pending, failed and stale route requests never disappear from the gate. A home checks its actual pin against the same catchments, while lifestyle measurements remain inherited from its containing cell.
-
-Earlier preference bands dominate later ones; Important uses finer bands than Nice. No universal liveability or safety score is used. Without lifestyle preferences, the interface describes commute feasibility rather than a definitive personalised ranking.
-
-Coverage ends at SFO's southern edge, 37.60° N. Peninsula incident and injury-crash data are unavailable. Missing data is neither zero nor a failed measurement. ZIP rents are historical all-type asking indices, not property or bedroom-specific estimates. Distances are straight-line access measures. Park-cut display footprints are not a verified residential parcel inventory.
-
-## Optional live evaluation routing
-
-Keep existing private environment files intact. Use [.env.example](.env.example) as a blank reference. Only server variables receive `TRAVELTIME_APP_ID` and `TRAVELTIME_API_KEY`.
-
-TravelTime Basic is free without a card or expiry, but is restricted to **research, development and evaluation**. Commercial production use needs a separate licence and is outside this upgrade. Successful API access does not grant production rights.
-
-For a permitted local evaluation, set the private environment configuration:
-
-```dotenv
-VITE_COMMUTE_PROVIDER=proxy
-VITE_ROUTING_PROXY_URL=/api
-ROUTING_DRY_RUN=0
-ROUTING_PROXY_PORT=8787
-```
-
-Start `npm.cmd run proxy` in a second terminal and restart Vite. `/api/health` reports configuration booleans without credentials. Persistent provider caching is disabled unless `ROUTING_CACHE_ALLOWED=1` is deliberately set after verifying storage rights. Identical in-flight requests are deduplicated. Server caps are per instance, not distributed account-wide quotas.
-
-Exact journey times are requested for one home at a time, only after an explicit action. A weekly illustration doubles measured inbound duration and multiplies by entered office days, assuming equal return travel. Missing journeys keep the combined total unknown. Multiple destinations count separate return trips; avoid overlapping allocations.
-
-## Verification
+## Verify
 
 ```powershell
 npm.cmd test
 npm.cmd run test:proxy
 npm.cmd run build
-npm.cmd run test:browser
+npm.cmd run test:browser -- --project=desktop
 .venv/Scripts/python.exe -X utf8 scripts/validate_datasets.py
 .venv/Scripts/python.exe -X utf8 -m pytest
+node scripts/verify_desktop.mjs
 ```
 
-Browser tests use installed Google Chrome, one worker, fixture routing and an isolated port 5187. They include genuine MapLibre rendering and touch dragging, recovery from deliberate failures, stale routes, matching, data gaps, local persistence, scenarios, sharing and home comparisons. See [measured verification](docs/VERIFICATION.md) for actual results and host limitations, and [review screenshots](docs/REVIEW.md) for the three requested viewport sizes.
+Browser tests use installed Chrome, one worker and fixture routing on isolated port 5187. `verify_desktop.mjs` uses the running application at port 5196, or `CG_BASE_URL`. Live verification is an explicit bounded evaluation: `node scripts/verify_live_routing.mjs`. Static `npm.cmd run preview` serves the build but does not execute Vercel API functions.
 
-## Data and performance
+## Data and limitations
 
-Canonical processed data lives in `data/sf/processed/`; frontend builds copy it to ignored `public/data/`. Heavy preprocessing stays outside runtime and frontend builds. Dataset sources, licences, dates, resolution and limits are in [the manifest](data/sf/manifest.yaml).
+The housing boundary is an explicit polygon: named Census city/community urban areas, official area-water subtraction and the original detailed SF/northern Peninsula geography. Richmond is excluded. Basemap navigation and permitted commute destinations have wider coverage. The complete H3-9 candidate index drives region-wide matching independently of viewport tiles. Detailed cell and optional context geometry loads by viewport; expensive evaluation runs in a Web Worker.
 
-Optional terrain uses continuous, attributed **Mapterhorn Terrarium tiles** at normal scale. Buildings, terrain and camera tilt are independent. The former clipped USGS display pyramid is retained only as a reproducible historical asset; it is no longer the display source. It is independent of the existing coloured topographic overlay. Buildings come from viewport vector tiles, with approximate OSM-derived metre heights, including storey inference. Building height never encodes suitability. No custom city-wide building GeoJSON, global extract or mesh is shipped.
+Non-SF incidents and injury crashes remain unknown. Regional street gradients, frequent-service measurements and failed OSM extracts are not invented. ZIP-level rents and tract pollution retain their original resolution. Distances are straight-line mapped access, not walking routes. City/community groups are not neighbourhood subdivisions or verified residential parcels.
 
-```powershell
-.venv/Scripts/python.exe -X utf8 scripts/rebuild_all.py --dry-run
-.venv/Scripts/python.exe -X utf8 scripts/build_regional_terrain.py
-.venv/Scripts/python.exe -X utf8 scripts/build_decision_context.py
-node scripts/measure_map.cjs
-```
+Canonical processed data is committed under `data/sf/processed/`. `predev` and `prebuild` copy only runtime assets to ignored `public/data/`; heavy preprocessing never runs during builds or requests. Source dates, licences, refresh commands and coverage are in the manifest and data guide.
 
-The complete data preparation, source decisions and HTTP/asset budgets are in [map documentation](docs/MAP_UPGRADE.md), [data accuracy](docs/DATA_ACCURACY_AUDIT.md) and [Peninsula coverage](docs/PENINSULA_COVERAGE.md).
+- [Architecture and state](docs/ARCHITECTURE.md)
+- [Data sources, regional coverage matrix and limitations](docs/DATA_SOURCES.md)
+- [Deployment and promotion boundary](docs/DEPLOYMENT.md)
+- [Verification, screenshots, navigation demonstration and measurements](docs/VERIFICATION.md)
+- [Decision log](docs/DECISIONS.md)
+- [Ranking method](docs/RANKING_METHOD.md) and [street-gradient method](docs/STREET_GRADIENT_METHOD.md)
 
-## Review and deployment
-
-- [Product audit and resolved findings](docs/PRODUCT_AUDIT.md)
-- [Journey redesign](docs/UX_REDESIGN.md)
-- [Regional 3D diagnosis and repair](docs/3D_RENDERING_FIX.md)
-- [New context sources and refresh commands](docs/DECISION_CONTEXT_DATA.md)
-- [Verification, measurements and limitations](docs/VERIFICATION.md)
-- [Desktop, tablet and mobile screenshots](docs/REVIEW.md)
-- [Vercel and Railway deployment checklist](docs/VERCEL_DEPLOYMENT.md)
-- [Place search, routing, terms and fairness](docs/SEARCH_ROUTING.md)
-- [Scenarios, sharing, homes and costs](docs/HOUSEHOLD_SCENARIOS.md)
-- [Architecture](docs/ARCHITECTURE.md) and [ranking method](docs/RANKING_METHOD.md)
-- [Implementation progress](docs/UPGRADE_PROGRESS.md)
-
-The upgrade stays on its feature branch. Merging, production deployment, paid resources and infrastructure changes require a separate instruction.
+`main` is the intended canonical branch. Production promotion is held until the verified consolidation is reviewed because a push to `main` deploys to Vercel. See the deployment guide for recorded branch tips and the promotion procedure.

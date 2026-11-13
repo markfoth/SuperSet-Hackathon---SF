@@ -12,6 +12,10 @@ export function loadData<T>(file: string): Promise<T> {
         return r.json();
       }).catch((error: unknown) => { cache.delete(file); throw error; }),
     );
+    // Bounded spatial cache. Revisiting an evicted tile uses HTTP caching;
+    // repeated navigation cannot retain every context feature in JS memory.
+    const spatial=[...cache.keys()].filter(key=>/^(cells|context)\//.test(key));
+    while(spatial.length>48)cache.delete(spatial.shift()!);
   }
   return cache.get(file) as Promise<T>;
 }

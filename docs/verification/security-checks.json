@@ -1,0 +1,10 @@
+{
+  "configurationPresent": {
+    "TRAVELTIME_APP_ID": true,
+    "TRAVELTIME_API_KEY": true
+  },
+  "secretValuesDetected": false,
+  "privateEnvironmentTracked": false,
+  "filesScanned": 454,
+  "findings": []
+}

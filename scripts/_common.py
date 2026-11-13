@@ -27,6 +27,9 @@ DOWNLOAD_LOG = RAW_DIR / "_downloads.json"
 # Study area: San Francisco plus the northern Peninsula to SFO's southern edge.
 # (west, south, east, north) in EPSG:4326.
 STUDY_BBOX = (-122.53, 37.60, -122.35, 37.835)
+# Download/validation envelope only. The housing boundary is the named urban
+# polygon in study_boundary.geojson; this rectangle never gates recommendations.
+REGIONAL_ENVELOPE = (-122.65, 37.1, -121.5, 38.1)
 # San Francisco city/county only (used for plausibility checks on DataSF data).
 SF_BBOX = (-122.53, 37.70, -122.35, 37.835)
 

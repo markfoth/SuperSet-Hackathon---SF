@@ -30,7 +30,7 @@ interface Props {
 }
 
 export function ResultsList(p: Props) {
-  if (!p.hasWorkplaces) return <div className="results empty-results"><span className="empty-results-symbol" aria-hidden="true">⌖</span><h2>Your places, in perspective.</h2><p>Add a destination to see neighbourhoods that fit every commute.</p><p className="hint">Explore the map and its context layers while you decide what matters.</p><div className="empty-results-steps"><span><b>1</b> Add your destinations</span><span><b>2</b> Choose your priorities</span><span><b>3</b> Compare places together</span></div></div>;
+  if (!p.hasWorkplaces) return <div className="results empty-results"><span className="empty-results-symbol" aria-hidden="true">⌖</span><h2>Your places, in perspective.</h2><p>Add a destination to see areas that fit every commute.</p><p className="hint">Explore the map and its context layers while you decide what matters.</p><div className="empty-results-steps"><span><b>1</b> Add your destinations</span><span><b>2</b> Choose your priorities</span><span><b>3</b> Compare places together</span></div></div>;
   if (p.pending) return <div className="results" role="status">Calculating every workplace’s commute before showing matches…</div>;
   if (p.blocked) {
     return (
@@ -46,7 +46,7 @@ export function ResultsList(p: Props) {
     <div className="results">
       <div className="results-toolbar">
       <div className="results-head">
-        <h2>{p.ranked.length} neighbourhood{p.ranked.length === 1 ? '' : 's'} to explore</h2>
+        <h2>{p.ranked.length} area{p.ranked.length === 1 ? '' : 's'} to explore</h2>
         <button className="btn link" onClick={p.onToggleExcluded}>
           {p.showExcluded ? 'Hide' : 'Show'} exclusions
         </button>
@@ -128,7 +128,7 @@ function Card({ r, rank, content, metrics, onSelect, shortlist, onToggleShortlis
         <div className="card-commutes">{workplaces.map((w, i) => <span key={w.id}><i style={{ background: w.colour || ['#e8590c', '#7048e8', '#0c8599', '#c2255c'][i % 4] }} />{w.personName || w.name}: within {w.maxMinutes} min</span>)}</div>
         <p className="card-reason"><b>Why it fits</b> {strength ? description(strength.prefId, strength.value) : 'The leading cell meets every commute limit.'}</p>
         {cell?.cell.park_distance_m != null && <p className="card-reason"><b>Everyday context</b>Mapped green space approximately {Math.round(cell.cell.park_distance_m)} m from the representative location, straight line.</p>}
-        <p className="card-compromise"><b>{compromise ? 'The compromise' : 'Keep in mind'}</b> {compromise ? description(compromise.prefId, compromise.value) : 'Not every address in this neighbourhood matches.'}</p>
+        <p className="card-compromise"><b>{compromise ? 'The compromise' : 'Keep in mind'}</b> {compromise ? description(compromise.prefId, compromise.value) : 'Not every address in this area matches.'}</p>
         <div className="card-facts">
           {m.rents?.typical_rent_zip_weighted != null
             ? <span className="asking-rent">~{usd(m.rents.typical_rent_zip_weighted)}/mo asking (ZIP-level)</span>

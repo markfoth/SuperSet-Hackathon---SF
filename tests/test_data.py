@@ -45,7 +45,7 @@ def test_every_neighbourhood_has_sample_points():
     assert all(len(pts) >= 1 for pts in samples.values())
     for pts in samples.values():
         for lat, lon in pts:
-            assert 37.60 <= lat <= 37.84 and -122.53 <= lon <= -122.35
+            assert 37.1 <= lat <= 38.1 and -122.65 <= lon <= -121.5
 
 
 def test_crime_window_is_twelve_complete_months():

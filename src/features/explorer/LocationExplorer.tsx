@@ -31,7 +31,7 @@ export function LocationExplorer({lat,lon}:{lat:number;lon:number}) {
      setError(missing.length?`Unavailable sources: ${missing.join(', ')}. This context is unknown; matching is unchanged.`:'');setLoading(false);
    });return()=>{cancelled=true;};},[attempt]);
  const covered=lat>=37.60&&lat<=37.84&&lon>=-122.55&&lon<=-122.33;
- if(!covered)return <section className="location-explorer"><h3>Local evidence coverage</h3><p>Outside the daily-life extract. The surrounding map is context, not a recommendation region.</p></section>;
+ if(!covered)return <section className="location-explorer"><h3>Local evidence coverage</h3><p>This location is outside the original daily-life, Muni and flood extract. Regional commute, park, rail, rent and pollution evidence is listed separately where measured. Missing local context remains unknown.</p></section>;
  const nearby=(essentials?.places||[]).map(p=>({...p,distance:proximity({lat,lon},p)})).filter(p=>p.distance<2000).sort((a,b)=>a.distance-b.distance);
  const active=service?activeService(service,day):new Set<string>();
  const previous=new Date(day+'T12:00:00Z');previous.setUTCDate(previous.getUTCDate()-1);

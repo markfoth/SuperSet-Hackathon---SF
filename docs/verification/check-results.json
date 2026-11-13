@@ -1,0 +1,34 @@
+{
+  "unitTests": 74,
+  "proxyTests": 12,
+  "pythonTests": 63,
+  "desktopBrowserTests": 52,
+  "dataValidatorErrors": 0,
+  "productionBuild": "passed",
+  "diffWhitespaceCheck": "passed",
+  "dedicatedBrowsers": [
+    "Chrome",
+    "Microsoft Edge"
+  ],
+  "desktopSizes": [
+    [
+      1280,
+      800
+    ],
+    [
+      1440,
+      900
+    ],
+    [
+      1920,
+      1080
+    ]
+  ],
+  "maximumGestureAnchorErrorPixels": 0.202,
+  "liveCustomRouting": "passed; Berkeley and San Mateo; viewport-independent joint matching",
+  "privateCredentialsExposed": false,
+  "datePacific": "2026-11-13",
+  "finalAffectedBrowserTests": 6,
+  "finalRegionalDataTests": 3,
+  "crimeDisplayMetresPerIncident": 0.05
+}

@@ -5,7 +5,6 @@ test('right drag anchors terrain zoom and ends outside the map, on cancellation 
   await expect(page.locator('.map')).toHaveAttribute('data-vector-loaded','true');
   await page.getByRole('button',{name:/Focus on map/}).click();
   await page.getByRole('button',{name:'Dismiss navigation hint'}).click();
-  await page.getByRole('button',{name:'Terrain',exact:true}).click();
   await expect(page.locator('.map')).toHaveAttribute('data-terrain-loaded','true');
   for(const [zoom,pitch,bearing] of [[14,0,0],[15,35,85],[16,60,-35]]) {
     await page.evaluate(({zoom,pitch,bearing}) => (document.querySelector('.map') as any).__commonGroundMap.jumpTo({center:[-122.444,37.756],zoom,pitch,bearing,padding:{top:0,bottom:0,left:0,right:0}}),{zoom,pitch,bearing});
@@ -40,8 +39,9 @@ test('left pan, wheel, explicit rotation and destination dragging remain availab
   await expect(page.locator('.map')).not.toHaveAttribute('data-centre',before!);
   const zoom=await page.locator('.map').getAttribute('data-zoom');await page.mouse.wheel(0,-400);
   await expect(page.locator('.map')).not.toHaveAttribute('data-zoom',zoom!);
-  await page.getByRole('button',{name:'Rotate map clockwise'}).click();await expect(page.locator('.map')).toHaveAttribute('data-bearing','30');
-  const marker=page.locator('.cg-destination-pin').first(), rect=(await marker.boundingBox())!;
+  await page.locator('.map canvas').focus();await page.locator('.map canvas').press('Shift+ArrowRight');await expect(page.locator('.map')).toHaveAttribute('data-bearing','15');
+  await page.evaluate(()=>{const m=(document.querySelector('.map') as HTMLElement & {__commonGroundMap:import('maplibre-gl').Map}).__commonGroundMap;m.jumpTo({center:[-122.3855,37.6213],zoom:12,bearing:0,padding:{top:0,bottom:0,left:0,right:0}});});
+ const marker=page.locator('.cg-destination-pin').first(), rect=(await marker.boundingBox())!;
   const transform=await marker.getAttribute('style');await page.mouse.move(rect.x+16,rect.y+16);await page.mouse.down();await page.mouse.move(rect.x+55,rect.y+45,{steps:8});await page.mouse.up();
   await expect(marker).not.toHaveAttribute('style',transform!);
 });
